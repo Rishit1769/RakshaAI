@@ -70,7 +70,9 @@ type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 let socket: AppSocket | null = null;
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:5000';
+  process.env.NEXT_PUBLIC_WS_URL ??
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') ??
+  'http://localhost:5000';
 
 /**
  * Returns (and lazily creates) the singleton Socket.IO client.
