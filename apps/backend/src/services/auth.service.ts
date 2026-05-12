@@ -164,6 +164,17 @@ export async function verifyOTP(
   }
 
   const tokens = generateTokens(user);
+
+  // Create a session record so refresh-token rotation works
+  const sessionTokenHash = await bcrypt.hash(tokens.refreshToken, 8);
+  await prisma.userSession.create({
+    data: {
+      userId: user.id,
+      tokenHash: sessionTokenHash,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    },
+  });
+
   logger.info('OTP verified', { userId: user.id, purpose });
 
   return { user: toSafeUser({ ...user, isVerified: true }), tokens };
@@ -208,18 +219,38 @@ export async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
     throw new AppError('Invalid or expired refresh token', 401);
   }
 
-  // Verify the session exists and is active
-  const tokenHash = await bcrypt.hash(refreshToken, 8);
-  const session = await prisma.userSession.findFirst({
-    where: { userId: payload.sub, isActive: true },
+  // Find and verify the session by comparing bcrypt-hashed refresh tokens
+  const sessions = await prisma.userSession.findMany({
+    where: { userId: payload.sub, isActive: true, expiresAt: { gt: new Date() } },
   });
 
-  if (!session) throw new AppError('Session not found or revoked', 401);
+  let matchedSession: (typeof sessions)[0] | null = null;
+  for (const session of sessions) {
+    const isMatch = await bcrypt.compare(refreshToken, session.tokenHash);
+    if (isMatch) { matchedSession = session; break; }
+  }
+
+  if (!matchedSession) throw new AppError('Session not found or revoked', 401);
 
   const user = await prisma.user.findUnique({ where: { id: payload.sub } });
   if (!user || !user.isActive) throw new AppError('User not found or inactive', 401);
 
-  return generateTokens(user);
+  const tokens = generateTokens(user);
+
+  // Rotate session: invalidate old token, create new one
+  const newTokenHash = await bcrypt.hash(tokens.refreshToken, 8);
+  await prisma.$transaction([
+    prisma.userSession.update({ where: { id: matchedSession.id }, data: { isActive: false } }),
+    prisma.userSession.create({
+      data: {
+        userId: user.id,
+        tokenHash: newTokenHash,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    }),
+  ]);
+
+  return tokens;
 }
 
 /**
