@@ -1,0 +1,84 @@
+import { z } from 'zod';
+
+export const registerSchema = z.object({
+  fullName: z
+    .string({ required_error: 'Full name is required' })
+    .trim()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must not exceed 100 characters')
+    .regex(/^[a-zA-Z\s'-]+$/, 'Name may only contain letters, spaces, hyphens and apostrophes'),
+
+  email: z
+    .string({ required_error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .email('Please provide a valid email address')
+    .max(150, 'Email must not exceed 150 characters'),
+
+  phone: z
+    .string({ required_error: 'Phone number is required' })
+    .trim()
+    .regex(/^\+?[0-9]{7,15}$/, 'Please provide a valid phone number (7–15 digits, optional + prefix)'),
+
+  password: z
+    .string({ required_error: 'Password is required' })
+    .min(8, 'Password must be at least 8 characters')
+    .max(72, 'Password must not exceed 72 characters') // bcrypt max
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+
+  role: z
+    .enum(['user', 'volunteer', 'guardian'], {
+      errorMap: () => ({ message: 'Role must be one of: user, volunteer, guardian' }),
+    })
+    .optional()
+    .default('user'),
+});
+
+export const verifyOTPSchema = z.object({
+  identifier: z
+    .string({ required_error: 'Email or phone is required' })
+    .trim()
+    .min(5, 'Invalid identifier'),
+
+  otp: z
+    .string({ required_error: 'OTP is required' })
+    .trim()
+    .length(6, 'OTP must be exactly 6 digits')
+    .regex(/^\d{6}$/, 'OTP must contain only digits'),
+
+  purpose: z.enum(['register', 'login', 'reset', 'verify']),
+});
+
+export const loginSchema = z.object({
+  email: z
+    .string({ required_error: 'Email is required' })
+    .trim()
+    .toLowerCase()
+    .email('Please provide a valid email address'),
+
+  password: z
+    .string({ required_error: 'Password is required' })
+    .min(1, 'Password is required'),
+});
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string({ required_error: 'Refresh token is required' }).min(1),
+});
+
+export const resendOTPSchema = z.object({
+  identifier: z
+    .string({ required_error: 'Email or phone is required' })
+    .trim()
+    .min(5, 'Invalid identifier'),
+
+  purpose: z.enum(['register', 'login', 'reset', 'verify']),
+});
+
+// TypeScript types inferred from schemas
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type VerifyOTPInput = z.infer<typeof verifyOTPSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+export type ResendOTPInput = z.infer<typeof resendOTPSchema>;
