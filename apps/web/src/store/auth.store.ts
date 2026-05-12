@@ -56,9 +56,10 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'rakshaai-auth',
-      // Only persist user and refresh token — access token managed separately
+      // Persist tokens and user so socket hooks and guards work after page refresh
       partialize: (state) => ({
         user: state.user,
+        accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
