@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { useAuthStore } from '@/store/auth.store';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 type LoginMode = 'email' | 'mpin';
@@ -113,6 +114,7 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-[#0B1026] via-[#111827] to-[#0B1026] flex items-center justify-center px-4">
+      <div className="fixed top-4 right-4 z-50"><ThemeToggle /></div>
       <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/15 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 right-0 w-72 h-72 rounded-full bg-[#7B61FF]/10 blur-3xl" />
 

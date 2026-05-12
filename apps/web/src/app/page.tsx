@@ -1,9 +1,15 @@
 import Link from 'next/link';
 import DownloadApp from '@/components/DownloadApp';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default function HomePage() {
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-[#0B1026] via-[#111827] to-[#0B1026] overflow-hidden flex flex-col items-center justify-center px-4">
+      {/* Theme toggle — fixed top-right */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Ambient glow blobs */}
       <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-[#7B61FF]/15 blur-3xl" />
