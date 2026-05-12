@@ -39,6 +39,27 @@ async function main() {
 
   console.log(`✅  Super admin created: ${superAdmin.email} (id: ${superAdmin.id})`);
   console.log(`⚠️  Change the default password immediately in production!`);
+
+  // ─── Fixed admin account ────────────────────────────────────────────
+  const adminEmail = 'admin@raksha.ai';
+  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+  if (existingAdmin) {
+    console.log(`⚠️  Admin account already exists: ${adminEmail}`);
+  } else {
+    const adminHash = await bcrypt.hash('admin@159753', 12);
+    const admin = await prisma.user.create({
+      data: {
+        fullName: 'RakshaAI Admin',
+        email: adminEmail,
+        phone: '+919988776655',
+        passwordHash: adminHash,
+        role: 'super_admin',
+        isVerified: true,
+        isEmailVerified: true,
+      },
+    });
+    console.log(`✅  Admin account created: ${admin.email} (id: ${admin.id})`);
+  }
 }
 
 main()
