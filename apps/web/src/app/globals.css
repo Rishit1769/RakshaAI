@@ -98,3 +98,38 @@
   /* ─── Background helpers ─────────────────────────────────── */
   .bg-light     { @apply bg-[#F7F8FC]; }
 }
+
+/* ─── Dark Mode Overrides ──────────────────────────────────────────── */
+@layer base {
+  .dark body {
+    background-color: #0B1026;
+    color: #F7F8FC;
+  }
+}
+
+@layer components {
+  .dark .card {
+    @apply bg-white/5 border border-white/10 text-white shadow-none;
+  }
+
+  .dark .input-field {
+    @apply bg-white/5 border-white/15 text-white placeholder:text-white/30
+           focus:ring-primary focus:border-primary;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-white/5 border-white/15 text-white hover:bg-white/10;
+  }
+
+  .dark .bg-light {
+    background-color: #0B1026;
+  }
+
+  .dark .text-navy {
+    color: #F7F8FC;
+  }
+
+  .dark .text-muted {
+    color: rgba(247, 248, 252, 0.45);
+  }
+}
