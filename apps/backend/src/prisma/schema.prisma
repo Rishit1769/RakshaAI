@@ -960,7 +960,7 @@ model GuardianTrackingSession {
 }
 
 // -----------------------------------------------------------------
-// RBAC — ORGANIZATIONS, WORKERS, AUDIT LOGS
+// RBAC ï¿½ ORGANIZATIONS, WORKERS, AUDIT LOGS
 // -----------------------------------------------------------------
 
 model Organization {

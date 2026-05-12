@@ -47,11 +47,44 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/login
- * Validates credentials and sends login OTP.
+ * Validates credentials and sends login OTP (email+password flow).
  */
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const result = await AuthService.loginUser(req.body as AuthService.LoginInput);
   sendSuccess(res, result, 'OTP sent to your registered email');
+});
+
+/**
+ * POST /api/auth/login-mpin
+ * Authenticates with email + password + MPIN. Returns tokens immediately (no OTP step).
+ */
+export const loginWithMpin = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password, mpin } = req.body as {
+    email: string;
+    password: string;
+    mpin: string;
+  };
+  const result = await AuthService.loginWithMpin(email, password, mpin);
+
+  res.cookie('refreshToken', result.tokens.refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/api/auth',
+  });
+
+  sendSuccess(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Login successful');
+});
+
+/**
+ * POST /api/auth/setup-mpin
+ * Sets or updates MPIN for an authenticated user (after email verification).
+ */
+export const setupMpin = asyncHandler(async (req: Request, res: Response) => {
+  const { mpin } = req.body as { mpin: string };
+  await AuthService.setupMpin(req.user!.id, mpin);
+  sendSuccess(res, null, 'MPIN set up successfully');
 });
 
 /**
