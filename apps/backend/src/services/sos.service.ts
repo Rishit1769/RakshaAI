@@ -4,6 +4,7 @@ import { generateAlertCode } from '../utils/helpers';
 import { sendEmergencyEmail } from './email.service';
 import { AppError } from '../middleware/error.middleware';
 import { logger } from '../config/logger';
+import { emitSOSCreated, emitAlertStatusChanged } from '../sockets';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,24 @@ export async function createSosAlert(input: CreateSosInput) {
     longitude,
   });
 
+  // Broadcast to all connected responders in real-time
+  try {
+    emitSOSCreated({
+      alertId: alert.id,
+      alertCode,
+      userId,
+      alertType: alert.alertType,
+      triggerMethod: alert.triggerMethod,
+      latitude,
+      longitude,
+      address,
+      createdAt: alert.createdAt.toISOString(),
+    });
+  } catch {
+    // Socket failure must NOT block alert creation
+    logger.error('Socket emit failed for SOS_CREATED', { alertId: alert.id });
+  }
+
   // Fire-and-forget: notify emergency contacts (non-blocking)
   void notifyEmergencyContacts(userId, alert.id, alertCode, latitude, longitude, description);
 
@@ -114,6 +133,19 @@ export async function updateAlertStatus(input: UpdateSosStatusInput) {
     newStatus,
     updatedBy: userId,
   });
+
+  // Broadcast status change to all alert room subscribers
+  try {
+    emitAlertStatusChanged(alertId, {
+      alertId,
+      status: newStatus,
+      updatedBy: userId,
+      notes,
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    logger.error('Socket emit failed for ALERT_STATUS_CHANGED', { alertId });
+  }
 
   return updatedAlert;
 }

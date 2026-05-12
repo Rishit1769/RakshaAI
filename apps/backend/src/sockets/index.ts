@@ -138,8 +138,8 @@ export function initializeSocket(httpServer: HttpServer): SocketIOServer {
               userId: socket.user.id,
               latitude: data.latitude,
               longitude: data.longitude,
-              accuracy: data.accuracy,
-              source: 'gps',
+              accuracyMeters: data.accuracy !== undefined ? data.accuracy : undefined,
+              alertId: data.alertId,
             },
           });
 
