@@ -60,7 +60,7 @@ export default function SafetyMap({
     // Dynamic import to avoid SSR
     void (async () => {
       const L = await import('leaflet');
-      await import('leaflet/dist/leaflet.css');
+      // Leaflet CSS is imported in globals.css via @import or next.config
 
       const map = L.map(containerRef.current!, {
         center: [center.latitude, center.longitude],
