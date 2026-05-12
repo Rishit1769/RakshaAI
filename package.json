@@ -8,6 +8,8 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "concurrently --names \"backend,web\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:web\"",
+    "build": "npm run build:backend && npm run build:web",
     "dev:backend": "npm run dev --workspace=apps/backend",
     "dev:web": "npm run dev --workspace=apps/web",
     "build:backend": "npm run build --workspace=apps/backend",
@@ -24,6 +26,7 @@
     "npm": ">=9.0.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "rimraf": "^5.0.5"
   }
 }
