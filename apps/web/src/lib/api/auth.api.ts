@@ -6,19 +6,31 @@ export interface RegisterPayload {
   fullName: string;
   email: string;
   phone: string;
+  aadhaarNumber: string;
   password: string;
-  role?: 'user' | 'volunteer' | 'police';
 }
 
 export interface VerifyOtpPayload {
   identifier: string;
   otp: string;
-  purpose: 'register' | 'login' | 'reset' | 'verify';
+  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin';
 }
 
 export interface LoginPayload {
+  credential: string;
+  password: string;
+  loginType: 'email' | 'mpin';
+}
+
+export interface LoginMpinPayload {
   email: string;
   password: string;
+  mpin: string;
+}
+
+export interface SetupMpinPayload {
+  mpin: string;
+  confirmMpin: string;
 }
 
 export interface AuthTokens {
@@ -42,7 +54,7 @@ export interface LoginResponse {
 
 export interface ResendOtpPayload {
   identifier: string;
-  purpose: 'register' | 'login' | 'reset' | 'verify';
+  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin';
 }
 
 // ─── API calls ────────────────────────────────────────────────────
@@ -56,6 +68,12 @@ export const authApi = {
 
   login: (payload: LoginPayload) =>
     api.post<{ maskedEmail: string; requiresOTP: boolean }>('/auth/login', payload),
+
+  loginMpin: (payload: LoginMpinPayload) =>
+    api.post<{ user: AuthUser; accessToken: string }>('/auth/login-mpin', payload),
+
+  setupMpin: (payload: SetupMpinPayload) =>
+    api.post<null>('/auth/setup-mpin', payload),
 
   refreshToken: (refreshToken: string) =>
     api.post<{ accessToken: string }>('/auth/refresh', { refreshToken }),
