@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 
@@ -117,7 +118,8 @@ export default function SuperAdminDashboard() {
             <h1 className="text-2xl font-bold text-white">Super Admin</h1>
             <p className="text-sm text-white/40 mt-0.5">Signed in as <span className="text-white/60">{user.email}</span></p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/30">SUPER ADMIN</span>
           </div>
         </div>

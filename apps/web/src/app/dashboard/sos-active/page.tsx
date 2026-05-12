@@ -7,6 +7,7 @@ import { sosApi } from '@/lib/api/sos.api';
 import { useAuthStore } from '@/store/auth.store';
 import { useSosRealtime } from '@/hooks/useSosRealtime';
 import { useLocationBroadcast } from '@/hooks/useLocationBroadcast';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default function SosActivePage() {
   const router = useRouter();
@@ -91,6 +92,10 @@ export default function SosActivePage() {
 
   return (
     <div className="min-h-screen bg-[#1a0a0a] flex flex-col items-center justify-center p-4">
+      {/* Theme toggle — top-right */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle size="sm" className="bg-white/10 text-white hover:bg-white/20" />
+      </div>
       {/* Pulsing emergency ring */}
       <div className="relative flex items-center justify-center mb-8">
         <div

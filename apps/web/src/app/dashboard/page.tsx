@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -31,21 +32,24 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-light">
+    <div className="min-h-screen bg-light dark:bg-[#0B1026] transition-colors duration-200">
       {/* Top bar */}
-      <header className="bg-white border-b border-border px-4 py-3 flex items-center justify-between">
+      <header className="bg-white dark:bg-[#0d1628] border-b border-border dark:border-white/10 px-4 py-3 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-navy">
+          <h1 className="text-lg font-bold text-navy dark:text-white">
             Raksha<span className="text-primary">AI</span>
           </h1>
-          <p className="text-xs text-muted">Welcome, {user.fullName.split(' ')[0]}</p>
+          <p className="text-xs text-muted dark:text-white/45">Welcome, {user.fullName.split(' ')[0]}</p>
         </div>
-        <button
-          onClick={() => { clearAuth(); router.push('/auth/login'); }}
-          className="text-xs text-muted hover:text-navy px-3 py-1 rounded-lg hover:bg-gray-100"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => { clearAuth(); router.push('/auth/login'); }}
+            className="text-xs text-muted dark:text-white/40 hover:text-navy dark:hover:text-white px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
       <main className="max-w-2xl mx-auto p-4 space-y-6">
