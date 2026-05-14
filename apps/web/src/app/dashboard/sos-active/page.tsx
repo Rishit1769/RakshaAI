@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { sosApi } from '@/lib/api/sos.api';
@@ -9,7 +10,7 @@ import { useSosRealtime } from '@/hooks/useSosRealtime';
 import { useLocationBroadcast } from '@/hooks/useLocationBroadcast';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
-export default function SosActivePage() {
+function SosActivePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const alertId = searchParams.get('alertId');
@@ -176,6 +177,14 @@ export default function SosActivePage() {
         <p className="text-red-300 text-xs mt-3">Failed to cancel. Please try again.</p>
       )}
     </div>
+  );
+}
+
+export default function SosActivePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#1a0a0a]" />}>
+      <SosActivePageContent />
+    </Suspense>
   );
 }
 

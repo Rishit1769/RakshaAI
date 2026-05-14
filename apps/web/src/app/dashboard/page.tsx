@@ -18,6 +18,17 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, clearAuth } = useAuthStore();
 
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // Server-side logout failure should not leave client session alive.
+    } finally {
+      clearAuth();
+      router.push('/auth/login');
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) router.push('/auth/login');
   }, [isAuthenticated, router]);
@@ -87,13 +98,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Server-side logout failure should not leave client session alive.
-    } finally {
-      clearAuth();
-      router.push('/auth/login');
-    }
-  };
