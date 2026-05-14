@@ -9,27 +9,22 @@ import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 type LoginMode = 'email' | 'mpin';
-type Step = 'credentials' | 'otp';
 
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth, clearAuth, preferredIdentifier, rememberIdentifier } = useAuthStore();
 
   const [mode, setMode] = useState<LoginMode>('email');
-  const [step, setStep] = useState<Step>('credentials');
 
   // Email login state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [maskedEmail, setMaskedEmail] = useState('');
-
-  // OTP state (for email login 2FA)
-  const [otp, setOtp] = useState('');
 
   // MPIN login state
   const [mpinPassword, setMpinPassword] = useState('');
   const [mpinDigits, setMpinDigits] = useState('');
+  const [mpinCredential, setMpinCredential] = useState('');
   const [showMpinPassword, setShowMpinPassword] = useState(false);
 
   const [error, setError] = useState('');
@@ -43,56 +38,26 @@ export default function LoginPage() {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: email.trim().toLowerCase(), password, loginType: 'email' }),
-      });
-      const data = (await res.json()) as { success: boolean; message: string; data?: { maskedEmail: string } };
-      if (!res.ok || !data.success) { setError(data.message || 'Login failed.'); return; }
-      setMaskedEmail(data.data?.maskedEmail ?? email);
-      rememberIdentifier(email.trim().toLowerCase());
-      sessionStorage.setItem('rakshaai_pending_email', email.trim().toLowerCase());
-      sessionStorage.setItem('rakshaai_otp_purpose', 'login');
-      setStep('otp');
-    } catch { setError('Network error. Please try again.'); }
-    finally { setLoading(false); }
-  }
-
-  async function handleOtpVerify(e: React.FormEvent) {
-    e.preventDefault();
-    if (otp.length < 6) { setError('Enter all 6 digits.'); return; }
-    setLoading(true); setError('');
-    try {
-      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: email.trim().toLowerCase(), otp, purpose: 'login' }),
+        body: JSON.stringify({ credential: email.trim().toLowerCase(), password }),
       });
       const data = (await res.json()) as {
-        success: boolean; message: string;
+        success: boolean;
+        message: string;
         data?: { user: { id: string; fullName: string; email: string; phone: string; role: string; isVerified: boolean }; accessToken: string };
       };
-      if (!res.ok || !data.success) { setError(data.message || 'Invalid OTP.'); return; }
+      if (!res.ok || !data.success) { setError(data.message || 'Login failed.'); return; }
+      rememberIdentifier(email.trim().toLowerCase());
       setAuth(data.data!.user, data.data!.accessToken);
-      sessionStorage.removeItem('rakshaai_pending_email');
-      sessionStorage.removeItem('rakshaai_otp_purpose');
       router.push('/dashboard');
     } catch { setError('Network error. Please try again.'); }
     finally { setLoading(false); }
   }
 
-  async function handleResendOtp() {
-    try {
-      await fetch(`${API_BASE}/auth/resend-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: email.trim().toLowerCase(), purpose: 'login' }),
-      });
-    } catch { /* ignore */ }
-  }
-
   async function handleMpinLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (!preferredIdentifier) {
-      setError('No saved account found for MPIN login. Sign in once with Email + Password.');
+    const credential = (preferredIdentifier ?? mpinCredential).trim().toLowerCase();
+    if (!credential) {
+      setError('Enter your linked email or phone once. It will be remembered for next MPIN login.');
       return;
     }
     if (!mpinPassword || mpinDigits.length < 4) {
@@ -103,13 +68,14 @@ export default function LoginPage() {
       const res = await fetch(`${API_BASE}/auth/login-mpin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: preferredIdentifier, password: mpinPassword, mpin: mpinDigits }),
+        body: JSON.stringify({ credential, password: mpinPassword, mpin: mpinDigits }),
       });
       const data = (await res.json()) as {
         success: boolean; message: string;
         data?: { user: { id: string; fullName: string; email: string; phone: string; role: string; isVerified: boolean }; accessToken: string };
       };
       if (!res.ok || !data.success) { setError(data.message || 'Login failed.'); return; }
+      rememberIdentifier(credential);
       setAuth(data.data!.user, data.data!.accessToken);
       router.push('/dashboard');
     } catch { setError('Network error. Please try again.'); }
@@ -133,7 +99,7 @@ export default function LoginPage() {
         <div className="rounded-2xl border border-navy/10 bg-white/90 dark:border-white/10 dark:bg-white/5 backdrop-blur-xl shadow-2xl animate-slide-up">
           <div className="flex border-b border-navy/10 dark:border-white/10">
             {(['email', 'mpin'] as LoginMode[]).map((m) => (
-              <button key={m} onClick={() => { setMode(m); setError(''); setStep('credentials'); }}
+              <button key={m} onClick={() => { setMode(m); setError(''); }}
                 className={['flex-1 py-3.5 text-sm font-medium transition-colors first:rounded-tl-2xl last:rounded-tr-2xl',
                   mode === m ? 'text-navy dark:text-white border-b-2 border-primary -mb-px' : 'text-navy/45 hover:text-navy/70 dark:text-white/35 dark:hover:text-white/60'].join(' ')}>
                 {m === 'email' ? 'Email + Password' : 'MPIN Login'}
@@ -151,7 +117,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            {mode === 'email' && step === 'credentials' && (
+            {mode === 'email' && (
               <form onSubmit={handleEmailLogin} noValidate className="space-y-4">
                 <FloatingLabelInput label="Email Address" type="email" value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(''); }} autoComplete="email" disabled={loading} />
@@ -173,33 +139,23 @@ export default function LoginPage() {
                 />
                 <button type="submit" disabled={loading}
                   className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-semibold text-sm transition-all hover:bg-primary-600 active:scale-95 disabled:opacity-60">
-                  {loading ? <><Spinner /> Sending OTP…</> : 'Continue'}
+                  {loading ? <><Spinner /> Signing in…</> : 'Sign In'}
                 </button>
-              </form>
-            )}
-
-            {mode === 'email' && step === 'otp' && (
-              <form onSubmit={handleOtpVerify} noValidate className="space-y-4">
-                <p className="text-sm text-navy/55 dark:text-white/40 text-center">
-                  Code sent to <span className="text-navy/80 dark:text-white/60 font-medium">{maskedEmail}</span>
-                </p>
-                <input type="text" inputMode="numeric" maxLength={6} value={otp}
-                  onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '')); setError(''); }}
-                  className="w-full rounded-xl border border-navy/15 bg-white dark:border-white/15 dark:bg-white/5 px-4 py-3.5 text-center text-2xl font-mono tracking-[0.5em] text-navy dark:text-white outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                  disabled={loading} aria-label="OTP code" />
-                <button type="submit" disabled={loading || otp.length < 6}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-semibold text-sm transition-all hover:bg-primary-600 active:scale-95 disabled:opacity-60">
-                  {loading ? <><Spinner /> Verifying…</> : 'Verify & Sign In'}
-                </button>
-                <div className="flex justify-between text-xs text-navy/45 dark:text-white/30">
-                  <button type="button" onClick={handleResendOtp} disabled={loading} className="hover:text-navy/75 dark:hover:text-white/60 transition-colors">Resend OTP</button>
-                  <button type="button" onClick={() => { setStep('credentials'); setOtp(''); setError(''); }} className="hover:text-navy/75 dark:hover:text-white/60 transition-colors">← Change email</button>
-                </div>
               </form>
             )}
 
             {mode === 'mpin' && (
               <form onSubmit={handleMpinLogin} noValidate className="space-y-4">
+                {!preferredIdentifier && (
+                  <FloatingLabelInput
+                    label="Email or Phone"
+                    type="text"
+                    value={mpinCredential}
+                    onChange={(e) => { setMpinCredential(e.target.value); setError(''); }}
+                    autoComplete="username"
+                    disabled={loading}
+                  />
+                )}
                 <FloatingLabelInput
                   label="Password"
                   type={showMpinPassword ? 'text' : 'password'}
@@ -237,7 +193,7 @@ export default function LoginPage() {
             {preferredIdentifier && (
               <button
                 type="button"
-                onClick={() => { clearAuth(); setError(''); }}
+                onClick={() => { clearAuth(); setMpinCredential(''); setError(''); }}
                 className="mt-3 w-full text-xs text-navy/50 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors"
               >
                 Forget saved account for MPIN login

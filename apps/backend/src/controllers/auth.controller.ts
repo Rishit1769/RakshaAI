@@ -47,11 +47,19 @@ export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/login
- * Validates credentials and sends login OTP (email+password flow).
+ * Validates credentials and logs user in directly (email+password flow).
  */
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const result = await AuthService.loginUser(req.body as AuthService.LoginInput);
-  sendSuccess(res, result, 'OTP sent to your registered email');
+  res.cookie('refreshToken', result.tokens.refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/api/auth',
+  });
+
+  sendSuccess(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Login successful');
 });
 
 /**

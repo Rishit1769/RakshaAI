@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthState>()(
       },
       clearAuth: () => {
         syncAccessToken(null);
-        set({ user: null, accessToken: null, isAuthenticated: false, preferredIdentifier: null });
+        set((state) => ({ user: null, accessToken: null, isAuthenticated: false, preferredIdentifier: state.preferredIdentifier }));
       },
     }),
     {

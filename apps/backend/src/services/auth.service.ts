@@ -139,7 +139,7 @@ export async function verifyOTP(
   return { user: toSafeUser({ ...user, isVerified: true }), tokens };
 }
 
-export async function loginUser(input: LoginInput): Promise<{ maskedEmail: string; requiresOTP: boolean }> {
+export async function loginUser(input: LoginInput): Promise<{ user: SafeUser; tokens: AuthTokens }> {
   const { credential, password } = input;
 
   const user = await prisma.user.findFirst({
@@ -155,8 +155,16 @@ export async function loginUser(input: LoginInput): Promise<{ maskedEmail: strin
     throw new AppError('Email not verified. A new OTP has been sent.', 403);
   }
 
-  await createAndSendOTP(user.id, user.email, 'login');
-  return { maskedEmail: maskEmail(user.email), requiresOTP: true };
+  const tokens = generateTokens(user);
+  await createSession(user.id, tokens.refreshToken);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() },
+  });
+
+  logger.info('User logged in via email+password', { userId: user.id });
+  return { user: toSafeUser(user), tokens };
 }
 
 export async function loginWithMpin(
