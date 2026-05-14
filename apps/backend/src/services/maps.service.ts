@@ -25,40 +25,37 @@ export async function getNearbyVolunteers(query: NearbyQuery) {
       distance_km: number;
     }>
   >`
-    SELECT
-      v.id,
-      v.user_id,
-      u.full_name,
-      v.rating::float,
-      v.service_radius_km,
-      ul.latitude  AS lat,
-      ul.longitude AS lng,
-      (
-        6371 * acos(
-          cos(radians(${latitude})) * cos(radians(ul.latitude)) *
-          cos(radians(ul.longitude) - radians(${longitude})) +
-          sin(radians(${latitude})) * sin(radians(ul.latitude))
-        )
-      ) AS distance_km
-    FROM volunteers v
-    JOIN users u ON u.id = v.user_id
-    JOIN LATERAL (
-      SELECT latitude, longitude
-      FROM user_locations
-      WHERE user_id = v.user_id
-      ORDER BY recorded_at DESC
-      LIMIT 1
-    ) ul ON TRUE
-    WHERE v.status = 'available'
-      AND v.verification_status = 'verified'
-    HAVING (
-      6371 * acos(
-        cos(radians(${latitude})) * cos(radians(ul.latitude)) *
-        cos(radians(ul.longitude) - radians(${longitude})) +
-        sin(radians(${latitude})) * sin(radians(ul.latitude))
-      )
-    ) <= ${radiusKm}
-    ORDER BY distance_km ASC
+    SELECT *
+    FROM (
+      SELECT
+        v.id,
+        v.user_id,
+        u.full_name,
+        v.rating::float,
+        v.service_radius_km,
+        ul.latitude  AS lat,
+        ul.longitude AS lng,
+        (
+          6371 * acos(
+            cos(radians(${latitude})) * cos(radians(ul.latitude)) *
+            cos(radians(ul.longitude) - radians(${longitude})) +
+            sin(radians(${latitude})) * sin(radians(ul.latitude))
+          )
+        ) AS distance_km
+      FROM volunteers v
+      JOIN users u ON u.id = v.user_id
+      JOIN LATERAL (
+        SELECT latitude, longitude
+        FROM user_locations
+        WHERE user_id = v.user_id
+        ORDER BY recorded_at DESC
+        LIMIT 1
+      ) ul ON TRUE
+      WHERE v.status = 'available'
+        AND v.verification_status = 'verified'
+    ) nearby
+    WHERE nearby.distance_km <= ${radiusKm}
+    ORDER BY nearby.distance_km ASC
     LIMIT 20
   `;
 
@@ -82,33 +79,30 @@ export async function getNearbyPoliceStations(query: NearbyQuery) {
       distance_km: number;
     }>
   >`
-    SELECT
-      id,
-      name,
-      address,
-      city,
-      phone_primary,
-      latitude,
-      longitude,
-      (
-        6371 * acos(
-          cos(radians(${latitude})) * cos(radians(latitude)) *
-          cos(radians(longitude) - radians(${longitude})) +
-          sin(radians(${latitude})) * sin(radians(latitude))
-        )
-      ) AS distance_km
-    FROM police_stations
-    WHERE is_active = true
-      AND latitude IS NOT NULL
-      AND longitude IS NOT NULL
-    HAVING (
-      6371 * acos(
-        cos(radians(${latitude})) * cos(radians(latitude)) *
-        cos(radians(longitude) - radians(${longitude})) +
-        sin(radians(${latitude})) * sin(radians(latitude))
-      )
-    ) <= ${radiusKm}
-    ORDER BY distance_km ASC
+    SELECT *
+    FROM (
+      SELECT
+        id,
+        name,
+        address,
+        city,
+        phone_primary,
+        latitude,
+        longitude,
+        (
+          6371 * acos(
+            cos(radians(${latitude})) * cos(radians(latitude)) *
+            cos(radians(longitude) - radians(${longitude})) +
+            sin(radians(${latitude})) * sin(radians(latitude))
+          )
+        ) AS distance_km
+      FROM police_stations
+      WHERE is_active = true
+        AND latitude IS NOT NULL
+        AND longitude IS NOT NULL
+    ) nearby
+    WHERE nearby.distance_km <= ${radiusKm}
+    ORDER BY nearby.distance_km ASC
     LIMIT 10
   `;
 
@@ -133,33 +127,30 @@ export async function getNearbySafeZones(query: NearbyQuery) {
       distance_km: number;
     }>
   >`
-    SELECT
-      id,
-      name,
-      type,
-      address,
-      phone,
-      is_24x7,
-      latitude,
-      longitude,
-      (
-        6371 * acos(
-          cos(radians(${latitude})) * cos(radians(latitude)) *
-          cos(radians(longitude) - radians(${longitude})) +
-          sin(radians(${latitude})) * sin(radians(latitude))
-        )
-      ) AS distance_km
-    FROM safe_zones
-    WHERE is_active = true
-      AND is_verified = true
-    HAVING (
-      6371 * acos(
-        cos(radians(${latitude})) * cos(radians(latitude)) *
-        cos(radians(longitude) - radians(${longitude})) +
-        sin(radians(${latitude})) * sin(radians(latitude))
-      )
-    ) <= ${radiusKm}
-    ORDER BY distance_km ASC
+    SELECT *
+    FROM (
+      SELECT
+        id,
+        name,
+        type,
+        address,
+        phone,
+        is_24x7,
+        latitude,
+        longitude,
+        (
+          6371 * acos(
+            cos(radians(${latitude})) * cos(radians(latitude)) *
+            cos(radians(longitude) - radians(${longitude})) +
+            sin(radians(${latitude})) * sin(radians(latitude))
+          )
+        ) AS distance_km
+      FROM safe_zones
+      WHERE is_active = true
+        AND is_verified = true
+    ) nearby
+    WHERE nearby.distance_km <= ${radiusKm}
+    ORDER BY nearby.distance_km ASC
     LIMIT 15
   `;
 
@@ -182,8 +173,8 @@ export async function getAreaRiskData(query: NearbyQuery) {
       },
     }),
     prisma.safetyHotspot
-      ? prisma.$queryRaw<Array<{ id: string; risk_level: string; incident_count: number }>>`
-          SELECT id, risk_level, incident_count
+      ? prisma.$queryRaw<Array<{ id: string; risk_score: number; report_count: number }>>`
+          SELECT id, risk_score, report_count
           FROM safety_hotspots
           WHERE is_active = true
           LIMIT 5

@@ -24,7 +24,6 @@ export default function LoginPage() {
   // MPIN login state
   const [mpinPassword, setMpinPassword] = useState('');
   const [mpinDigits, setMpinDigits] = useState('');
-  const [mpinCredential, setMpinCredential] = useState('');
   const [showMpinPassword, setShowMpinPassword] = useState(false);
 
   const [error, setError] = useState('');
@@ -55,9 +54,9 @@ export default function LoginPage() {
 
   async function handleMpinLogin(e: React.FormEvent) {
     e.preventDefault();
-    const credential = (preferredIdentifier ?? mpinCredential).trim().toLowerCase();
+    const credential = (preferredIdentifier ?? '').trim().toLowerCase();
     if (!credential) {
-      setError('Enter your linked email or phone once. It will be remembered for next MPIN login.');
+      setError('No linked account found for MPIN login. Login once with Email + Password to link it.');
       return;
     }
     if (!mpinPassword || mpinDigits.length < 4) {
@@ -146,16 +145,6 @@ export default function LoginPage() {
 
             {mode === 'mpin' && (
               <form onSubmit={handleMpinLogin} noValidate className="space-y-4">
-                {!preferredIdentifier && (
-                  <FloatingLabelInput
-                    label="Email or Phone"
-                    type="text"
-                    value={mpinCredential}
-                    onChange={(e) => { setMpinCredential(e.target.value); setError(''); }}
-                    autoComplete="username"
-                    disabled={loading}
-                  />
-                )}
                 <FloatingLabelInput
                   label="Password"
                   type={showMpinPassword ? 'text' : 'password'}
@@ -193,7 +182,7 @@ export default function LoginPage() {
             {preferredIdentifier && (
               <button
                 type="button"
-                onClick={() => { clearAuth(); setMpinCredential(''); setError(''); }}
+                onClick={() => { clearAuth(); setError(''); }}
                 className="mt-3 w-full text-xs text-navy/50 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors"
               >
                 Forget saved account for MPIN login

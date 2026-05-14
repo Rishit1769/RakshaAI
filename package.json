@@ -10,8 +10,8 @@
   "scripts": {
     "dev": "concurrently --names \"backend,web\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:web\"",
     "build": "npm run build:backend && npm run build:web",
-    "dev:backend": "npm run dev --workspace=apps/backend",
-    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:backend": "npm --prefix apps/backend run dev",
+    "dev:web": "npm --prefix apps/web run dev",
     "build:backend": "npm run build --workspace=apps/backend",
     "build:web": "npm run build --workspace=apps/web",
     "db:generate": "npm run db:generate --workspace=apps/backend",
