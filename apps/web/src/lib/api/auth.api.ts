@@ -23,7 +23,7 @@ export interface LoginPayload {
 }
 
 export interface LoginMpinPayload {
-  email: string;
+  credential: string;
   password: string;
   mpin: string;
 }

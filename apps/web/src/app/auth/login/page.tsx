@@ -13,7 +13,7 @@ type Step = 'credentials' | 'otp';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { setAuth, clearAuth, preferredIdentifier, rememberIdentifier } = useAuthStore();
 
   const [mode, setMode] = useState<LoginMode>('email');
   const [step, setStep] = useState<Step>('credentials');
@@ -28,7 +28,6 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
 
   // MPIN login state
-  const [mpinEmail, setMpinEmail] = useState('');
   const [mpinPassword, setMpinPassword] = useState('');
   const [mpinDigits, setMpinDigits] = useState('');
   const [showMpinPassword, setShowMpinPassword] = useState(false);
@@ -49,6 +48,7 @@ export default function LoginPage() {
       const data = (await res.json()) as { success: boolean; message: string; data?: { maskedEmail: string } };
       if (!res.ok || !data.success) { setError(data.message || 'Login failed.'); return; }
       setMaskedEmail(data.data?.maskedEmail ?? email);
+      rememberIdentifier(email.trim().toLowerCase());
       sessionStorage.setItem('rakshaai_pending_email', email.trim().toLowerCase());
       sessionStorage.setItem('rakshaai_otp_purpose', 'login');
       setStep('otp');
@@ -71,7 +71,7 @@ export default function LoginPage() {
         data?: { user: { id: string; fullName: string; email: string; phone: string; role: string; isVerified: boolean }; accessToken: string };
       };
       if (!res.ok || !data.success) { setError(data.message || 'Invalid OTP.'); return; }
-      setAuth(data.data!.user, data.data!.accessToken, '');
+      setAuth(data.data!.user, data.data!.accessToken);
       sessionStorage.removeItem('rakshaai_pending_email');
       sessionStorage.removeItem('rakshaai_otp_purpose');
       router.push('/dashboard');
@@ -91,22 +91,26 @@ export default function LoginPage() {
 
   async function handleMpinLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (!mpinEmail || !mpinPassword || mpinDigits.length < 4) {
-      setError('Please fill all fields and enter your MPIN.'); return;
+    if (!preferredIdentifier) {
+      setError('No saved account found for MPIN login. Sign in once with Email + Password.');
+      return;
+    }
+    if (!mpinPassword || mpinDigits.length < 4) {
+      setError('Please enter password and MPIN.'); return;
     }
     setLoading(true); setError('');
     try {
       const res = await fetch(`${API_BASE}/auth/login-mpin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: mpinEmail.trim().toLowerCase(), password: mpinPassword, mpin: mpinDigits }),
+        body: JSON.stringify({ credential: preferredIdentifier, password: mpinPassword, mpin: mpinDigits }),
       });
       const data = (await res.json()) as {
         success: boolean; message: string;
         data?: { user: { id: string; fullName: string; email: string; phone: string; role: string; isVerified: boolean }; accessToken: string };
       };
       if (!res.ok || !data.success) { setError(data.message || 'Login failed.'); return; }
-      setAuth(data.data!.user, data.data!.accessToken, '');
+      setAuth(data.data!.user, data.data!.accessToken);
       router.push('/dashboard');
     } catch { setError('Network error. Please try again.'); }
     finally { setLoading(false); }
@@ -196,8 +200,6 @@ export default function LoginPage() {
 
             {mode === 'mpin' && (
               <form onSubmit={handleMpinLogin} noValidate className="space-y-4">
-                <FloatingLabelInput label="Email Address" type="email" value={mpinEmail}
-                  onChange={(e) => { setMpinEmail(e.target.value); setError(''); }} autoComplete="email" disabled={loading} />
                 <FloatingLabelInput
                   label="Password"
                   type={showMpinPassword ? 'text' : 'password'}
@@ -232,6 +234,15 @@ export default function LoginPage() {
               Don&apos;t have an account?{' '}
               <Link href="/auth/register" className="text-primary hover:text-primary-400 font-medium transition-colors">Create one</Link>
             </p>
+            {preferredIdentifier && (
+              <button
+                type="button"
+                onClick={() => { clearAuth(); setError(''); }}
+                className="mt-3 w-full text-xs text-navy/50 dark:text-white/40 hover:text-navy dark:hover:text-white transition-colors"
+              >
+                Forget saved account for MPIN login
+              </button>
+            )}
           </div>
         </div>
       </div>

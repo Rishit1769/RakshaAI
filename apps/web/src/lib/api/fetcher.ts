@@ -1,6 +1,7 @@
 /**
  * Core fetch wrapper for all RakshaAI API calls.
- * - Injects Bearer token from localStorage
+ * - Injects Bearer token from session state
+ * - Uses HttpOnly cookie for refresh and auto-recovers on 401
  * - Centralised error handling
  * - Typed generic responses
  * - NO Axios — native Fetch API only
@@ -32,13 +33,45 @@ function getToken(): string | null {
   return localStorage.getItem('access_token');
 }
 
+let isRefreshing = false;
+let pendingRefresh: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (isRefreshing && pendingRefresh) return pendingRefresh;
+
+  isRefreshing = true;
+  pendingRefresh = (async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const payload = (await res.json()) as ApiResponse<{ accessToken: string }>;
+      if (!res.ok || !payload.success || !payload.data?.accessToken) return null;
+
+      localStorage.setItem('access_token', payload.data.accessToken);
+      return payload.data.accessToken;
+    } catch {
+      return null;
+    } finally {
+      isRefreshing = false;
+      pendingRefresh = null;
+    }
+  })();
+
+  return pendingRefresh;
+}
+
 type FetchOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
 };
 
 export async function fetcher<T>(
   path: string,
-  options: FetchOptions = {}
+  options: FetchOptions = {},
+  retried = false
 ): Promise<ApiResponse<T>> {
   const token = getToken();
   const { body, ...rest } = options;
@@ -51,6 +84,7 @@ export async function fetcher<T>(
 
   const response = await fetch(`${API_BASE}${path}`, {
     ...rest,
+    credentials: 'include',
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
@@ -63,6 +97,12 @@ export async function fetcher<T>(
   }
 
   if (!response.ok) {
+    if (response.status === 401 && !retried) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        return fetcher<T>(path, options, true);
+      }
+    }
     throw new ApiError(data.message ?? 'Request failed', response.status, data);
   }
 

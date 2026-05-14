@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface AuthUser {
   id: string;
@@ -15,53 +15,56 @@ interface AuthUser {
 interface AuthState {
   user: AuthUser | null;
   accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
-
-  // Actions
-  setAuth: (user: AuthUser, accessToken: string, refreshToken: string) => void;
-  setTokens: (accessToken: string, refreshToken: string) => void;
+  preferredIdentifier: string | null;
+  setAuth: (user: AuthUser, accessToken: string) => void;
+  setAccessToken: (accessToken: string) => void;
+  rememberIdentifier: (identifier: string) => void;
   clearAuth: () => void;
 }
+
+const syncAccessToken = (token: string | null) => {
+  if (typeof window === 'undefined') return;
+  if (token) localStorage.setItem('access_token', token);
+  else localStorage.removeItem('access_token');
+};
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
-
-      setAuth: (user, accessToken, refreshToken) => {
-        // Sync token to localStorage for the fetcher utility
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('access_token', accessToken);
-        }
-        set({ user, accessToken, refreshToken, isAuthenticated: true });
+      preferredIdentifier: null,
+      setAuth: (user, accessToken) => {
+        syncAccessToken(accessToken);
+        set({
+          user,
+          accessToken,
+          isAuthenticated: true,
+          preferredIdentifier: user.email || user.phone,
+        });
       },
-
-      setTokens: (accessToken, refreshToken) => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('access_token', accessToken);
-        }
-        set({ accessToken, refreshToken });
+      setAccessToken: (accessToken) => {
+        syncAccessToken(accessToken);
+        set((state) => ({ ...state, accessToken, isAuthenticated: !!state.user }));
       },
-
+      rememberIdentifier: (identifier) => {
+        set({ preferredIdentifier: identifier });
+      },
       clearAuth: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('access_token');
-        }
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
+        syncAccessToken(null);
+        set({ user: null, accessToken: null, isAuthenticated: false, preferredIdentifier: null });
       },
     }),
     {
       name: 'rakshaai-auth',
-      // Persist tokens and user so socket hooks and guards work after page refresh
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
+        preferredIdentifier: state.preferredIdentifier,
       }),
     }
   )

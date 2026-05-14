@@ -104,7 +104,7 @@ export default function VerifyOtpPage() {
       }
 
       const { user, accessToken } = data.data!;
-      setAuth(user, accessToken, '');
+      setAuth(user, accessToken);
 
       sessionStorage.removeItem('rakshaai_pending_email');
       sessionStorage.removeItem('rakshaai_otp_purpose');

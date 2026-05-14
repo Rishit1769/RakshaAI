@@ -6,7 +6,7 @@ interface SendOTPOptions {
   to: string;
   name: string;
   otp: string;
-  purpose: 'register' | 'login' | 'reset' | 'verify';
+  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin';
 }
 
 const PURPOSE_LABELS: Record<SendOTPOptions['purpose'], string> = {
@@ -14,6 +14,7 @@ const PURPOSE_LABELS: Record<SendOTPOptions['purpose'], string> = {
   login: 'Login Verification',
   reset: 'Password Reset',
   verify: 'Identity Verification',
+  mpin: 'MPIN Verification',
 };
 
 /**

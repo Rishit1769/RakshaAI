@@ -59,12 +59,16 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
  * Authenticates with email + password + MPIN. Returns tokens immediately (no OTP step).
  */
 export const loginWithMpin = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, mpin } = req.body as {
-    email: string;
+  const { credential, password, mpin } = req.body as {
+    credential?: string;
     password: string;
     mpin: string;
   };
-  const result = await AuthService.loginWithMpin(email, password, mpin);
+  if (!credential) {
+    sendUnauthorized(res, 'No known account for MPIN login on this device. Use Email + Password once.');
+    return;
+  }
+  const result = await AuthService.loginWithMpin(credential, password, mpin);
 
   res.cookie('refreshToken', result.tokens.refreshToken, {
     httpOnly: true,

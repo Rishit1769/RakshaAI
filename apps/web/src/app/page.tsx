@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import DownloadApp from '@/components/DownloadApp';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default function HomePage() {
@@ -102,9 +101,6 @@ export default function HomePage() {
           </span>
         ))}
       </div>
-
-      {/* Download App floating bottom-right */}
-      <DownloadApp />
     </main>
   );
 }
