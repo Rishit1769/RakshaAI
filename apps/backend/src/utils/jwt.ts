@@ -1,6 +1,7 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { UserRole } from '@prisma/client';
 import { env } from '../config/env';
+import { mkdirSync } from 'fs';
 
 export interface AccessTokenPayload {
   sub: string;
