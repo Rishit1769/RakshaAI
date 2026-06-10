@@ -52,10 +52,14 @@ export const env = {
   SMTP_PASS: process.env.SMTP_PASS as string,
   SMTP_FROM: process.env.SMTP_FROM ?? `RakshaAI <${process.env.SMTP_USER}>`,
 
-  // Twilio SMS
-  TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID ?? '',
-  TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN ?? '',
-  TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER ?? '',
+  // MinIO
+  MINIO_ENDPOINT: process.env.MINIO_ENDPOINT ?? 'localhost',
+  MINIO_PORT: parseInt(process.env.MINIO_PORT ?? '9000', 10),
+  MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY ?? '',
+  MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY ?? '',
+  MINIO_BUCKET_NAME: process.env.MINIO_BUCKET_NAME ?? '',
+  MINIO_USE_SSL: (process.env.MINIO_USE_SSL ?? 'false').toLowerCase() === 'true',
+  MINIO_APK_OBJECT_KEY: process.env.MINIO_APK_OBJECT_KEY ?? 'app/release.apk',
 
   // Gemini AI
   GEMINI_API_KEY: process.env.GEMINI_API_KEY ?? '',

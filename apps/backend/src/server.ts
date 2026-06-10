@@ -4,26 +4,22 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { logger } from './config/logger';
 import { connectDatabase, disconnectDatabase } from './config/database';
-import { verifyEmailTransporter } from './config/mailer';
 import { initializeSocket } from './sockets/index';
 
 async function bootstrap(): Promise<void> {
   // 1. Connect to database
   await connectDatabase();
 
-  // 2. Verify email transporter (non-fatal)
-  await verifyEmailTransporter();
-
-  // 3. Create Express app
+  // 2. Create Express app
   const app = createApp();
 
-  // 4. Create HTTP server (required for Socket.IO)
+  // 3. Create HTTP server (required for Socket.IO)
   const httpServer = http.createServer(app);
 
-  // 5. Initialize Socket.IO
+  // 4. Initialize Socket.IO
   initializeSocket(httpServer);
 
-  // 6. Start listening
+  // 5. Start listening
   httpServer.listen(env.PORT, () => {
     logger.info(`🚀 RakshaAI backend running on port ${env.PORT} [${env.NODE_ENV}]`);
   });

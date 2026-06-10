@@ -31,18 +31,8 @@ export const registerSchema = z.object({
   role: z.enum(['user']).optional().default('user'),
 });
 
-export const verifyOTPSchema = z.object({
-  identifier: z.string({ required_error: 'Email or phone is required' }).trim().min(5, 'Invalid identifier'),
-  otp: z
-    .string({ required_error: 'OTP is required' })
-    .trim()
-    .length(6, 'OTP must be exactly 6 digits')
-    .regex(/^\d{6}$/, 'OTP must contain only digits'),
-  purpose: z.enum(['register', 'login', 'reset', 'verify', 'mpin']),
-});
-
 export const loginSchema = z.object({
-  credential: z.string({ required_error: 'Email or phone is required' }).trim().min(1, 'Credential is required'),
+  credential: z.string({ required_error: 'Email is required' }).trim().toLowerCase().email('Please provide a valid email address'),
   password: z.string({ required_error: 'Password is required' }).min(1, 'Password is required'),
 });
 
@@ -66,15 +56,8 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string({ required_error: 'Refresh token is required' }).min(1),
 });
 
-export const resendOTPSchema = z.object({
-  identifier: z.string({ required_error: 'Email or phone is required' }).trim().min(5, 'Invalid identifier'),
-  purpose: z.enum(['register', 'login', 'reset', 'verify', 'mpin']),
-});
-
 export type RegisterInput = z.infer<typeof registerSchema>;
-export type VerifyOTPInput = z.infer<typeof verifyOTPSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type MpinLoginInput = z.infer<typeof mpinLoginSchema>;
 export type SetupMpinInput = z.infer<typeof setupMpinSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
-export type ResendOTPInput = z.infer<typeof resendOTPSchema>;

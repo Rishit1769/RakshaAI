@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>()(
           user,
           accessToken,
           isAuthenticated: true,
-          preferredIdentifier: user.email || user.phone,
+          preferredIdentifier: user.email,
         });
       },
       setAccessToken: (accessToken) => {

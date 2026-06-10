@@ -1,7 +1,5 @@
 import { api } from './fetcher';
 
-// ─── Types ────────────────────────────────────────────────────────
-
 export interface RegisterPayload {
   fullName: string;
   email: string;
@@ -10,16 +8,9 @@ export interface RegisterPayload {
   password: string;
 }
 
-export interface VerifyOtpPayload {
-  identifier: string;
-  otp: string;
-  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin';
-}
-
 export interface LoginPayload {
   credential: string;
   password: string;
-  loginType: 'email' | 'mpin';
 }
 
 export interface LoginMpinPayload {
@@ -52,22 +43,12 @@ export interface LoginResponse {
   tokens: AuthTokens;
 }
 
-export interface ResendOtpPayload {
-  identifier: string;
-  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin';
-}
-
-// ─── API calls ────────────────────────────────────────────────────
-
 export const authApi = {
   register: (payload: RegisterPayload) =>
-    api.post<{ maskedEmail: string; maskedPhone: string }>('/auth/register', payload),
-
-  verifyOtp: (payload: VerifyOtpPayload) =>
-    api.post<{ user: AuthUser; accessToken: string }>('/auth/verify-otp', payload),
+    api.post<{ user: AuthUser; accessToken: string }>('/auth/register', payload),
 
   login: (payload: LoginPayload) =>
-    api.post<{ maskedEmail: string; requiresOTP: boolean }>('/auth/login', payload),
+    api.post<{ user: AuthUser; accessToken: string }>('/auth/login', payload),
 
   loginMpin: (payload: LoginMpinPayload) =>
     api.post<{ user: AuthUser; accessToken: string }>('/auth/login-mpin', payload),
@@ -80,9 +61,6 @@ export const authApi = {
 
   logout: () =>
     api.post<null>('/auth/logout'),
-
-  resendOtp: (payload: ResendOtpPayload) =>
-    api.post<{ maskedEmail: string }>('/auth/resend-otp', payload),
 
   getMe: () =>
     api.get<AuthUser>('/auth/me'),

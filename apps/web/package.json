@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.32.1",
-    "@tanstack/react-query-devtools": "^5.32.1",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
     "next": "14.2.3",

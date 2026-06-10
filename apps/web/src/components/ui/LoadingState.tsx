@@ -7,7 +7,7 @@ interface LoadingStateProps {
   className?: string;
 }
 
-export function LoadingState({ label = 'Loading…', className = '' }: LoadingStateProps) {
+export function LoadingState({ label = 'Loading...', className = '' }: LoadingStateProps) {
   return (
     <div className={`flex items-center justify-center gap-3 rounded-2xl border border-navy/10 bg-white/80 px-4 py-8 text-sm text-muted dark:border-white/10 dark:bg-white/5 ${className}`}>
       <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
@@ -36,17 +36,17 @@ export function SkeletonCards({ count = 3, className = '' }: SkeletonCardsProps)
 }
 
 interface EmptyStateProps {
-  icon?: string;
+  icon?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
 }
 
-export function EmptyState({ icon = '•', title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
     <div className="empty-state">
-      <div className="text-3xl">{icon}</div>
-      <h3 className="mt-3 text-base font-semibold text-navy dark:text-white">{title}</h3>
+      {icon ? <div className="mb-3 text-base font-medium text-muted">{icon}</div> : null}
+      <h3 className="text-base font-semibold text-navy dark:text-white">{title}</h3>
       {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}
     </div>

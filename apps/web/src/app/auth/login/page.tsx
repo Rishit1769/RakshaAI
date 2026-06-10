@@ -128,7 +128,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   disabled={loading}
                   rightElement={
-                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="hover:text-white/70 transition-colors">
+                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="transition-colors hover:text-navy dark:hover:text-white/70">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -153,7 +153,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   disabled={loading}
                   rightElement={
-                    <button type="button" onClick={() => setShowMpinPassword((v) => !v)} className="hover:text-white/70 transition-colors">
+                    <button type="button" onClick={() => setShowMpinPassword((v) => !v)} className="transition-colors hover:text-navy dark:hover:text-white/70">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -162,10 +162,10 @@ export default function LoginPage() {
                   }
                 />
                 <div className="space-y-1.5">
-                  <p className="text-xs text-navy/55 dark:text-white/35 pl-1">MPIN ({mpinDigits.length}/6)</p>
+                  <p className="pl-1 text-xs text-navy/60 dark:text-white/40">MPIN ({mpinDigits.length}/6)</p>
                   <input type="password" inputMode="numeric" maxLength={6} value={mpinDigits}
                     onChange={(e) => { setMpinDigits(e.target.value.replace(/\D/g, '')); setError(''); }}
-                    className="w-full rounded-xl border border-navy/15 bg-white dark:border-white/15 dark:bg-white/5 px-4 py-3.5 text-center text-2xl font-mono tracking-[0.4em] text-navy dark:text-white outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full rounded-xl border border-navy/15 bg-white px-4 py-3.5 text-center text-2xl font-mono tracking-[0.4em] text-navy outline-none focus:border-primary focus:ring-2 focus:ring-primary dark:border-white/15 dark:bg-white/5 dark:text-white"
                     aria-label="MPIN" disabled={loading} />
                 </div>
                 <button type="submit" disabled={loading || mpinDigits.length < 4}
@@ -175,7 +175,7 @@ export default function LoginPage() {
               </form>
             )}
 
-            <p className="mt-5 text-center text-sm text-navy/45 dark:text-white/30">
+            <p className="mt-5 text-center text-sm text-navy/60 dark:text-white/35">
               Don&apos;t have an account?{' '}
               <Link href="/auth/register" className="text-primary hover:text-primary-400 font-medium transition-colors">Create one</Link>
             </p>

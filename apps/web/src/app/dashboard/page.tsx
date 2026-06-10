@@ -65,10 +65,7 @@ export default function DashboardPage() {
         <div className="card flex items-center justify-between gap-4">
           <div>
             <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-1">Safety Status</p>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-safe animate-pulse" />
-              <span className="font-semibold text-navy">You&apos;re Safe</span>
-            </div>
+            <span className="font-semibold text-navy">You&apos;re Safe</span>
           </div>
           <span className="text-sm font-semibold text-safe">Active Monitoring</span>
         </div>

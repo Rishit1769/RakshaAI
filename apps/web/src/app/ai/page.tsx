@@ -24,7 +24,7 @@ export default function AiPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
-      content: 'Hello! I am RakshaAI Assistant 🛡️ I am here to help with safety guidance, legal rights, and emotional support. How can I help you today?',
+      content: 'Hello. I am the RakshaAI Assistant. I am here to help with safety guidance, legal rights, and emotional support. How can I help you today?',
     },
   ]);
   const [input, setInput] = useState('');
@@ -57,7 +57,6 @@ export default function AiPage() {
     const newMessages: Message[] = [...messages, { role: 'user', content: text.trim() }];
     setMessages(newMessages);
     setInput('');
-    // Send only the non-initial messages (skip the initial greeting)
     const apiMessages = newMessages.filter((_, i) => i > 0);
     chatMutation.mutate(apiMessages);
   }
@@ -65,27 +64,23 @@ export default function AiPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-light flex flex-col">
-      <header className="bg-white border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="text-muted hover:text-navy p-1 rounded hover:bg-gray-100">←</button>
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🤖</span>
-          <div>
-            <p className="text-sm font-bold text-navy">RakshaAI Assistant</p>
-            <p className="text-xs text-safe">● Online</p>
-          </div>
+    <div className="flex min-h-screen flex-col bg-light">
+      <header className="flex items-center gap-3 border-b border-border bg-white px-4 py-3">
+        <button onClick={() => router.back()} className="rounded p-1 text-muted hover:bg-gray-100 hover:text-navy">Back</button>
+        <div>
+          <p className="text-sm font-bold text-navy">RakshaAI Assistant</p>
+          <p className="text-xs text-safe">Online</p>
         </div>
       </header>
 
-      {/* Chat area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 max-w-2xl w-full mx-auto">
+      <div className="mx-auto flex-1 w-full max-w-2xl space-y-3 overflow-y-auto px-4 py-4">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-xs sm:max-w-sm rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              className={`max-w-xs rounded-2xl px-4 py-2.5 text-sm leading-relaxed sm:max-w-sm ${
                 msg.role === 'user'
-                  ? 'bg-primary text-white rounded-br-sm'
-                  : 'bg-white text-navy border border-border rounded-bl-sm shadow-sm'
+                  ? 'rounded-br-sm bg-primary text-white'
+                  : 'rounded-bl-sm border border-border bg-white text-navy shadow-sm'
               }`}
             >
               {msg.content}
@@ -93,56 +88,43 @@ export default function AiPage() {
           </div>
         ))}
 
-        {chatMutation.isPending && (
+        {chatMutation.isPending ? (
           <div className="flex justify-start">
-            <div className="bg-white border border-border rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm">
-              <div className="flex gap-1 items-center h-4">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:300ms]" />
-              </div>
+            <div className="rounded-2xl rounded-bl-sm border border-border bg-white px-4 py-2.5 shadow-sm">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
             </div>
           </div>
-        )}
+        ) : null}
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick prompts */}
-      {messages.length <= 2 && (
-        <div className="px-4 pb-2 max-w-2xl w-full mx-auto">
+      {messages.length <= 2 ? (
+        <div className="mx-auto w-full max-w-2xl px-4 pb-2">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {QUICK_PROMPTS.map((p) => (
               <button
                 key={p}
                 onClick={() => send(p)}
-                className="whitespace-nowrap text-xs px-3 py-1.5 rounded-full bg-white border border-border text-navy hover:bg-gray-50 font-medium shrink-0"
+                className="shrink-0 whitespace-nowrap rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-navy hover:bg-gray-50"
               >
                 {p}
               </button>
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
-      {/* Input */}
-      <div className="bg-white border-t border-border px-4 py-3 max-w-2xl w-full mx-auto">
-        <form
-          onSubmit={(e) => { e.preventDefault(); send(input); }}
-          className="flex gap-2 items-end"
-        >
+      <div className="mx-auto w-full max-w-2xl border-t border-border bg-white px-4 py-3">
+        <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex items-end gap-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
-            placeholder="Ask anything about safety…"
+            placeholder="Ask anything about safety..."
             rows={1}
             className="input-field flex-1 resize-none overflow-hidden"
           />
-          <button
-            type="submit"
-            disabled={!input.trim() || chatMutation.isPending}
-            className="btn-primary px-4 py-2 disabled:opacity-50 shrink-0"
-          >
+          <button type="submit" disabled={!input.trim() || chatMutation.isPending} className="btn-primary shrink-0 px-4 py-2 disabled:opacity-50">
             Send
           </button>
         </form>

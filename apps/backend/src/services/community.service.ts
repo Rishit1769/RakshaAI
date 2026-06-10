@@ -136,7 +136,7 @@ export async function getHeatmapData(radiusKm = 50, centerLat = 20.5937, centerL
     LIMIT 500
   `;
 
-  return points.map((p) => ({
+  return points.map((p: ReportPoint) => ({
     latitude: p.latitude,
     longitude: p.longitude,
     weight: 1 + Number(p.upvote_count) * 0.5,

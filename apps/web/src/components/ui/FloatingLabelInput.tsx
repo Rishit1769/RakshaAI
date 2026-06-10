@@ -31,12 +31,12 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
             onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
             onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
             className={[
-              'peer w-full rounded-xl border bg-white/5 px-4 pt-6 pb-2 text-sm text-white',
+              'peer w-full rounded-xl border bg-white px-4 pt-6 pb-2 text-sm text-navy dark:bg-white/5 dark:text-white',
               'placeholder-transparent outline-none transition-all duration-200',
               'focus:ring-2 focus:ring-primary focus:border-primary',
               error
                 ? 'border-emergency focus:ring-emergency focus:border-emergency'
-                : 'border-white/15 hover:border-white/30',
+                : 'border-navy/15 hover:border-navy/30 dark:border-white/15 dark:hover:border-white/30',
               rightElement ? 'pr-12' : '',
               className,
             ].join(' ')}
@@ -49,12 +49,12 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
             htmlFor={inputId}
             className={[
               'pointer-events-none absolute left-4 select-none transition-all duration-200',
-              'peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-white/35',
+              'peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-navy/55 dark:peer-placeholder-shown:text-white/35',
               'peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-primary',
               floated && !focused
-                ? 'top-1.5 text-[10px] text-white/40'
+                ? 'top-1.5 text-[10px] text-navy/55 dark:text-white/40'
                 : '',
-              !floated ? 'top-4 text-sm text-white/35' : '',
+              !floated ? 'top-4 text-sm text-navy/55 dark:text-white/35' : '',
             ].join(' ')}
           >
             {label}
@@ -62,7 +62,7 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
 
           {/* Right element (e.g. show/hide password) */}
           {rightElement && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-navy/55 dark:text-white/40">
               {rightElement}
             </div>
           )}

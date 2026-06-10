@@ -19,15 +19,15 @@ interface Report {
   createdAt: string;
 }
 
-const CATEGORY_LABELS: Record<string, { label: string; emoji: string }> = {
-  unsafe_area: { label: 'Unsafe Area', emoji: '⚠️' },
-  stalking: { label: 'Stalking', emoji: '👁️' },
-  broken_streetlight: { label: 'Broken Streetlight', emoji: '💡' },
-  suspicious_behavior: { label: 'Suspicious Behavior', emoji: '🔍' },
-  unsafe_transport: { label: 'Unsafe Transport', emoji: '🚌' },
-  harassment: { label: 'Harassment', emoji: '🚨' },
-  poor_lighting: { label: 'Poor Lighting', emoji: '🌙' },
-  other: { label: 'Other', emoji: '📋' },
+const CATEGORY_LABELS: Record<string, { label: string }> = {
+  unsafe_area: { label: 'Unsafe Area' },
+  stalking: { label: 'Stalking' },
+  broken_streetlight: { label: 'Broken Streetlight' },
+  suspicious_behavior: { label: 'Suspicious Behavior' },
+  unsafe_transport: { label: 'Unsafe Transport' },
+  harassment: { label: 'Harassment' },
+  poor_lighting: { label: 'Poor Lighting' },
+  other: { label: 'Other' },
 };
 
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as Array<keyof typeof CATEGORY_LABELS>;
@@ -55,7 +55,7 @@ export default function CommunityPage() {
       <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0d1628]">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="interactive rounded p-1 text-muted hover:bg-gray-100 hover:text-navy dark:hover:bg-white/5 dark:hover:text-white">
-            ←
+            Back
           </Link>
           <div>
             <h1 className="text-base font-bold text-navy dark:text-white">Community Reports</h1>
@@ -64,7 +64,7 @@ export default function CommunityPage() {
         </div>
         {isAuthenticated ? (
           <Link href="/community/report" className="btn-primary px-3 py-1.5 text-xs">
-            + Report
+            Report
           </Link>
         ) : null}
       </header>
@@ -81,7 +81,7 @@ export default function CommunityPage() {
               All
             </button>
             {CATEGORIES.map((cat) => {
-              const { label, emoji } = CATEGORY_LABELS[cat];
+              const { label } = CATEGORY_LABELS[cat];
               return (
                 <button
                   key={cat}
@@ -90,7 +90,7 @@ export default function CommunityPage() {
                     selectedCategory === cat ? 'bg-primary text-white' : 'border border-border bg-white text-navy hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10'
                   }`}
                 >
-                  {emoji} {label}
+                  {label}
                 </button>
               );
             })}
@@ -101,13 +101,12 @@ export default function CommunityPage() {
 
         {!isLoading && reports.length === 0 ? (
           <EmptyState
-            icon="📋"
             title="No reports found"
             description="Try another category or start the first report for your area."
             action={
               isAuthenticated ? (
                 <Link href="/community/report" className="interactive inline-block text-sm font-semibold text-primary hover:underline">
-                  Be the first to report →
+                  Be the first to report
                 </Link>
               ) : null
             }
@@ -121,16 +120,13 @@ export default function CommunityPage() {
             return (
               <div key={report.id} className="card space-y-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-0.5 text-lg">{cat?.emoji ?? '📋'}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-navy dark:text-white">
-                        {report.title ?? cat?.label ?? report.category}
-                      </p>
-                      {(report.address ?? report.city) ? (
-                        <p className="text-xs text-muted">{[report.address, report.city].filter(Boolean).join(', ')}</p>
-                      ) : null}
-                    </div>
+                  <div>
+                    <p className="text-sm font-semibold text-navy dark:text-white">
+                      {report.title ?? cat?.label ?? report.category}
+                    </p>
+                    {(report.address ?? report.city) ? (
+                      <p className="text-xs text-muted">{[report.address, report.city].filter(Boolean).join(', ')}</p>
+                    ) : null}
                   </div>
                   {report.isVerified ? (
                     <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-300">
@@ -146,10 +142,9 @@ export default function CommunityPage() {
                   <button
                     onClick={() => isAuthenticated && upvoteMutation.mutate(report.id)}
                     disabled={!isAuthenticated || upvoteMutation.isPending}
-                    className="interactive flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                    className="interactive rounded-full px-2 py-1 text-xs text-muted hover:bg-primary/10 hover:text-primary disabled:opacity-50"
                     title={isAuthenticated ? 'Upvote' : 'Login to upvote'}
                   >
-                    <span>👍</span>
                     <span className="font-semibold">{report.upvoteCount}</span>
                   </button>
                 </div>

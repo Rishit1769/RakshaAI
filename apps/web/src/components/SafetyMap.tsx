@@ -29,19 +29,15 @@ const MARKER_COLORS: Record<MapMarker['type'], string> = {
   hotspot: '#F59E0B',
 };
 
-const MARKER_ICONS: Record<MapMarker['type'], string> = {
-  user: '📍',
-  volunteer: '🦺',
-  police: '🚔',
-  safe_zone: '🛡️',
-  alert: '🆘',
-  hotspot: '⚠️',
+const MARKER_LABELS: Record<MapMarker['type'], string> = {
+  user: 'U',
+  volunteer: 'V',
+  police: 'P',
+  safe_zone: 'S',
+  alert: 'A',
+  hotspot: 'H',
 };
 
-/**
- * OpenStreetMap-based safety map using Leaflet.js
- * Dynamically imported to avoid SSR issues.
- */
 export default function SafetyMap({
   center,
   zoom = 14,
@@ -57,10 +53,8 @@ export default function SafetyMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    // Dynamic import to avoid SSR
     void (async () => {
       const L = await import('leaflet');
-      // Leaflet CSS is imported in globals.css via @import or next.config
 
       const map = L.map(containerRef.current!, {
         center: [center.latitude, center.longitude],
@@ -70,13 +64,12 @@ export default function SafetyMap({
       });
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+        attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(map);
 
       mapRef.current = map;
 
-      // Draw radius circle
       if (radiusKm) {
         circleRef.current = L.circle([center.latitude, center.longitude], {
           radius: radiusKm * 1000,
@@ -88,7 +81,6 @@ export default function SafetyMap({
         }).addTo(map);
       }
 
-      // Add markers
       addMarkers(L, map, markers);
     })();
 
@@ -96,16 +88,13 @@ export default function SafetyMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update markers when they change
   useEffect(() => {
     if (!mapRef.current) return;
 
     void (async () => {
       const L = await import('leaflet');
-      // Clear existing markers
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
       addMarkers(L, mapRef.current!, markers);
@@ -115,7 +104,7 @@ export default function SafetyMap({
   function addMarkers(L: typeof import('leaflet'), map: LeafletMap, items: MapMarker[]) {
     items.forEach((item) => {
       const color = MARKER_COLORS[item.type];
-      const icon = MARKER_ICONS[item.type];
+      const label = MARKER_LABELS[item.type];
 
       const divIcon = L.divIcon({
         html: `<div style="
@@ -124,9 +113,9 @@ export default function SafetyMap({
           border-radius:50%;
           width:28px;height:28px;
           display:flex;align-items:center;justify-content:center;
-          font-size:14px;
+          font-size:11px;font-weight:700;color:white;
           box-shadow:0 2px 8px rgba(0,0,0,0.3);
-        ">${icon}</div>`,
+        ">${label}</div>`,
         className: '',
         iconSize: [28, 28],
         iconAnchor: [14, 14],
@@ -143,7 +132,7 @@ export default function SafetyMap({
   }
 
   return (
-    <div className={`rounded-xl overflow-hidden border border-border ${className}`}>
+    <div className={`overflow-hidden rounded-xl border border-border ${className}`}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );

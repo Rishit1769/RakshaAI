@@ -296,8 +296,11 @@ async function notifyEmergencyContacts(
 
     if (!user) return;
 
-    const emailPromises = user.emergencyContacts
-      .filter((c) => c.email)
+    type EmergencyContactTarget = { name: string; email: string | null };
+    const contacts = user.emergencyContacts as EmergencyContactTarget[];
+
+    const emailPromises = contacts
+      .filter((c: EmergencyContactTarget) => c.email)
       .map((contact) =>
         sendEmergencyEmail({
           to: contact.email!,

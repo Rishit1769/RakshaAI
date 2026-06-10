@@ -1,21 +1,26 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
+const trustBadges = [
+  'AES-256 End-to-End Encryption',
+  'Government-Grade Security Compliance',
+  'Sub-Second Real-Time Response',
+];
+
+const featureBadges = ['SOS Alerts', 'Live Tracking', 'Volunteer Network', 'AI Risk Analysis'];
+
 export default function HomePage() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#FFF4EF] via-[#F7F8FC] to-[#E8EEF9] px-4 transition-colors duration-200 dark:from-[#0B1026] dark:via-[#111827] dark:to-[#0B1026]">
-      {/* Theme toggle — fixed top-right */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed right-4 top-4 z-50">
         <ThemeToggle />
       </div>
 
-      {/* Ambient glow blobs */}
-      <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-[#7B61FF]/15 blur-3xl" />
-      <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full bg-primary/5 blur-3xl" />
+      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-[#7B61FF]/15 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
 
-      {/* Header brand */}
-      <div className="relative z-10 mb-10 text-center animate-fade-in">
+      <div className="relative z-10 mb-10 animate-fade-in text-center">
         <h1 className="text-5xl font-bold tracking-tight text-navy sm:text-6xl dark:text-white">
           Raksha<span className="text-primary">AI</span>
         </h1>
@@ -23,25 +28,19 @@ export default function HomePage() {
           AI-Powered Women Safety &amp; Emergency Response Ecosystem
         </p>
 
-        {/* Trust indicators */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-5">
-          {['End-to-End Encrypted', 'Government Grade Security', 'Real-time Response'].map((tag) => (
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-4">
+          {trustBadges.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1.5 rounded-full border border-navy/10 bg-white/70 px-3 py-1 text-xs text-navy/55 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/40"
+              className="inline-flex items-center rounded-full border border-navy/10 bg-white/70 px-3 py-1 text-xs font-medium text-navy/70 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/60"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-safe inline-block" />
               {tag}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Auth card — glassmorphism */}
-      <div
-        className="surface-panel relative z-10 w-full max-w-sm animate-slide-up p-8"
-        style={{ animationDelay: '0.1s' }}
-      >
+      <div className="surface-panel relative z-10 w-full max-w-sm animate-slide-up p-8" style={{ animationDelay: '0.1s' }}>
         <p className="mb-7 text-center text-xs font-medium uppercase tracking-widest text-navy/45 dark:text-white/40">
           Secure Access Portal
         </p>
@@ -49,23 +48,14 @@ export default function HomePage() {
         <div className="flex flex-col gap-3">
           <Link
             href="/auth/register"
-            className="group flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-primary text-white font-semibold text-sm shadow-primary transition-all duration-200 hover:bg-primary-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex w-full items-center justify-center rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-primary transition-all duration-200 hover:bg-primary-600 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Create Account
-            <svg
-              className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
           </Link>
 
           <Link
             href="/auth/login"
-            className="interactive flex w-full items-center justify-center gap-2 rounded-xl border border-navy/10 py-3.5 text-sm font-semibold text-navy hover:bg-navy/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/20 dark:text-white dark:hover:bg-white/10 dark:focus-visible:ring-white/30"
+            className="interactive flex w-full items-center justify-center rounded-xl border border-navy/10 py-3.5 text-sm font-semibold text-navy hover:bg-navy/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-white/20 dark:text-white dark:hover:bg-white/10 dark:focus-visible:ring-white/30"
           >
             Sign In
           </Link>
@@ -84,24 +74,16 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Feature pills */}
-      <div className="relative z-10 flex flex-wrap justify-center gap-3 mt-8 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-        {[
-          { icon: '🛡️', label: 'SOS Alerts' },
-          { icon: '📍', label: 'Live Tracking' },
-          { icon: '🤝', label: 'Volunteer Network' },
-          { icon: '🧠', label: 'AI Risk Analysis' },
-        ].map((f) => (
+      <div className="relative z-10 mt-8 flex flex-wrap justify-center gap-3 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+        {featureBadges.map((label) => (
           <span
-            key={f.label}
-            className="inline-flex items-center gap-1.5 rounded-full border border-navy/10 bg-white/70 px-3.5 py-1.5 text-xs text-navy/55 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/35"
+            key={label}
+            className="inline-flex items-center rounded-full border border-navy/10 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-navy/70 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/55"
           >
-            <span>{f.icon}</span>
-            {f.label}
+            {label}
           </span>
         ))}
       </div>
     </main>
   );
 }
-

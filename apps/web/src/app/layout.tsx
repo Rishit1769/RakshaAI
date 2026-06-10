@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import DownloadAppButton from '@/components/ui/DownloadAppButton';
 import './globals.css';
 import { Providers } from './providers';
 
@@ -29,7 +30,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-navy antialiased transition-colors duration-200 dark:bg-[#0B1026] dark:text-white">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <DownloadAppButton />
+        </Providers>
       </body>
     </html>
   );

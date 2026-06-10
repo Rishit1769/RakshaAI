@@ -3,10 +3,8 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
 import { logger } from '../config/logger';
 import { AppError } from '../middleware/error.middleware';
-import { generateOTP, getOTPExpiry, maskEmail, maskPhone } from '../utils/helpers';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { comparePassword, hashPassword } from '../utils/password';
-import { sendOTPEmail } from './email.service';
 
 export interface RegisterInput {
   fullName: string;
@@ -63,7 +61,7 @@ function toSafeUser(user: {
   };
 }
 
-export async function registerUser(input: RegisterInput): Promise<{ maskedEmail: string; maskedPhone: string }> {
+export async function registerUser(input: RegisterInput): Promise<{ user: SafeUser; tokens: AuthTokens }> {
   const { fullName, email, phone, aadhaarNumber, password, role = UserRole.user } = input;
 
   if (!(['user'] as string[]).includes(role)) {
@@ -82,78 +80,33 @@ export async function registerUser(input: RegisterInput): Promise<{ maskedEmail:
 
   const passwordHash = await hashPassword(password);
   const user = await prisma.user.create({
-    data: { fullName, email, phone, aadhaarNumber, passwordHash, role },
+    data: {
+      fullName,
+      email,
+      phone,
+      aadhaarNumber,
+      passwordHash,
+      role,
+      isVerified: true,
+      isEmailVerified: true,
+    },
   });
-
-  await createAndSendOTP(user.id, email, 'register');
-  logger.info('New user registered', { userId: user.id, role });
-
-  return { maskedEmail: maskEmail(email), maskedPhone: maskPhone(phone) };
-}
-
-export async function verifyOTP(
-  identifier: string,
-  otp: string,
-  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin'
-): Promise<{ user: SafeUser; tokens: AuthTokens }> {
-  const otpRecord = await prisma.otpVerification.findFirst({
-    where: { identifier, purpose, isUsed: false, expiresAt: { gt: new Date() } },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  if (!otpRecord) throw new AppError('OTP not found or expired. Please request a new one.', 400);
-
-  await prisma.otpVerification.update({
-    where: { id: otpRecord.id },
-    data: { attempts: { increment: 1 } },
-  });
-
-  if (otpRecord.attempts >= otpRecord.maxAttempts) {
-    throw new AppError('Maximum OTP attempts exceeded. Please request a new OTP.', 429);
-  }
-
-  const isValid = await bcrypt.compare(otp, otpRecord.otpHash);
-  if (!isValid) throw new AppError('Invalid OTP. Please try again.', 400);
-
-  await prisma.otpVerification.update({
-    where: { id: otpRecord.id },
-    data: { isUsed: true },
-  });
-
-  const user = await prisma.user.findFirst({
-    where: { OR: [{ email: identifier }, { phone: identifier }] },
-  });
-  if (!user) throw new AppError('User not found', 404);
-
-  if (purpose === 'register' && !user.isVerified) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { isVerified: true, isEmailVerified: true },
-    });
-  }
 
   const tokens = generateTokens(user);
   await createSession(user.id, tokens.refreshToken);
-  logger.info('OTP verified', { userId: user.id, purpose });
+  logger.info('New user registered', { userId: user.id, role });
 
-  return { user: toSafeUser({ ...user, isVerified: true }), tokens };
+  return { user: toSafeUser(user), tokens };
 }
 
 export async function loginUser(input: LoginInput): Promise<{ user: SafeUser; tokens: AuthTokens }> {
   const { credential, password } = input;
 
-  const user = await prisma.user.findFirst({
-    where: { OR: [{ email: credential }, { phone: credential }] },
-  });
+  const user = await prisma.user.findUnique({ where: { email: credential } });
   if (!user || !user.isActive) throw new AppError('Invalid credentials', 401);
 
   const isPasswordValid = await comparePassword(password, user.passwordHash);
   if (!isPasswordValid) throw new AppError('Invalid credentials', 401);
-
-  if (!user.isVerified) {
-    await createAndSendOTP(user.id, user.email, 'register');
-    throw new AppError('Email not verified. A new OTP has been sent.', 403);
-  }
 
   const tokens = generateTokens(user);
   await createSession(user.id, tokens.refreshToken);
@@ -172,15 +125,12 @@ export async function loginWithMpin(
   password: string,
   mpin: string
 ): Promise<{ user: SafeUser; tokens: AuthTokens }> {
-  const user = await prisma.user.findFirst({
-    where: { OR: [{ email: credential }, { phone: credential }] },
-  });
+  const user = await prisma.user.findUnique({ where: { email: credential } });
   if (!user || !user.isActive) throw new AppError('Invalid credentials', 401);
 
   const isPasswordValid = await comparePassword(password, user.passwordHash);
   if (!isPasswordValid) throw new AppError('Invalid credentials', 401);
 
-  if (!user.isVerified) throw new AppError('Account not verified', 403);
   if (!user.mpinHash) throw new AppError('MPIN not set up. Please use email login first.', 400);
 
   const isMpinValid = await bcrypt.compare(mpin, user.mpinHash);
@@ -252,40 +202,6 @@ export async function logoutUser(userId: string): Promise<void> {
     data: { isActive: false },
   });
   logger.info('User logged out', { userId });
-}
-
-export async function resendOTP(
-  identifier: string,
-  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin'
-): Promise<{ maskedEmail: string }> {
-  const user = await prisma.user.findFirst({
-    where: { OR: [{ email: identifier }, { phone: identifier }] },
-  });
-  if (!user) throw new AppError('No account found with this contact', 404);
-
-  await createAndSendOTP(user.id, user.email, purpose);
-  return { maskedEmail: maskEmail(user.email) };
-}
-
-async function createAndSendOTP(
-  userId: string,
-  email: string,
-  purpose: 'register' | 'login' | 'reset' | 'verify' | 'mpin'
-): Promise<void> {
-  await prisma.otpVerification.updateMany({
-    where: { identifier: email, purpose, isUsed: false },
-    data: { isUsed: true },
-  });
-
-  const otp = generateOTP();
-  const otpHash = await bcrypt.hash(otp, 10);
-
-  await prisma.otpVerification.create({
-    data: { userId, identifier: email, otpHash, purpose, expiresAt: getOTPExpiry(10) },
-  });
-
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  await sendOTPEmail({ to: email, name: user?.fullName ?? 'User', otp, purpose });
 }
 
 async function createSession(userId: string, refreshToken: string): Promise<void> {
