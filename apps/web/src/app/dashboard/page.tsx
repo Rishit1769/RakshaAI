@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-light dark:bg-[#0B1026] transition-colors duration-200">
-      <header className="bg-white dark:bg-[#0d1628] border-b border-border dark:border-white/10 px-4 py-3 flex items-center justify-between">
+      <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0d1628]">
         <div>
           <h1 className="text-lg font-bold text-navy dark:text-white">
             Raksha<span className="text-primary">AI</span>
@@ -54,15 +54,15 @@ export default function DashboardPage() {
           <ThemeToggle />
           <button
             onClick={handleLogout}
-            className="text-xs text-muted dark:text-white/40 hover:text-navy dark:hover:text-white px-3 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"
+            className="interactive rounded-lg px-3 py-1 text-xs text-muted hover:bg-gray-100 hover:text-navy dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white"
           >
             Sign out
           </button>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto p-4 space-y-6">
-        <div className="card flex items-center justify-between">
+      <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+        <div className="card flex items-center justify-between gap-4">
           <div>
             <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-1">Safety Status</p>
             <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ export default function DashboardPage() {
           <span className="text-sm font-semibold text-safe">Active Monitoring</span>
         </div>
 
-        <div className="flex flex-col items-center gap-3 py-6">
+        <div className="surface-panel flex flex-col items-center gap-3 px-4 py-8">
           <button className="btn-sos" onClick={() => router.push('/sos')} aria-label="Trigger emergency SOS">
             SOS
           </button>
@@ -82,9 +82,9 @@ export default function DashboardPage() {
 
         <div>
           <h2 className="text-sm font-semibold text-navy mb-3">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {quickActions.map((action) => (
-              <Link key={action.href} href={action.href} className="card flex flex-col gap-2 hover:shadow-md transition-shadow">
+              <Link key={action.href} href={action.href} className="card interactive flex flex-col gap-2 hover:-translate-y-0.5 hover:shadow-md">
                 <span className="text-xs uppercase tracking-wide text-muted">{action.icon}</span>
                 <div>
                   <p className="text-sm font-semibold text-navy">{action.label}</p>

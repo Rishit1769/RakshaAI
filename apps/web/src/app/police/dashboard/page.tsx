@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EmptyState, LoadingState } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/store/auth.store';
 import { api } from '@/lib/api/fetcher';
 
@@ -70,8 +71,8 @@ export default function PoliceDashboard() {
   });
 
   const escalateMutation = useMutation({
-    mutationFn: ({ alertId, reason: r }: { alertId: string; reason: string }) =>
-      api.post('/police/escalate', { alertId, reason: r }),
+    mutationFn: ({ alertId, reason: message }: { alertId: string; reason: string }) =>
+      api.post('/police/escalate', { alertId, reason: message }),
     onSuccess: () => {
       setEscalateId(null);
       setReason('');
@@ -86,11 +87,11 @@ export default function PoliceDashboard() {
 
   if (noProfile) {
     return (
-      <div className="min-h-screen bg-light flex flex-col items-center justify-center p-6">
-        <div className="card max-w-sm w-full text-center space-y-4">
-          <div className="text-4xl">🚔</div>
-          <h1 className="text-xl font-bold text-navy">Police Officer Registration</h1>
-          <p className="text-muted text-sm">Register your police account to access the emergency feed.</p>
+      <div className="flex min-h-screen items-center justify-center bg-light p-6 dark:bg-[#0B1026]">
+        <div className="card w-full max-w-sm space-y-4 text-center">
+          <div className="text-3xl font-semibold text-primary">Police</div>
+          <h1 className="text-xl font-bold text-navy dark:text-white">Police Officer Registration</h1>
+          <p className="text-sm text-muted">Register your police account to access the emergency feed.</p>
           <button onClick={() => router.push('/police/register')} className="btn-primary w-full">
             Register Police Account
           </button>
@@ -100,110 +101,114 @@ export default function PoliceDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-light">
-      <header className="bg-white border-b border-border px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-light transition-colors duration-200 dark:bg-[#0B1026]">
+      <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0d1628]">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/dashboard')} className="text-muted hover:text-navy p-1 rounded hover:bg-gray-100">←</button>
+          <button onClick={() => router.push('/dashboard')} className="interactive rounded p-1 text-muted hover:bg-gray-100 hover:text-navy dark:hover:bg-white/5 dark:hover:text-white">
+            ←
+          </button>
           <div>
-            <p className="text-sm font-bold text-navy">{profile?.rank ? `${profile.rank} ` : ''}{profile?.badgeNumber}</p>
+            <p className="text-sm font-bold text-navy dark:text-white">
+              {profile?.rank ? `${profile.rank} ` : ''}
+              {profile?.badgeNumber}
+            </p>
             <p className="text-xs text-muted">{profile?.station?.name}</p>
           </div>
         </div>
         <button
           onClick={() => dutyMutation.mutate(!profile?.isOnDuty)}
           disabled={dutyMutation.isPending}
-          className={`text-xs px-3 py-1.5 rounded-xl font-semibold ${
-            profile?.isOnDuty ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+          className={`interactive rounded-xl px-3 py-1.5 text-xs font-semibold ${
+            profile?.isOnDuty ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-white/70'
           }`}
         >
-          {profile?.isOnDuty ? '🟢 On Duty' : '⚫ Off Duty'}
+          {profile?.isOnDuty ? 'On Duty' : 'Off Duty'}
         </button>
       </header>
 
-      <main className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Escalate modal */}
-        {escalateId && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4">
-            <div className="bg-white rounded-2xl p-4 w-full max-w-sm space-y-3">
-              <h3 className="text-sm font-bold text-navy">Escalation Reason</h3>
+      <main className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
+        {escalateId ? (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4">
+            <div className="w-full max-w-sm space-y-3 rounded-2xl bg-white p-4 dark:bg-[#0d1628]">
+              <h3 className="text-sm font-bold text-navy dark:text-white">Escalation Reason</h3>
               <textarea
                 value={reason}
-                onChange={(e) => setReason(e.target.value)}
+                onChange={(event) => setReason(event.target.value)}
                 className="input-field w-full resize-none"
                 rows={3}
                 placeholder="Describe why this alert needs escalation…"
               />
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setEscalateId(null); setReason(''); }}
-                  className="flex-1 py-2 rounded-xl bg-gray-100 text-navy text-sm font-semibold"
+                  onClick={() => {
+                    setEscalateId(null);
+                    setReason('');
+                  }}
+                  className="interactive flex-1 rounded-xl bg-gray-100 py-2 text-sm font-semibold text-navy dark:bg-white/10 dark:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   disabled={reason.length < 5 || escalateMutation.isPending}
                   onClick={() => escalateMutation.mutate({ alertId: escalateId, reason })}
-                  className="flex-1 py-2 rounded-xl bg-emergency text-white text-sm font-semibold disabled:opacity-50"
+                  className="interactive flex-1 rounded-xl bg-emergency py-2 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   {escalateMutation.isPending ? 'Escalating…' : 'Escalate'}
                 </button>
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
-        <h2 className="text-sm font-bold text-navy px-1">Live Emergency Feed</h2>
+        <h2 className="px-1 text-sm font-bold text-navy dark:text-white">Live Emergency Feed</h2>
 
-        {isLoading && <p className="text-center text-muted text-sm py-8">Loading alerts…</p>}
-        {!isLoading && alerts.length === 0 && (
-          <div className="card text-center py-8">
-            <p className="text-3xl mb-2">✅</p>
-            <p className="text-muted text-sm">No active alerts</p>
-          </div>
-        )}
+        {isLoading ? <LoadingState label="Loading police alerts…" /> : null}
+        {!isLoading && alerts.length === 0 ? (
+          <EmptyState icon="All clear" title="No active alerts" description="New incidents will appear here in real time." />
+        ) : null}
 
         {alerts.map((alert) => (
-          <div key={alert.id} className="card space-y-2">
-            <div className="flex items-start justify-between">
+          <div key={alert.id} className="card space-y-3">
+            <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-mono text-muted">{alert.alertCode}</p>
-                <p className="text-sm font-semibold text-navy capitalize">{alert.alertType.replace(/_/g, ' ')}</p>
-                {alert.triggerAddress && <p className="text-xs text-muted">{alert.triggerAddress}</p>}
+                <p className="text-sm font-semibold capitalize text-navy dark:text-white">
+                  {alert.alertType.replace(/_/g, ' ')}
+                </p>
+                {alert.triggerAddress ? <p className="text-xs text-muted">{alert.triggerAddress}</p> : null}
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${STATUS_COLORS[alert.status] ?? ''}`}>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_COLORS[alert.status] ?? ''}`}>
                   {alert.status}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${SEVERITY_COLORS[alert.severity] ?? ''}`}>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${SEVERITY_COLORS[alert.severity] ?? ''}`}>
                   {alert.severity}
                 </span>
               </div>
             </div>
 
-            {alert.description && <p className="text-xs text-muted">{alert.description}</p>}
-            {alert.escalationReason && (
-              <p className="text-xs text-emergency font-medium">⚠️ {alert.escalationReason}</p>
-            )}
+            {alert.description ? <p className="text-sm text-muted">{alert.description}</p> : null}
+            {alert.escalationReason ? <p className="text-sm font-medium text-emergency">{alert.escalationReason}</p> : null}
 
-            <div className="flex gap-2 pt-1">
-              {alert.status !== 'accepted' && (
+            <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+              {alert.status !== 'accepted' ? (
                 <button
                   onClick={() => assignMutation.mutate(alert.id)}
                   disabled={assignMutation.isPending || !profile?.isOnDuty}
-                  className="flex-1 btn-primary text-sm py-2 disabled:opacity-50"
+                  className="btn-primary flex-1 py-2 text-sm disabled:opacity-50"
                 >
                   Assign to Me
                 </button>
-              )}
-              {alert.status !== 'escalated' && (
+              ) : null}
+              {alert.status !== 'escalated' ? (
                 <button
                   onClick={() => setEscalateId(alert.id)}
                   disabled={!profile?.isOnDuty}
-                  className="flex-1 py-2 rounded-xl border border-emergency text-emergency text-sm font-semibold hover:bg-red-50 disabled:opacity-50"
+                  className="interactive flex-1 rounded-xl border border-emergency py-2 text-sm font-semibold text-emergency hover:bg-red-50 disabled:opacity-50 dark:hover:bg-emergency/10"
                 >
                   Escalate
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         ))}

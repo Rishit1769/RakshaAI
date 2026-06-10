@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EmptyState, LoadingState } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/store/auth.store';
 import { api } from '@/lib/api/fetcher';
 
@@ -27,7 +28,7 @@ const SEVERITY_BADGE: Record<string, string> = {
 
 export default function VolunteerDashboard() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const [accepting, setAccepting] = useState<string | null>(null);
 
@@ -68,18 +69,14 @@ export default function VolunteerDashboard() {
   const profile = (profileData as { data?: { status?: string; verificationStatus?: string; totalResponses?: number; rating?: number } } | undefined)?.data;
   const alerts = ((alertsData as { data?: AlertItem[] } | undefined)?.data) ?? [];
 
-  // Register CTA if no profile
   if (noProfile) {
     return (
-      <div className="min-h-screen bg-light flex flex-col items-center justify-center p-6">
-        <div className="card max-w-sm w-full text-center space-y-4">
-          <div className="text-4xl">🦺</div>
-          <h1 className="text-xl font-bold text-navy">Become a Volunteer</h1>
-          <p className="text-muted text-sm">Register as a RakshaAI volunteer to help women in your area during emergencies.</p>
-          <button
-            onClick={() => router.push('/volunteer/register')}
-            className="btn-primary w-full"
-          >
+      <div className="flex min-h-screen items-center justify-center bg-light p-6 dark:bg-[#0B1026]">
+        <div className="card w-full max-w-sm space-y-4 text-center">
+          <div className="text-3xl font-semibold text-primary">Volunteer</div>
+          <h1 className="text-xl font-bold text-navy dark:text-white">Become a Volunteer</h1>
+          <p className="text-sm text-muted">Register as a RakshaAI volunteer to help women in your area during emergencies.</p>
+          <button onClick={() => router.push('/volunteer/register')} className="btn-primary w-full">
             Register as Volunteer
           </button>
         </div>
@@ -88,89 +85,100 @@ export default function VolunteerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-light">
-      <header className="bg-white border-b border-border px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-light transition-colors duration-200 dark:bg-[#0B1026]">
+      <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0d1628]">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/dashboard')} className="text-muted hover:text-navy p-1 rounded hover:bg-gray-100">←</button>
-          <h1 className="text-base font-bold text-navy">Volunteer Dashboard</h1>
+          <button onClick={() => router.push('/dashboard')} className="interactive rounded p-1 text-muted hover:bg-gray-100 hover:text-navy dark:hover:bg-white/5 dark:hover:text-white">
+            ←
+          </button>
+          <h1 className="text-base font-bold text-navy dark:text-white">Volunteer Dashboard</h1>
         </div>
-        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
-          profile?.status === 'available' ? 'bg-green-100 text-green-700' :
-          profile?.status === 'busy' ? 'bg-amber-100 text-amber-700' :
-          'bg-gray-100 text-gray-600'
-        }`}>
+        <span
+          className={`rounded-full px-2 py-1 text-xs font-semibold ${
+            profile?.status === 'available'
+              ? 'bg-green-100 text-green-700'
+              : profile?.status === 'busy'
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-gray-100 text-gray-600'
+          }`}
+        >
           {profile?.status ?? 'offline'}
         </span>
       </header>
 
-      <main className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3">
+      <main className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="card text-center">
             <p className="text-2xl font-bold text-primary">{profile?.totalResponses ?? 0}</p>
-            <p className="text-xs text-muted mt-1">Responses</p>
+            <p className="mt-1 text-xs text-muted">Responses</p>
           </div>
           <div className="card text-center">
             <p className="text-2xl font-bold text-primary">{profile?.rating ?? '0.00'}</p>
-            <p className="text-xs text-muted mt-1">Rating</p>
+            <p className="mt-1 text-xs text-muted">Rating</p>
           </div>
           <div className="card text-center">
             <p className={`text-sm font-semibold capitalize ${profile?.verificationStatus === 'verified' ? 'text-safe' : 'text-amber-600'}`}>
               {profile?.verificationStatus ?? 'pending'}
             </p>
-            <p className="text-xs text-muted mt-1">Status</p>
+            <p className="mt-1 text-xs text-muted">Status</p>
           </div>
         </div>
 
-        {/* Toggle availability */}
-        <div className="card flex items-center justify-between">
+        <div className="card flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-navy">Availability</p>
+            <p className="text-sm font-semibold text-navy dark:text-white">Availability</p>
             <p className="text-xs text-muted">Toggle your duty status</p>
           </div>
-          <div className="flex gap-2">
-            {(['available', 'busy', 'offline'] as const).map((s) => (
+          <div className="flex flex-wrap gap-2">
+            {(['available', 'busy', 'offline'] as const).map((status) => (
               <button
-                key={s}
+                key={status}
                 disabled={availabilityMutation.isPending}
-                onClick={() => availabilityMutation.mutate(s)}
-                className={`text-xs px-3 py-1.5 rounded-xl font-semibold transition-colors ${
-                  profile?.status === s ? 'bg-primary text-white' : 'bg-gray-100 text-navy hover:bg-gray-200'
+                onClick={() => availabilityMutation.mutate(status)}
+                className={`interactive rounded-xl px-3 py-1.5 text-xs font-semibold ${
+                  profile?.status === status
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-navy hover:bg-gray-200 dark:bg-white/10 dark:text-white dark:hover:bg-white/20'
                 }`}
               >
-                {s}
+                {status}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Alerts feed */}
-        <div className="space-y-2">
-          <h2 className="text-sm font-bold text-navy px-1">Active Alerts Near You</h2>
-          {isLoading && <p className="text-center text-muted text-sm py-8">Loading alerts…</p>}
-          {!isLoading && alerts.length === 0 && (
-            <div className="card text-center py-8">
-              <p className="text-3xl mb-2">✅</p>
-              <p className="text-muted text-sm">No active alerts right now</p>
-            </div>
-          )}
+        <div className="space-y-3">
+          <h2 className="px-1 text-sm font-bold text-navy dark:text-white">Active Alerts Near You</h2>
+          {isLoading ? <LoadingState label="Loading nearby alerts…" /> : null}
+          {!isLoading && alerts.length === 0 ? (
+            <EmptyState
+              icon="All clear"
+              title="No active alerts right now"
+              description="You will see nearby emergencies here as soon as they come in."
+            />
+          ) : null}
           {alerts.map((alert) => (
-            <div key={alert.id} className="card border-l-4 border-l-emergency space-y-2">
-              <div className="flex items-start justify-between">
+            <div key={alert.id} className="card space-y-3 border-l-4 border-l-emergency">
+              <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-mono text-muted">{alert.alertCode}</p>
-                  <p className="text-sm font-semibold text-navy capitalize">{alert.alertType.replace(/_/g, ' ')}</p>
-                  {alert.triggerAddress && <p className="text-xs text-muted">{alert.triggerAddress}</p>}
+                  <p className="text-sm font-semibold capitalize text-navy dark:text-white">
+                    {alert.alertType.replace(/_/g, ' ')}
+                  </p>
+                  {alert.triggerAddress ? <p className="text-xs text-muted">{alert.triggerAddress}</p> : null}
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${SEVERITY_BADGE[alert.severity] ?? 'badge-warning'}`}>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${SEVERITY_BADGE[alert.severity] ?? 'badge-warning'}`}>
                   {alert.severity}
                 </span>
               </div>
-              {alert.description && <p className="text-xs text-muted">{alert.description}</p>}
+              {alert.description ? <p className="text-sm text-muted">{alert.description}</p> : null}
               <button
                 disabled={accepting === alert.id || acceptMutation.isPending || profile?.status !== 'available'}
-                onClick={() => { setAccepting(alert.id); acceptMutation.mutate(alert.id); }}
-                className="btn-primary w-full text-sm py-2 disabled:opacity-50"
+                onClick={() => {
+                  setAccepting(alert.id);
+                  acceptMutation.mutate(alert.id);
+                }}
+                className="btn-primary w-full py-2 text-sm disabled:opacity-50"
               >
                 {accepting === alert.id ? 'Accepting…' : 'Accept Alert'}
               </button>

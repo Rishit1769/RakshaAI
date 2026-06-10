@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EmptyState, SkeletonCards } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/store/auth.store';
 import { api } from '@/lib/api/fetcher';
 
@@ -25,7 +26,7 @@ const CATEGORY_LABELS: Record<string, { label: string; emoji: string }> = {
   suspicious_behavior: { label: 'Suspicious Behavior', emoji: '🔍' },
   unsafe_transport: { label: 'Unsafe Transport', emoji: '🚌' },
   harassment: { label: 'Harassment', emoji: '🚨' },
-  poor_lighting: { label: 'Poor Lighting', emoji: '🌑' },
+  poor_lighting: { label: 'Poor Lighting', emoji: '🌙' },
   other: { label: 'Other', emoji: '📋' },
 };
 
@@ -38,8 +39,7 @@ export default function CommunityPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['community-reports', selectedCategory],
-    queryFn: () =>
-      api.get(`/community${selectedCategory ? `?category=${selectedCategory}` : ''}`),
+    queryFn: () => api.get(`/community${selectedCategory ? `?category=${selectedCategory}` : ''}`),
     refetchInterval: 30_000,
   });
 
@@ -51,98 +51,102 @@ export default function CommunityPage() {
   const reports = ((data as { data?: { reports?: Report[] } } | undefined)?.data?.reports) ?? [];
 
   return (
-    <div className="min-h-screen bg-light">
-      <header className="bg-white border-b border-border px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-light transition-colors duration-200 dark:bg-[#0B1026]">
+      <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0d1628]">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-muted hover:text-navy p-1 rounded hover:bg-gray-100">←</Link>
-          <h1 className="text-base font-bold text-navy">Community Reports</h1>
+          <Link href="/dashboard" className="interactive rounded p-1 text-muted hover:bg-gray-100 hover:text-navy dark:hover:bg-white/5 dark:hover:text-white">
+            ←
+          </Link>
+          <div>
+            <h1 className="text-base font-bold text-navy dark:text-white">Community Reports</h1>
+            <p className="text-xs text-muted">Local safety signals from verified users</p>
+          </div>
         </div>
-        {isAuthenticated && (
-          <Link href="/community/report" className="btn-primary text-xs px-3 py-1.5">
+        {isAuthenticated ? (
+          <Link href="/community/report" className="btn-primary px-3 py-1.5 text-xs">
             + Report
           </Link>
-        )}
+        ) : null}
       </header>
 
-      <main className="max-w-2xl mx-auto p-4 space-y-4">
-        {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          <button
-            onClick={() => setSelectedCategory('')}
-            className={`whitespace-nowrap text-xs px-3 py-1.5 rounded-full font-semibold shrink-0 ${
-              !selectedCategory ? 'bg-primary text-white' : 'bg-white border border-border text-navy'
-            }`}
-          >
-            All
-          </button>
-          {CATEGORIES.map((cat) => {
-            const { label, emoji } = CATEGORY_LABELS[cat];
-            return (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
-                className={`whitespace-nowrap text-xs px-3 py-1.5 rounded-full font-semibold shrink-0 ${
-                  selectedCategory === cat ? 'bg-primary text-white' : 'bg-white border border-border text-navy'
-                }`}
-              >
-                {emoji} {label}
-              </button>
-            );
-          })}
+      <main className="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
+        <div className="surface-panel p-3">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              onClick={() => setSelectedCategory('')}
+              className={`interactive shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
+                !selectedCategory ? 'bg-primary text-white' : 'border border-border bg-white text-navy hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10'
+              }`}
+            >
+              All
+            </button>
+            {CATEGORIES.map((cat) => {
+              const { label, emoji } = CATEGORY_LABELS[cat];
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(selectedCategory === cat ? '' : cat)}
+                  className={`interactive shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    selectedCategory === cat ? 'bg-primary text-white' : 'border border-border bg-white text-navy hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10'
+                  }`}
+                >
+                  {emoji} {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {isLoading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="card h-24 animate-pulse bg-gray-100" />
-            ))}
-          </div>
-        )}
+        {isLoading ? <SkeletonCards count={3} /> : null}
 
-        {!isLoading && reports.length === 0 && (
-          <div className="card text-center py-10">
-            <p className="text-3xl mb-2">📋</p>
-            <p className="text-muted text-sm">No reports found</p>
-            {isAuthenticated && (
-              <Link href="/community/report" className="mt-3 inline-block text-primary text-sm font-semibold hover:underline">
-                Be the first to report →
-              </Link>
-            )}
-          </div>
-        )}
+        {!isLoading && reports.length === 0 ? (
+          <EmptyState
+            icon="📋"
+            title="No reports found"
+            description="Try another category or start the first report for your area."
+            action={
+              isAuthenticated ? (
+                <Link href="/community/report" className="interactive inline-block text-sm font-semibold text-primary hover:underline">
+                  Be the first to report →
+                </Link>
+              ) : null
+            }
+          />
+        ) : null}
 
         <div className="space-y-3">
           {reports.map((report) => {
             const cat = CATEGORY_LABELS[report.category];
+
             return (
-              <div key={report.id} className="card space-y-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{cat?.emoji ?? '📋'}</span>
+              <div key={report.id} className="card space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="mt-0.5 text-lg">{cat?.emoji ?? '📋'}</span>
                     <div>
-                      <p className="text-sm font-semibold text-navy">
+                      <p className="text-sm font-semibold text-navy dark:text-white">
                         {report.title ?? cat?.label ?? report.category}
                       </p>
-                      {(report.address ?? report.city) && (
+                      {(report.address ?? report.city) ? (
                         <p className="text-xs text-muted">{[report.address, report.city].filter(Boolean).join(', ')}</p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
-                  {report.isVerified && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">✓ Verified</span>
-                  )}
+                  {report.isVerified ? (
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                      Verified
+                    </span>
+                  ) : null}
                 </div>
 
-                {report.description && (
-                  <p className="text-xs text-muted line-clamp-2">{report.description}</p>
-                )}
+                {report.description ? <p className="text-sm text-muted">{report.description}</p> : null}
 
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center justify-between border-t border-navy/5 pt-3 dark:border-white/10">
                   <p className="text-xs text-muted">{new Date(report.createdAt).toLocaleDateString()}</p>
                   <button
                     onClick={() => isAuthenticated && upvoteMutation.mutate(report.id)}
                     disabled={!isAuthenticated || upvoteMutation.isPending}
-                    className="flex items-center gap-1 text-xs text-muted hover:text-primary disabled:opacity-50 transition-colors"
+                    className="interactive flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted hover:bg-primary/10 hover:text-primary disabled:opacity-50"
                     title={isAuthenticated ? 'Upvote' : 'Login to upvote'}
                   >
                     <span>👍</span>

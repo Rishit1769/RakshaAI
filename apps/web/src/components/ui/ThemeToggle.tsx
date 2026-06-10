@@ -10,7 +10,7 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ size = 'md', className = '' }: ThemeToggleProps) {
-  const { isDark, toggle } = useTheme();
+  const { isDark, mounted, toggle } = useTheme();
 
   const dim = size === 'sm' ? 'w-8 h-8' : 'w-9 h-9';
   const iconSize = size === 'sm' ? 'w-4 h-4' : 'w-[18px] h-[18px]';
@@ -21,12 +21,13 @@ export default function ThemeToggle({ size = 'md', className = '' }: ThemeToggle
       onClick={toggle}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Light mode' : 'Dark mode'}
+      disabled={!mounted}
       className={[
         dim,
-        'inline-flex items-center justify-center rounded-xl transition-colors duration-200',
+        'inline-flex items-center justify-center rounded-xl border border-navy/10 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10',
         isDark
           ? 'bg-white/10 text-yellow-300 hover:bg-white/20'
-          : 'bg-navy/8 text-navy hover:bg-navy/15',
+          : 'bg-white text-navy hover:bg-navy/5',
         className,
       ].join(' ')}
     >
