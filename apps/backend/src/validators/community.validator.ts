@@ -26,6 +26,15 @@ export const upvoteSchema = z.object({
   reportId: z.string().uuid(),
 });
 
+export const commentSchema = z.object({
+  reportId: z.string().uuid(),
+  content: z.string().trim().min(1).max(500),
+});
+
+export const incidentCommentSchema = z.object({
+  content: z.string().trim().min(1).max(500),
+});
+
 export const getReportsQuerySchema = z.object({
   category: z.enum(REPORT_CATEGORIES).optional(),
   page: z.coerce.number().int().min(1).default(1),

@@ -217,6 +217,7 @@ model User {
   geofences           Geofence[]
   communityReports    CommunityReport[]   @relation("reporter")
   reportUpvotes       ReportUpvote[]
+  reportComments      ReportComment[]
   aiRiskAnalyses      AiRiskAnalysis[]
   aiRouteRecommendations AiRouteRecommendation[]
   emergencyEvidences  EmergencyEvidence[]
@@ -629,16 +630,21 @@ model CommunityReport {
   city        String?        @db.VarChar(100)
   imageUrls   String[]       @map("image_urls")
   upvoteCount Int            @default(0) @map("upvote_count")
+  score       Float          @default(0)
+  pinColor    String         @default("white") @map("pin_color") @db.VarChar(20)
+  alertSent   Boolean        @default(false) @map("alert_sent")
   isVerified  Boolean        @default(false) @map("is_verified")
   verifiedBy  String?        @map("verified_by") @db.Uuid
   hotspotId   String?        @map("hotspot_id") @db.Uuid
   isActive    Boolean        @default(true) @map("is_active")
   createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
 
   reporter User?          @relation("reporter", fields: [reporterId], references: [id])
   verifier User?          @relation("verifier", fields: [verifiedBy], references: [id])
   hotspot  SafetyHotspot? @relation(fields: [hotspotId], references: [id])
   upvotes  ReportUpvote[]
+  comments ReportComment[]
 
   @@index([createdAt(sort: Desc)], name: "idx_community_reports_created")
   @@map("community_reports")
@@ -655,6 +661,21 @@ model ReportUpvote {
 
   @@unique([reportId, userId])
   @@map("report_upvotes")
+}
+
+model ReportComment {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  reportId  String   @map("report_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  report CommunityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([reportId, createdAt(sort: Desc)], name: "idx_report_comments_report_created")
+  @@map("report_comments")
 }
 
 model SafeZone {

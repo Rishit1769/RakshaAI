@@ -54,6 +54,7 @@ export function createApp(): Application {
 
   logger.info('API routes mounted', {
     auth: '/api/auth',
+    incidents: '/api/incidents',
     volunteers: '/api/volunteers',
     police: '/api/police',
     health: '/api/health',

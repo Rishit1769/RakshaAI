@@ -32,7 +32,7 @@ export default function SosPage() {
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        (position) => setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
         () => {
           setLocationError('Location unavailable - using default coordinates.');
           setLocation({ latitude: 0, longitude: 0 });
@@ -67,74 +67,80 @@ export default function SosPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-light">
-      <header className="flex items-center gap-3 border-b border-border bg-white px-4 py-3">
-        <button onClick={() => router.back()} className="rounded-lg p-1 text-muted hover:bg-gray-100 hover:text-navy" aria-label="Go back">
+    <div className="min-h-screen bg-[#091120] text-white">
+      <header className="flex items-center gap-3 border-b border-white/10 bg-[#0D1628] px-4 py-3">
+        <button
+          onClick={() => router.back()}
+          className="rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-slate-100 hover:bg-white/5"
+          aria-label="Go back"
+        >
           Back
         </button>
-        <h1 className="text-base font-bold text-navy">Emergency SOS</h1>
+        <h1 className="text-base font-bold text-white">Emergency SOS</h1>
       </header>
 
-      <main className="mx-auto max-w-sm space-y-6 p-4">
-        <div className={`rounded-lg px-3 py-2 text-xs ${location ? 'bg-safe/10 text-safe' : 'bg-warning/10 text-amber-700'}`}>
-          <span>
-            {location
-              ? locationError || `Location acquired (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`
-              : 'Acquiring your location...'}
-          </span>
+      <main className="mx-auto max-w-lg space-y-6 p-4 md:py-6">
+        <div className={`rounded-2xl px-3 py-2 text-xs ${location ? 'bg-green-500/15 text-green-300' : 'bg-amber-500/10 text-amber-200'}`}>
+          {location
+            ? locationError || `Location acquired (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`
+            : 'Acquiring your location...'}
         </div>
 
         <div className="flex flex-col items-center gap-3 py-4">
           <button className="btn-sos disabled:cursor-not-allowed disabled:opacity-60" onClick={handleSos} disabled={!location || sosMutation.isPending} aria-label="Send SOS emergency alert">
             {sosMutation.isPending ? '...' : 'SOS'}
           </button>
-          <p className="text-center text-sm text-muted">
+          <p className="text-center text-sm text-slate-300">
             {sosMutation.isPending ? 'Sending emergency alert...' : 'Tap to send an immediate emergency alert'}
           </p>
         </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-navy">Type of Emergency</h2>
+          <h2 className="mb-3 text-sm font-semibold text-white">Type of Emergency</h2>
           <div className="grid grid-cols-2 gap-2">
             {ALERT_TYPES.map((type) => (
               <button
                 key={type.value}
+                type="button"
                 onClick={() => setSelectedType(type.value)}
-                className={`rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                className={`rounded-2xl border px-3 py-3 text-left text-sm font-medium transition-colors ${
                   selectedType === type.value
-                    ? 'border-primary bg-primary/10 font-semibold text-primary'
-                    : 'border-border bg-white text-navy hover:bg-gray-50'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-white/10 bg-white/5 text-slate-100 hover:bg-white/10'
                 }`}
               >
-                <span className="text-xs">{type.label}</span>
+                {type.label}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-semibold text-navy" htmlFor="desc">
-            Description <span className="font-normal text-muted">(optional)</span>
+          <label className="mb-2 block text-sm font-semibold text-white" htmlFor="desc">
+            Description <span className="font-normal text-slate-400">(optional)</span>
           </label>
           <textarea
             id="desc"
-            rows={3}
+            rows={4}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(event) => setDescription(event.target.value)}
             placeholder="Briefly describe the situation..."
             maxLength={500}
-            className="input-field resize-none text-sm"
+            className="min-h-28 w-full resize-none rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <p className="mt-1 text-right text-xs text-muted">{description.length}/500</p>
+          <p className="mt-1 text-right text-xs text-slate-400">{description.length}/500</p>
         </div>
 
         {sosMutation.isError ? (
-          <div className="rounded-xl border border-emergency/30 bg-emergency/10 px-4 py-3 text-sm text-emergency">
+          <div className="rounded-2xl border border-emergency/30 bg-emergency/10 px-4 py-3 text-sm text-emergency">
             Failed to send SOS. Please try again or call 112.
           </div>
         ) : null}
 
-        <a href="tel:112" className="block rounded-xl border border-border py-3 text-center text-xs text-muted transition-colors hover:text-navy">
+        <a
+          href="tel:112"
+          className="block rounded-2xl border border-white/20 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white/5"
+        >
           Call Emergency Services (112)
         </a>
       </main>

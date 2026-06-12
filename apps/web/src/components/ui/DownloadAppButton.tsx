@@ -45,7 +45,7 @@ export default function DownloadAppButton() {
         type="button"
         onClick={handleDownload}
         disabled={isLoading}
-        className="fixed bottom-6 right-6 z-50 rounded-full bg-navy px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-navy/90 disabled:cursor-not-allowed disabled:opacity-70 md:px-5 md:py-3.5 md:text-sm"
+        className="fixed bottom-6 right-6 z-50 inline-flex items-center justify-center rounded-full border border-white/10 bg-navy px-5 py-3 text-sm font-semibold text-white shadow-2xl transition hover:bg-navy/90 hover:shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-70"
       >
         {isLoading ? 'Preparing download...' : 'Download Mobile App'}
       </button>

@@ -9,6 +9,7 @@ import aiRoutes from './ai.routes';
 import communityRoutes from './community.routes';
 import organizationRoutes from './organization.routes';
 import appRoutes from './app.routes';
+import incidentsRoutes from './incidents.routes';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/ai', aiRoutes);
 router.use('/community', communityRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/app', appRoutes);
+router.use('/incidents', incidentsRoutes);
 
 export default router;
 

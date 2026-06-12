@@ -18,6 +18,9 @@ export interface CommunityReport {
   city?: string;
   imageUrls: string[];
   upvoteCount: number;
+  score: number;
+  pinColor: string;
+  commentCount: number;
   isVerified: boolean;
   createdAt: string;
 }
@@ -43,24 +46,24 @@ export interface HeatmapPoint {
 
 export const communityApi = {
   createReport: (payload: CreateReportPayload) =>
-    api.post<CommunityReport>('/community/report', payload),
+    api.post<CommunityReport>('/community', payload),
 
   getReports: (params?: { city?: string; category?: ReportCategory; page?: number }) => {
     const query = new URLSearchParams(
       Object.entries(params ?? {}).filter(([, v]) => v !== undefined) as [string, string][]
     ).toString();
-    return api.get<CommunityReport[]>(`/community/reports${query ? `?${query}` : ''}`);
+    return api.get<CommunityReport[]>(`/community${query ? `?${query}` : ''}`);
   },
 
   getHeatmaps: (params: { lat: number; lng: number; radiusKm?: number }) => {
     const query = new URLSearchParams({
-      lat: params.lat.toString(),
-      lng: params.lng.toString(),
-      ...(params.radiusKm ? { radiusKm: params.radiusKm.toString() } : {}),
+      latitude: params.lat.toString(),
+      longitude: params.lng.toString(),
+      ...(params.radiusKm ? { radius: params.radiusKm.toString() } : {}),
     }).toString();
-    return api.get<HeatmapPoint[]>(`/community/heatmaps?${query}`);
+    return api.get<HeatmapPoint[]>(`/community/heatmap?${query}`);
   },
 
   upvoteReport: (reportId: string) =>
-    api.post<{ upvoteCount: number }>(`/community/reports/${reportId}/upvote`),
+    api.post<{ upvoteCount: number }>('/community/upvote', { reportId }),
 };

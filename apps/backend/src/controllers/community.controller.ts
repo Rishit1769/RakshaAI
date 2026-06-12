@@ -26,6 +26,15 @@ export const upvoteReport = asyncHandler(async (req: Request, res: Response) => 
   sendSuccess(res, result, result.upvoted ? 'Upvoted' : 'Upvote removed');
 });
 
+export const addComment = asyncHandler(async (req: Request, res: Response) => {
+  const result = await CommunityService.addComment(
+    req.body.reportId as string,
+    req.user!.id,
+    req.body.content as string
+  );
+  sendCreated(res, result, 'Comment added');
+});
+
 export const heatmap = asyncHandler(async (req: Request, res: Response) => {
   const lat = parseFloat(req.query.latitude as string) || 20.5937;
   const lng = parseFloat(req.query.longitude as string) || 78.9629;

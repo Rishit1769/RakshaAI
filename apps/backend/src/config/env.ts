@@ -67,6 +67,7 @@ export const env = {
   // Firebase
   FIREBASE_SERVER_KEY: process.env.FIREBASE_SERVER_KEY ?? '',
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ?? '',
+  POLICE_ALERT_EMAIL: process.env.POLICE_ALERT_EMAIL ?? '',
 
   // CORS
   CORS_ORIGIN: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
