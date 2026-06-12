@@ -4,26 +4,16 @@ import { createContext, createElement, useContext, useEffect, useMemo, useState 
 
 type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'rakshaai-theme';
+const STORAGE_KEY = 'theme';
 
 interface ThemeContextValue {
   theme: Theme;
   isDark: boolean;
-  mounted: boolean;
   setTheme: (theme: Theme) => void;
   toggle: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-function resolveInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
-
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark') return stored;
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
@@ -33,31 +23,35 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'dark';
+
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === 'light' || stored === 'dark') return stored;
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   useEffect(() => {
-    const initialTheme = resolveInitialTheme();
-    applyTheme(initialTheme);
-    setThemeState(initialTheme);
-    setMounted(true);
+    applyTheme(theme);
+  }, [theme]);
 
+  useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleMediaChange = (event: MediaQueryListEvent) => {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored === 'light' || stored === 'dark') return;
 
       const nextTheme: Theme = event.matches ? 'dark' : 'light';
-      applyTheme(nextTheme);
       setThemeState(nextTheme);
+      applyTheme(nextTheme);
     };
 
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY) return;
-
-      const nextTheme: Theme = event.newValue === 'dark' ? 'dark' : 'light';
-      applyTheme(nextTheme);
+      const nextTheme: Theme = event.newValue === 'light' ? 'light' : 'dark';
       setThemeState(nextTheme);
+      applyTheme(nextTheme);
     };
 
     mediaQuery.addEventListener('change', handleMediaChange);
@@ -70,24 +64,30 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setTheme = (nextTheme: Theme) => {
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
-    applyTheme(nextTheme);
     setThemeState(nextTheme);
+    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    document.documentElement.style.colorScheme = nextTheme;
   };
 
   const toggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
+    setThemeState(nextTheme);
+    window.localStorage.setItem(STORAGE_KEY, nextTheme);
+    document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    document.documentElement.style.colorScheme = nextTheme;
   };
 
   const value = useMemo<ThemeContextValue>(
     () => ({
       theme,
       isDark: theme === 'dark',
-      mounted,
       setTheme,
       toggle,
     }),
-    [mounted, theme]
+    [theme]
   );
 
   return createElement(ThemeContext.Provider, { value }, children);

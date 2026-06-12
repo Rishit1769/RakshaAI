@@ -34,6 +34,28 @@ export async function sendEmergencyEmail(options: SendEmergencyEmailOptions): Pr
   }
 }
 
+export async function sendOtpEmail(email: string, otp: string): Promise<void> {
+  try {
+    await emailTransporter.sendMail({
+      from: `"Disaster Relief Platform" <${env.SMTP_FROM}>`,
+      to: email,
+      subject: 'Your Registration OTP — Disaster Relief Platform',
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
+          <h2 style="color:#1d4ed8;">Verify Your Email Address</h2>
+          <p>Use the following One-Time Password to complete your registration:</p>
+          <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#111827;margin:24px 0;">${otp}</div>
+          <p>This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.</p>
+          <p style="color:#6b7280;font-size:12px;">If you did not request this, please ignore this email.</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    logger.error('OTP email delivery failed', { email, error });
+    throw new Error('Failed to send verification email.');
+  }
+}
+
 interface PoliceAlertEmailOptions {
   incidentId: string;
   incidentType: string;

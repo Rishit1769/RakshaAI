@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth.store';
-import { api } from '@/lib/api/fetcher';
+import { ApiError, api } from '@/lib/api/fetcher';
 
 interface Message {
   role: 'user' | 'model';
@@ -44,10 +44,20 @@ export default function AiPage() {
       const reply = (data as { data?: { reply?: string } })?.data?.reply ?? 'Sorry, I could not generate a response.';
       setMessages((prev) => [...prev, { role: 'model', content: reply }]);
     },
-    onError: () => {
+    onError: (error) => {
+      let message = 'Something went wrong. Please try again.';
+
+      if (error instanceof ApiError) {
+        if (error.statusCode === 503) message = 'The AI assistant is temporarily unavailable. Please try again in a moment.';
+        else if (error.statusCode === 401 || error.statusCode === 403) message = 'Authentication error. Please refresh the page and try again.';
+        else message = error.message || message;
+      } else if (error instanceof TypeError) {
+        message = 'Unable to reach the server. Please check your connection.';
+      }
+
       setMessages((prev) => [
         ...prev,
-        { role: 'model', content: 'I am having trouble connecting right now. Please try again.' },
+        { role: 'model', content: message },
       ]);
     },
   });

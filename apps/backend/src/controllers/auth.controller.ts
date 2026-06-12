@@ -4,44 +4,45 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { sendSuccess, sendCreated, sendUnauthorized } from '../utils/response';
 import { logger } from '../config/logger';
 
-/**
- * POST /api/auth/register
- * Registers a new user and returns an authenticated session.
- */
-export const register = asyncHandler(async (req: Request, res: Response) => {
-  const result = await AuthService.registerUser(req.body as AuthService.RegisterInput);
-  res.cookie('refreshToken', result.tokens.refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: '/api/auth',
-  });
-
-  sendCreated(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Registration successful');
-});
-
-/**
- * POST /api/auth/login
- * Validates credentials and logs user in directly.
- */
-export const login = asyncHandler(async (req: Request, res: Response) => {
-  const result = await AuthService.loginUser(req.body as AuthService.LoginInput);
-  res.cookie('refreshToken', result.tokens.refreshToken, {
+function attachRefreshTokenCookie(res: Response, refreshToken: string) {
+  res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/api/auth',
   });
+}
 
+export const sendRegistrationOtp = asyncHandler(async (req: Request, res: Response) => {
+  await AuthService.sendRegistrationOtp((req.body as { email: string }).email);
+  sendSuccess(res, null, 'OTP sent to your email address.');
+});
+
+export const checkRegistrationOtp = asyncHandler(async (req: Request, res: Response) => {
+  const { email, otp } = req.body as { email: string; otp: string };
+  await AuthService.checkRegistrationOtp(email, otp);
+  sendSuccess(res, null, 'OTP verified successfully.');
+});
+
+export const verifyRegistrationOtp = asyncHandler(async (req: Request, res: Response) => {
+  const result = await AuthService.verifyRegistrationOtp(req.body as AuthService.VerifyOtpInput);
+  attachRefreshTokenCookie(res, result.tokens.refreshToken);
+  sendCreated(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Registration successful');
+});
+
+export const register = asyncHandler(async (req: Request, res: Response) => {
+  const result = await AuthService.registerUser(req.body as AuthService.RegisterInput);
+  attachRefreshTokenCookie(res, result.tokens.refreshToken);
+  sendCreated(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Registration successful');
+});
+
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const result = await AuthService.loginUser(req.body as AuthService.LoginInput);
+  attachRefreshTokenCookie(res, result.tokens.refreshToken);
   sendSuccess(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Login successful');
 });
 
-/**
- * POST /api/auth/login-mpin
- * Authenticates with email + password + MPIN. Returns tokens immediately.
- */
 export const loginWithMpin = asyncHandler(async (req: Request, res: Response) => {
   const { credential, password, mpin } = req.body as {
     credential?: string;
@@ -49,38 +50,38 @@ export const loginWithMpin = asyncHandler(async (req: Request, res: Response) =>
     mpin: string;
   };
   if (!credential) {
-    sendUnauthorized(res, 'No known account for MPIN login on this device. Use Email + Password once.');
+    sendUnauthorized(res, 'No known account for MPIN login. Please use password login first.');
     return;
   }
-  const result = await AuthService.loginWithMpin(credential, password, mpin);
 
-  res.cookie('refreshToken', result.tokens.refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/api/auth',
+  const result = await AuthService.loginUser({
+    identifier: credential,
+    credential: mpin || password,
+    loginMethod: 'mpin',
   });
-
+  attachRefreshTokenCookie(res, result.tokens.refreshToken);
   sendSuccess(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Login successful');
 });
 
-/**
- * POST /api/auth/setup-mpin
- * Sets or updates MPIN for an authenticated user.
- */
 export const setupMpin = asyncHandler(async (req: Request, res: Response) => {
   const { mpin } = req.body as { mpin: string };
   await AuthService.setupMpin(req.user!.id, mpin);
   sendSuccess(res, null, 'MPIN set up successfully');
 });
 
-/**
- * POST /api/auth/refresh
- * Refreshes access token using refresh token from cookie or body.
- */
+export const changeMpin = asyncHandler(async (req: Request, res: Response) => {
+  const { currentMpin, newMpin } = req.body as { currentMpin: string; newMpin: string };
+  await AuthService.changeMpin(req.user!.id, currentMpin, newMpin);
+  sendSuccess(res, null, 'MPIN changed successfully');
+});
+
+export const disableMpin = asyncHandler(async (req: Request, res: Response) => {
+  const { currentMpin } = req.body as { currentMpin: string };
+  await AuthService.disableMpin(req.user!.id, currentMpin);
+  sendSuccess(res, null, 'MPIN disabled successfully');
+});
+
 export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
-  // Accept from HttpOnly cookie (preferred) or request body (mobile)
   const token =
     (req.cookies as { refreshToken?: string })?.refreshToken ??
     (req.body as { refreshToken?: string })?.refreshToken;
@@ -91,37 +92,17 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
   }
 
   const tokens = await AuthService.refreshTokens(token);
-
-  // Rotate cookie
-  res.cookie('refreshToken', tokens.refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/api/auth',
-  });
-
+  attachRefreshTokenCookie(res, tokens.refreshToken);
   sendSuccess(res, { accessToken: tokens.accessToken }, 'Token refreshed');
 });
 
-/**
- * POST /api/auth/logout
- * Revokes all active sessions for the authenticated user.
- */
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   await AuthService.logoutUser(req.user!.id);
-
-  // Clear cookie
   res.clearCookie('refreshToken', { path: '/api/auth' });
-
   logger.info('User logged out', { userId: req.user!.id });
   sendSuccess(res, null, 'Logged out successfully');
 });
 
-/**
- * GET /api/auth/me
- * Returns the currently authenticated user's profile.
- */
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
   const { prisma } = await import('../config/database');
   const user = await prisma.user.findUnique({
@@ -134,12 +115,15 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
       role: true,
       isVerified: true,
       profileImageUrl: true,
+      mpinEnabled: true,
       createdAt: true,
     },
   });
+
   if (!user) {
     sendUnauthorized(res, 'User not found');
     return;
   }
+
   sendSuccess(res, user, 'Profile retrieved');
 });

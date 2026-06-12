@@ -10,6 +10,7 @@ import communityRoutes from './community.routes';
 import organizationRoutes from './organization.routes';
 import appRoutes from './app.routes';
 import incidentsRoutes from './incidents.routes';
+import emergencyContactRoutes from './emergency-contact.routes';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.use('/community', communityRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/app', appRoutes);
 router.use('/incidents', incidentsRoutes);
+router.use('/emergency-contacts', emergencyContactRoutes);
 
 export default router;
 

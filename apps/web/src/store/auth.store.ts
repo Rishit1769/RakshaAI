@@ -10,6 +10,7 @@ interface AuthUser {
   phone: string;
   role: string;
   isVerified: boolean;
+  mpinEnabled?: boolean;
 }
 
 interface AuthState {

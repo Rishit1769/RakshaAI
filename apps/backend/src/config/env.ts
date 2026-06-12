@@ -48,6 +48,7 @@ export const env = {
   // SMTP / Email
   SMTP_HOST: process.env.SMTP_HOST as string,
   SMTP_PORT: parseInt(process.env.SMTP_PORT ?? '587', 10),
+  SMTP_SECURE: (process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true',
   SMTP_USER: process.env.SMTP_USER as string,
   SMTP_PASS: process.env.SMTP_PASS as string,
   SMTP_FROM: process.env.SMTP_FROM ?? `RakshaAI <${process.env.SMTP_USER}>`,
@@ -68,9 +69,10 @@ export const env = {
   FIREBASE_SERVER_KEY: process.env.FIREBASE_SERVER_KEY ?? '',
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ?? '',
   POLICE_ALERT_EMAIL: process.env.POLICE_ALERT_EMAIL ?? '',
+  FRONTEND_URL: process.env.FRONTEND_URL ?? process.env.CORS_ORIGIN ?? 'http://localhost:3000',
 
   // CORS
-  CORS_ORIGIN: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+  CORS_ORIGIN: process.env.CORS_ORIGIN ?? process.env.FRONTEND_URL ?? 'http://localhost:3000',
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '900000', 10),

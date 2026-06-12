@@ -191,6 +191,7 @@ model User {
   aadhaarNumber       String?   @unique @map("aadhaar_number") @db.VarChar(12)
   passwordHash        String    @map("password_hash")
   mpinHash            String?   @map("mpin_hash")
+  mpinEnabled         Boolean   @default(false) @map("mpin_enabled")
   role                UserRole  @default(user)
   gender              Gender?
   dateOfBirth         DateTime? @map("date_of_birth") @db.Date
@@ -272,7 +273,8 @@ model EmergencyContact {
   name            String   @db.VarChar(100)
   phone           String   @db.VarChar(15)
   email           String?  @db.VarChar(150)
-  relationship    String?  @db.VarChar(50)
+  relationship    String   @db.VarChar(50)
+  isPrimary       Boolean  @default(false) @map("is_primary")
   priorityOrder   Int      @default(1) @map("priority_order")
   notifyOnSos     Boolean  @default(true) @map("notify_on_sos")
   notifyOnJourney Boolean  @default(true) @map("notify_on_journey")
@@ -280,6 +282,7 @@ model EmergencyContact {
   isAppUser       Boolean  @default(false) @map("is_app_user")
   linkedUserId    String?  @map("linked_user_id") @db.Uuid
   createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -309,17 +312,19 @@ model UserSession {
 model OtpVerification {
   id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   userId      String?  @map("user_id") @db.Uuid
+  email       String   @db.VarChar(150)
   identifier  String   @db.VarChar(150)
   otpHash     String   @map("otp_hash")
   purpose     String   @db.VarChar(30)
   attempts    Int      @default(0)
   maxAttempts Int      @default(3) @map("max_attempts")
   isUsed      Boolean  @default(false) @map("is_used")
+  verified    Boolean  @default(false)
   expiresAt   DateTime @map("expires_at")
   createdAt   DateTime @default(now()) @map("created_at")
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([email], name: "idx_otp_verifications_email")
   @@map("otp_verifications")
 }
 

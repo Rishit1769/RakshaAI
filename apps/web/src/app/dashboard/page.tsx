@@ -10,7 +10,7 @@ import { useAuthStore } from '@/store/auth.store';
 const quickActions = [
   { label: 'Journey Mode', href: '/journey', icon: 'Map', desc: 'Track your route safely' },
   { label: 'Community', href: '/community', icon: 'People', desc: 'Area safety reports' },
-  { label: 'Contacts', href: '/community/report', icon: 'Phone', desc: 'Emergency contacts & reports' },
+  { label: 'Contacts', href: '/dashboard/emergency-contacts', icon: 'Phone', desc: 'Emergency contacts & reports' },
   { label: 'AI Assistant', href: '/ai', icon: 'AI', desc: 'Safety guidance' },
 ] as const;
 
@@ -52,6 +52,12 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <Link
+            href="/dashboard/settings"
+            className="interactive rounded-lg px-3 py-1 text-xs text-muted hover:bg-gray-100 hover:text-navy dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white"
+          >
+            Settings
+          </Link>
           <button
             onClick={handleLogout}
             className="interactive rounded-lg px-3 py-1 text-xs text-muted hover:bg-gray-100 hover:text-navy dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white"

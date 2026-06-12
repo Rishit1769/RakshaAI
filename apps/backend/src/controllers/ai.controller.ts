@@ -9,7 +9,7 @@ import { AppError } from '../middleware/error.middleware';
  * Classify an emergency description using Gemini AI
  */
 export const classify = asyncHandler(async (req: Request, res: Response) => {
-  if (!process.env.GEMINI_API_KEY) throw new AppError('AI service is not configured', 503);
+  if (!process.env.GEMINI_API_KEY?.trim()) throw new AppError('AI service is not configured', 503);
 
   const result = await AiService.classifyEmergency(req.body.description as string);
   sendSuccess(res, result, 'Emergency classified');
@@ -20,7 +20,7 @@ export const classify = asyncHandler(async (req: Request, res: Response) => {
  * Analyze area risk for given coordinates
  */
 export const riskAnalysis = asyncHandler(async (req: Request, res: Response) => {
-  if (!process.env.GEMINI_API_KEY) throw new AppError('AI service is not configured', 503);
+  if (!process.env.GEMINI_API_KEY?.trim()) throw new AppError('AI service is not configured', 503);
 
   const { latitude, longitude, timeOfDay } = req.body as {
     latitude: number;
@@ -54,8 +54,8 @@ export const riskAnalysis = asyncHandler(async (req: Request, res: Response) => 
  * Chat with the RakshaAI safety assistant
  */
 export const chat = asyncHandler(async (req: Request, res: Response) => {
-  if (!process.env.GEMINI_API_KEY) throw new AppError('AI service is not configured', 503);
+  if (!process.env.GEMINI_API_KEY?.trim()) throw new AppError('AI service is not configured', 503);
 
-  const reply = await AiService.chatWithAssistant(req.body.messages as AiService.ChatMessage[]);
+  const reply = await AiService.chatWithAssistant(req.user!.id, req.body.messages as AiService.ChatMessage[]);
   sendSuccess(res, { reply }, 'Response generated');
 });

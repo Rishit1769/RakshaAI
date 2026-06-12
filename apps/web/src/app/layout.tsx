@@ -29,6 +29,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var stored=localStorage.getItem('theme');var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=stored?(stored==='dark'?'dark':'light'):(prefersDark?'dark':'light');if(theme==='dark'){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}document.documentElement.setAttribute('data-theme',theme);document.documentElement.style.colorScheme=theme;}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-background text-navy antialiased transition-colors duration-200 dark:bg-[#0B1026] dark:text-white">
         <Providers>
           {children}

@@ -37,12 +37,12 @@ export default function SetupMpinPage() {
   }
 
   function handleNext() {
-    if (mpin.length < 4) { setError('MPIN must be at least 4 digits.'); return; }
+    if (mpin.length !== MPIN_LENGTH) { setError('MPIN must be exactly 6 digits.'); return; }
     setStep('confirm');
   }
 
   async function handleConfirm() {
-    if (confirmMpin.length < 4) { setError('Please confirm your MPIN.'); return; }
+    if (confirmMpin.length !== MPIN_LENGTH) { setError('Please confirm your 6-digit MPIN.'); return; }
     if (mpin !== confirmMpin) {
       setError('MPINs do not match. Please try again.');
       setConfirmMpin('');
@@ -83,7 +83,7 @@ export default function SetupMpinPage() {
   }
 
   const handleAction = step === 'enter'
-    ? () => { if (active.length >= 4) handleNext(); }
+    ? () => { if (active.length === MPIN_LENGTH) handleNext(); }
     : handleConfirm;
 
   return (
@@ -185,7 +185,7 @@ export default function SetupMpinPage() {
           {/* Action button */}
           <button
             type="button"
-            disabled={loading || active.length < 4}
+            disabled={loading || active.length !== MPIN_LENGTH}
             onClick={handleAction}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-primary text-white font-semibold text-sm shadow-primary transition-all duration-200 hover:bg-primary-600 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
