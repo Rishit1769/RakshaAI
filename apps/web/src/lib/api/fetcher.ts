@@ -7,7 +7,12 @@
  * - NO Axios — native Fetch API only
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
+export const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
+
+export function buildApiUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE}${normalizedPath}`;
+}
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -42,7 +47,10 @@ async function refreshAccessToken(): Promise<string | null> {
   isRefreshing = true;
   pendingRefresh = (async () => {
     try {
-      const res = await fetch(`${API_BASE}/auth/refresh`, {
+      const refreshUrl = buildApiUrl('/auth/refresh');
+      console.log('[auth] refreshing access token via', refreshUrl);
+
+      const res = await fetch(refreshUrl, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -82,12 +90,30 @@ export async function fetcher<T>(
     ...((options.headers as Record<string, string>) ?? {}),
   };
 
-  const response = await fetch(`${API_BASE}${path}`, {
+  const requestUrl = buildApiUrl(path);
+  const requestInit: RequestInit = {
     ...rest,
     credentials: 'include',
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+  };
+
+  console.log('[api] request', {
+    url: requestUrl,
+    method: requestInit.method ?? 'GET',
   });
+
+  let response: Response;
+  try {
+    response = await fetch(requestUrl, requestInit);
+  } catch (error) {
+    console.error('[api] network error', {
+      url: requestUrl,
+      method: requestInit.method ?? 'GET',
+      error,
+    });
+    throw error;
+  }
 
   let data: ApiResponse<T>;
   try {

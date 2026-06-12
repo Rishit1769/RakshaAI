@@ -7,26 +7,24 @@ import { connectDatabase, disconnectDatabase } from './config/database';
 import { initializeSocket } from './sockets/index';
 
 async function bootstrap(): Promise<void> {
-  // 1. Connect to database
   await connectDatabase();
 
-  // 2. Create Express app
   const app = createApp();
-
-  // 3. Create HTTP server (required for Socket.IO)
   const httpServer = http.createServer(app);
 
-  // 4. Initialize Socket.IO
   initializeSocket(httpServer);
 
-  // 5. Start listening
   httpServer.listen(env.PORT, () => {
-    logger.info(`🚀 RakshaAI backend running on port ${env.PORT} [${env.NODE_ENV}]`);
+    logger.info(`Backend successfully initialized on port ${env.PORT}`);
+    logger.info('Backend runtime configuration', {
+      nodeEnv: env.NODE_ENV,
+      corsOrigin: env.CORS_ORIGIN,
+      apiBaseUrl: `http://localhost:${env.PORT}/api`,
+    });
   });
 
-  // ─── Graceful shutdown ────────────────────────────────────────
   const shutdown = async (signal: string): Promise<void> => {
-    logger.info(`${signal} received — shutting down gracefully`);
+    logger.info(`${signal} received; shutting down gracefully`);
     httpServer.close(async () => {
       await disconnectDatabase();
       logger.info('Server closed');
@@ -34,8 +32,12 @@ async function bootstrap(): Promise<void> {
     });
   };
 
-  process.on('SIGTERM', () => { void shutdown('SIGTERM'); });
-  process.on('SIGINT',  () => { void shutdown('SIGINT'); });
+  process.on('SIGTERM', () => {
+    void shutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void shutdown('SIGINT');
+  });
 
   process.on('unhandledRejection', (reason) => {
     logger.error('Unhandled Promise Rejection', { reason });

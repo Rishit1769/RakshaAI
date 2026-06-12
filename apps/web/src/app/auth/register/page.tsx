@@ -6,6 +6,8 @@ import Link from 'next/link';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import PasswordStrength from '@/components/ui/PasswordStrength';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import { authApi } from '@/lib/api/auth.api';
+import { ApiError, buildApiUrl } from '@/lib/api/fetcher';
 import { useAuthStore } from '@/store/auth.store';
 
 interface FormState {
@@ -69,44 +71,42 @@ export default function RegisterPage() {
     setErrors({});
 
     try {
-      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
-      const res = await fetch(`${apiBase}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: form.fullName.trim(),
-          email: form.email.trim().toLowerCase(),
-          phone: form.phone.trim(),
-          aadhaarNumber: form.aadhaarNumber.trim(),
-          password: form.password,
-        }),
-      });
+      const payload = {
+        fullName: form.fullName.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
+        aadhaarNumber: form.aadhaarNumber.trim(),
+        password: form.password,
+      };
+      const requestUrl = buildApiUrl('/auth/register');
 
-      const contentType = res.headers.get('content-type') ?? '';
-      let data: {
-        success: boolean;
-        message: string;
-        data?: {
-          user: { id: string; fullName: string; email: string; phone: string; role: string; isVerified: boolean };
-          accessToken: string;
-        };
-      } = { success: false, message: '' };
+      console.log('[register] submitting registration to', requestUrl, payload);
 
-      if (contentType.includes('application/json')) {
-        data = (await res.json()) as typeof data;
-      }
+      const response = await authApi.register(payload);
 
-      if (!res.ok || !data.success || !data.data) {
-        const fallbackMessage = res.ok
-          ? 'Registration failed.'
-          : `Unable to reach auth service (HTTP ${res.status}). Please ensure backend is running on port 5000.`;
-        setErrors({ form: data.message || fallbackMessage });
+      if (!response.success || !response.data) {
+        setErrors({ form: response.message || 'Registration failed.' });
         return;
       }
 
-      setAuth(data.data.user, data.data.accessToken);
+      setAuth(response.data.user, response.data.accessToken);
       router.push('/dashboard');
-    } catch {
+    } catch (error) {
+      console.error('[register] registration request failed', {
+        url: buildApiUrl('/auth/register'),
+        error,
+      });
+
+      if (error instanceof ApiError) {
+        const isConnectivityIssue = error.statusCode === 0 || error.message === 'Failed to fetch';
+        setErrors({
+          form: isConnectivityIssue
+            ? 'Cannot connect to backend. Start backend server and try again.'
+            : error.message || `Unable to reach auth service (HTTP ${error.statusCode}). Please ensure backend is running on port 5000.`,
+        });
+        return;
+      }
+
       setErrors({ form: 'Cannot connect to backend. Start backend server and try again.' });
     } finally {
       setLoading(false);
