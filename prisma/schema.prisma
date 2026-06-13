@@ -613,12 +613,16 @@ model SafetyHotspot {
   isActive        Boolean        @default(true) @map("is_active")
   peakDangerHours Int[]          @map("peak_danger_hours")
   lastIncidentAt  DateTime?      @map("last_incident_at")
+  assignedPolicemanId String?    @map("assigned_policeman_id") @db.Uuid
+  assignedAt      DateTime?      @map("assigned_at")
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
 
   communityReports CommunityReport[]
+  assignedPoliceman Worker?      @relation("hotspot_assigned_policeman", fields: [assignedPolicemanId], references: [id])
 
   @@index([city], name: "idx_hotspots_city")
+  @@index([assignedPolicemanId], name: "idx_hotspots_assigned_policeman")
   @@map("safety_hotspots")
 }
 
@@ -1025,6 +1029,7 @@ model Worker {
 
   user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignedHotspots SafetyHotspot[] @relation("hotspot_assigned_policeman")
 
   @@index([organizationId], name: "idx_workers_org_id")
   @@index([email], name: "idx_workers_email")

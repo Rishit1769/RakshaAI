@@ -11,6 +11,7 @@ import organizationRoutes from './organization.routes';
 import appRoutes from './app.routes';
 import incidentsRoutes from './incidents.routes';
 import emergencyContactRoutes from './emergency-contact.routes';
+import hotspotRoutes from './hotspot.routes';
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.use('/organizations', organizationRoutes);
 router.use('/app', appRoutes);
 router.use('/incidents', incidentsRoutes);
 router.use('/emergency-contacts', emergencyContactRoutes);
+router.use('/hotspots', hotspotRoutes);
 
 export default router;
 

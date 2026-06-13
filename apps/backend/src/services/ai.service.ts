@@ -84,7 +84,7 @@ function parseJsonResponse<T>(text: string): T {
 }
 
 function getModel() {
-  return getGenAI().getGenerativeModel({ model: 'gemini-1.5-flash' });
+  return getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' });
 }
 
 function mapHistory(messages: ChatMessage[]): ChatHistoryItem[] {

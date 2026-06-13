@@ -25,6 +25,9 @@
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "devDependencies": {
     "concurrently": "^9.2.1",
     "rimraf": "^5.0.5"
