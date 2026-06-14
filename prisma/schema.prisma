@@ -435,8 +435,8 @@ model SosAlert {
   severity            IncidentSeverity @default(high)
   description         String?
   // Geospatial: stored as lat/lng floats; PostGIS queries use raw SQL via $queryRaw
-  triggerLatitude     Float            @map("trigger_latitude")
-  triggerLongitude    Float            @map("trigger_longitude")
+  triggerLatitude     Float?           @map("trigger_latitude")
+  triggerLongitude    Float?           @map("trigger_longitude")
   triggerAddress      String?          @map("trigger_address")
   currentLatitude     Float?           @map("current_latitude")
   currentLongitude    Float?           @map("current_longitude")

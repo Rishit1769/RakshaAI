@@ -9,8 +9,11 @@ export type AlertStatus = 'pending' | 'active' | 'accepted' | 'resolved' | 'fals
 export interface CreateSosPayload {
   triggerMethod: SosTriggerMethod;
   alertType?: AlertType;
-  latitude: number;
-  longitude: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
   description?: string;
 }
 
@@ -20,8 +23,8 @@ export interface SosAlert {
   status: AlertStatus;
   alertType: AlertType;
   triggerMethod: SosTriggerMethod;
-  triggerLatitude: number;
-  triggerLongitude: number;
+  triggerLatitude?: number | null;
+  triggerLongitude?: number | null;
   triggerAddress?: string;
   createdAt: string;
 }

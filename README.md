@@ -49,6 +49,28 @@ I verified two separate local database issues:
 
 Both builds completed successfully after the code changes.
 
+## SOS Location Contract
+
+The SOS API accepts an optional `location` object in the POST body:
+
+```json
+{
+  "triggerMethod": "tap",
+  "alertType": "general_danger",
+  "location": {
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "accuracy": 15.0
+  }
+}
+```
+
+Frontend responsibility:
+- Call `navigator.geolocation.getCurrentPosition()` immediately before the SOS request for the most accurate live coordinates.
+- Include the `location` object in the SOS request body when permission is granted.
+- If geolocation is denied or unavailable, still fire the SOS request without `location`.
+- The backend will fall back to the user's last known DB location, and if none exists it will continue the SOS flow and mark location as unavailable in notifications.
+
 ## Modified Files
 - `apps/backend/src/config/env.ts`
 - `apps/web/src/app/community/page.tsx`

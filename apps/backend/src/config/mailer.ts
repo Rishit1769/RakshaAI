@@ -3,20 +3,25 @@ import { env } from './env';
 import { logger } from './logger';
 
 export const emailTransporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_SECURE,
+  host: env.EMAIL_HOST,
+  port: env.EMAIL_PORT,
+  secure: env.EMAIL_SECURE,
   auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
+    user: env.EMAIL_USER,
+    pass: env.EMAIL_PASS,
   },
 });
 
 export async function verifyEmailTransporter(): Promise<void> {
+  if (!env.EMAIL_HOST || !env.EMAIL_USER || !env.EMAIL_PASS) {
+    logger.warn('Email transporter not configured - email features disabled');
+    return;
+  }
+
   try {
     await emailTransporter.verify();
-    logger.info('✅ Email transporter ready');
+    logger.info('Email transporter ready');
   } catch (error) {
-    logger.warn('Email transporter not configured — email features disabled', { error });
+    logger.warn('Email transporter verification failed - email features disabled', { error });
   }
 }

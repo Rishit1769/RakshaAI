@@ -1,19 +1,20 @@
 import { AlertType, AlertStatus, SosTriggerMethod, IncidentSeverity } from '@prisma/client';
 import { prisma } from '../config/database';
 import { generateAlertCode } from '../utils/helpers';
-import { sendEmergencyEmail } from './email.service';
 import { AppError } from '../middleware/error.middleware';
 import { logger } from '../config/logger';
 import { emitSOSCreated, emitAlertStatusChanged } from '../sockets';
-
-// ─── Types ─────────────────────────────────────────────────────────────────
+import { sendSOSAlert } from './emailService';
 
 export interface CreateSosInput {
   userId: string;
   triggerMethod: SosTriggerMethod;
   alertType?: AlertType;
-  latitude: number;
-  longitude: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
   description?: string;
   address?: string;
 }
@@ -28,14 +29,20 @@ export interface UpdateSosStatusInput {
   longitude?: number;
 }
 
-// ─── SOS Service ────────────────────────────────────────────────────────────
+interface ResolvedSosLocation {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  source: 'live' | 'last_known';
+}
 
 /**
  * Creates a new SOS alert. This is the highest-priority operation in the system.
- * Must succeed fast — AI classification and notification happen asynchronously.
+ * Must succeed fast - AI classification and notification happen asynchronously.
  */
 export async function createSosAlert(input: CreateSosInput) {
-  const { userId, triggerMethod, alertType, latitude, longitude, description, address } = input;
+  const { userId, triggerMethod, alertType, location, description, address } = input;
+  const resolvedLocation = await resolveSosLocation(userId, location);
 
   const alertCode = generateAlertCode();
 
@@ -48,22 +55,37 @@ export async function createSosAlert(input: CreateSosInput) {
       status: AlertStatus.pending,
       severity: IncidentSeverity.high,
       description,
-      triggerLatitude: latitude,
-      triggerLongitude: longitude,
+      triggerLatitude: resolvedLocation?.latitude,
+      triggerLongitude: resolvedLocation?.longitude,
       triggerAddress: address,
+      currentLatitude: resolvedLocation?.latitude,
+      currentLongitude: resolvedLocation?.longitude,
     },
   });
 
-  logger.warn('🚨 SOS Alert created', {
+  if (resolvedLocation) {
+    await prisma.userLocation.create({
+      data: {
+        userId,
+        alertId: alert.id,
+        latitude: resolvedLocation.latitude,
+        longitude: resolvedLocation.longitude,
+        accuracyMeters: resolvedLocation.accuracy,
+      },
+    });
+  }
+
+  logger.warn('SOS alert created', {
     alertId: alert.id,
     alertCode,
     userId,
     triggerMethod,
-    latitude,
-    longitude,
+    latitude: resolvedLocation?.latitude,
+    longitude: resolvedLocation?.longitude,
+    accuracy: resolvedLocation?.accuracy,
+    locationSource: resolvedLocation?.source ?? 'unavailable',
   });
 
-  // Broadcast to all connected responders in real-time
   try {
     emitSOSCreated({
       alertId: alert.id,
@@ -71,18 +93,16 @@ export async function createSosAlert(input: CreateSosInput) {
       userId,
       alertType: alert.alertType,
       triggerMethod: alert.triggerMethod,
-      latitude,
-      longitude,
+      latitude: resolvedLocation?.latitude ?? 0,
+      longitude: resolvedLocation?.longitude ?? 0,
       address,
       createdAt: alert.createdAt.toISOString(),
     });
   } catch {
-    // Socket failure must NOT block alert creation
     logger.error('Socket emit failed for SOS_CREATED', { alertId: alert.id });
   }
 
-  // Fire-and-forget: notify emergency contacts (non-blocking)
-  void notifyEmergencyContacts(userId, alert.id, alertCode, latitude, longitude, description);
+  void notifyEmergencyContacts(userId, alert.id, resolvedLocation);
 
   return alert;
 }
@@ -91,12 +111,11 @@ export async function createSosAlert(input: CreateSosInput) {
  * Updates the status of an existing SOS alert and writes audit trail.
  */
 export async function updateAlertStatus(input: UpdateSosStatusInput) {
-  const { alertId, userId, userRole, newStatus, notes, latitude, longitude } = input;
+  const { alertId, userId, userRole, newStatus, notes } = input;
 
   const alert = await prisma.sosAlert.findUnique({ where: { id: alertId } });
   if (!alert) throw new AppError('Alert not found', 404);
 
-  // Only the alert owner, assigned responders, police, admin can update
   const canUpdate =
     alert.userId === userId ||
     alert.assignedVolunteerId === userId ||
@@ -106,7 +125,6 @@ export async function updateAlertStatus(input: UpdateSosStatusInput) {
 
   if (!canUpdate) throw new AppError('You are not authorized to update this alert', 403);
 
-  // Write status history before updating
   await prisma.alertStatusHistory.create({
     data: {
       alertId,
@@ -134,7 +152,6 @@ export async function updateAlertStatus(input: UpdateSosStatusInput) {
     updatedBy: userId,
   });
 
-  // Broadcast status change to all alert room subscribers
   try {
     emitAlertStatusChanged(alertId, {
       alertId,
@@ -150,11 +167,6 @@ export async function updateAlertStatus(input: UpdateSosStatusInput) {
   return updatedAlert;
 }
 
-/**
- * Fetches active alerts — filtered by role:
- * - user: their own active alerts
- * - volunteer/police/admin: all active alerts in system
- */
 export async function getActiveAlerts(userId: string, userRole: string) {
   if (userRole === 'user') {
     return prisma.sosAlert.findMany({
@@ -167,7 +179,6 @@ export async function getActiveAlerts(userId: string, userRole: string) {
     });
   }
 
-  // Responders and admins see all non-resolved active alerts
   return prisma.sosAlert.findMany({
     where: {
       status: { in: [AlertStatus.pending, AlertStatus.active, AlertStatus.accepted, AlertStatus.escalated] },
@@ -181,9 +192,6 @@ export async function getActiveAlerts(userId: string, userRole: string) {
   });
 }
 
-/**
- * Gets a single alert by ID. Only accessible by owner or responders.
- */
 export async function getAlertById(alertId: string, userId: string, userRole: string) {
   const alert = await prisma.sosAlert.findUnique({
     where: { id: alertId },
@@ -206,9 +214,6 @@ export async function getAlertById(alertId: string, userId: string, userRole: st
   return alert;
 }
 
-/**
- * Gets alert history for the authenticated user.
- */
 export async function getUserAlertHistory(userId: string, page = 1, limit = 20) {
   const skip = (page - 1) * limit;
 
@@ -226,6 +231,8 @@ export async function getUserAlertHistory(userId: string, page = 1, limit = 20) 
         severity: true,
         triggerMethod: true,
         triggerAddress: true,
+        triggerLatitude: true,
+        triggerLongitude: true,
         createdAt: true,
         resolvedAt: true,
       },
@@ -236,9 +243,6 @@ export async function getUserAlertHistory(userId: string, page = 1, limit = 20) 
   return { alerts, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
-/**
- * Cancels an active SOS alert (user-initiated).
- */
 export async function cancelAlert(alertId: string, userId: string): Promise<void> {
   const alert = await prisma.sosAlert.findUnique({ where: { id: alertId } });
   if (!alert) throw new AppError('Alert not found', 404);
@@ -273,15 +277,10 @@ export async function cancelAlert(alertId: string, userId: string): Promise<void
   logger.info('Alert cancelled by user', { alertId, userId });
 }
 
-// ─── Internal: Notify Emergency Contacts ─────────────────────────────────────
-
 async function notifyEmergencyContacts(
   userId: string,
   alertId: string,
-  alertCode: string,
-  latitude: number,
-  longitude: number,
-  message?: string
+  location: ResolvedSosLocation | null
 ): Promise<void> {
   try {
     const user = await prisma.user.findUnique({
@@ -296,30 +295,56 @@ async function notifyEmergencyContacts(
 
     if (!user) return;
 
-    type EmergencyContactTarget = { name: string; email: string | null };
-    const contacts = user.emergencyContacts as EmergencyContactTarget[];
-
-    const emailPromises = contacts
-      .filter((c: EmergencyContactTarget) => c.email)
-      .map((contact) =>
-        sendEmergencyEmail({
-          to: contact.email!,
-          contactName: contact.name,
-          userName: user.fullName,
-          alertCode,
-          latitude,
-          longitude,
-          message,
-        })
-      );
-
-    await Promise.allSettled(emailPromises);
-    logger.info('Emergency contacts notified', {
-      alertId,
-      count: emailPromises.length,
-    });
+    await sendSOSAlert(
+      {
+        fullName: user.fullName,
+        phone: user.phone,
+        email: user.email,
+        triggeredAt: new Date(),
+        alertId,
+      },
+      user.emergencyContacts.map((contact) => ({
+        id: contact.id,
+        name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
+      })),
+      location
+    );
   } catch (error) {
-    // Notification failure MUST NOT affect SOS creation
     logger.error('Failed to notify emergency contacts', { alertId, error });
   }
+}
+
+async function resolveSosLocation(
+  userId: string,
+  location?: CreateSosInput['location']
+): Promise<ResolvedSosLocation | null> {
+  if (location) {
+    return {
+      latitude: location.latitude,
+      longitude: location.longitude,
+      accuracy: location.accuracy,
+      source: 'live',
+    };
+  }
+
+  const lastKnownLocation = await prisma.userLocation.findFirst({
+    where: { userId },
+    orderBy: { recordedAt: 'desc' },
+  });
+
+  if (!lastKnownLocation) {
+    return null;
+  }
+
+  return {
+    latitude: lastKnownLocation.latitude,
+    longitude: lastKnownLocation.longitude,
+    accuracy:
+      lastKnownLocation.accuracyMeters !== null && lastKnownLocation.accuracyMeters !== undefined
+        ? Number(lastKnownLocation.accuracyMeters)
+        : undefined,
+    source: 'last_known',
+  };
 }

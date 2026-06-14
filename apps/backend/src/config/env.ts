@@ -21,9 +21,6 @@ const requiredEnvVars: string[] = [
   'DATABASE_URL',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',
-  'SMTP_HOST',
-  'SMTP_USER',
-  'SMTP_PASS',
 ];
 
 for (const envVar of requiredEnvVars) {
@@ -46,12 +43,16 @@ export const env = {
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
 
   // SMTP / Email
-  SMTP_HOST: process.env.SMTP_HOST as string,
-  SMTP_PORT: parseInt(process.env.SMTP_PORT ?? '587', 10),
-  SMTP_SECURE: (process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true',
-  SMTP_USER: process.env.SMTP_USER as string,
-  SMTP_PASS: process.env.SMTP_PASS as string,
-  SMTP_FROM: process.env.SMTP_FROM ?? `RakshaAI <${process.env.SMTP_USER}>`,
+  EMAIL_HOST: process.env.EMAIL_HOST ?? process.env.SMTP_HOST ?? '',
+  EMAIL_PORT: parseInt(process.env.EMAIL_PORT ?? process.env.SMTP_PORT ?? '587', 10),
+  EMAIL_SECURE: (process.env.EMAIL_SECURE ?? process.env.SMTP_SECURE ?? 'false').toLowerCase() === 'true',
+  EMAIL_USER: process.env.EMAIL_USER ?? process.env.SMTP_USER ?? '',
+  EMAIL_PASS: process.env.EMAIL_PASS ?? process.env.SMTP_PASS ?? '',
+  EMAIL_FROM:
+    process.env.EMAIL_FROM ??
+    process.env.SMTP_FROM ??
+    `Raksha AI <${process.env.EMAIL_USER ?? process.env.SMTP_USER ?? 'noreply@rakshaai.app'}>`,
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY ?? '',
 
   // MinIO
   MINIO_ENDPOINT: process.env.MINIO_ENDPOINT ?? 'localhost',

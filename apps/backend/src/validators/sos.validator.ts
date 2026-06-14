@@ -2,6 +2,13 @@ import { z } from 'zod';
 
 const latitudeSchema = z.number().min(-90).max(90);
 const longitudeSchema = z.number().min(-180).max(180);
+const accuracySchema = z.number().nonnegative().max(100000);
+
+const locationSchema = z.object({
+  latitude: latitudeSchema,
+  longitude: longitudeSchema,
+  accuracy: accuracySchema.optional(),
+});
 
 export const createSosSchema = z.object({
   triggerMethod: z.enum(
@@ -16,8 +23,7 @@ export const createSosSchema = z.object({
     ])
     .optional(),
 
-  latitude: latitudeSchema,
-  longitude: longitudeSchema,
+  location: locationSchema.optional(),
 
   description: z.string().trim().max(1000, 'Description too long').optional(),
   address: z.string().trim().max(300, 'Address too long').optional(),

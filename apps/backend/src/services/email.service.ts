@@ -18,7 +18,7 @@ export async function sendEmergencyEmail(options: SendEmergencyEmailOptions): Pr
 
   try {
     await emailTransporter.sendMail({
-      from: env.SMTP_FROM,
+      from: env.EMAIL_FROM,
       to,
       subject: `Emergency alert ${alertCode}`,
       html: `
@@ -37,7 +37,7 @@ export async function sendEmergencyEmail(options: SendEmergencyEmailOptions): Pr
 export async function sendOtpEmail(email: string, otp: string): Promise<void> {
   try {
     await emailTransporter.sendMail({
-      from: `"Disaster Relief Platform" <${env.SMTP_FROM}>`,
+      from: env.EMAIL_FROM,
       to: email,
       subject: 'Your Registration OTP — Disaster Relief Platform',
       html: `
@@ -88,7 +88,7 @@ export async function sendPoliceAlertEmail(options: PoliceAlertEmailOptions): Pr
 
   try {
     await emailTransporter.sendMail({
-      from: env.SMTP_FROM,
+      from: env.EMAIL_FROM,
       to: env.POLICE_ALERT_EMAIL,
       subject: '[CRITICAL ALERT] High-Density Incident Zone Detected — Immediate Attention Required',
       html: `

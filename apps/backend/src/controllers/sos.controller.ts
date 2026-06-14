@@ -1,20 +1,23 @@
 import { Request, Response } from 'express';
 import * as SosService from '../services/sos.service';
 import { asyncHandler } from '../utils/asyncHandler';
-import { sendSuccess, sendCreated, sendBadRequest } from '../utils/response';
+import { sendSuccess, sendCreated } from '../utils/response';
 import { SosTriggerMethod, AlertType, AlertStatus } from '@prisma/client';
 
 /**
  * POST /api/sos
  * Creates a new SOS alert for the authenticated user.
- * This is the highest-priority endpoint — must respond in < 500ms.
+ * This is the highest-priority endpoint - must respond in < 500ms.
  */
 export const createAlert = asyncHandler(async (req: Request, res: Response) => {
-  const { triggerMethod, alertType, latitude, longitude, description, address } = req.body as {
+  const { triggerMethod, alertType, location, description, address } = req.body as {
     triggerMethod: SosTriggerMethod;
     alertType?: AlertType;
-    latitude: number;
-    longitude: number;
+    location?: {
+      latitude: number;
+      longitude: number;
+      accuracy?: number;
+    };
     description?: string;
     address?: string;
   };
@@ -23,8 +26,7 @@ export const createAlert = asyncHandler(async (req: Request, res: Response) => {
     userId: req.user!.id,
     triggerMethod,
     alertType,
-    latitude,
-    longitude,
+    location,
     description,
     address,
   });

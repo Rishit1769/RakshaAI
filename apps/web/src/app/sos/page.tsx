@@ -21,7 +21,7 @@ export default function SosPage() {
 
   const [selectedType, setSelectedType] = useState<AlertType>('general_danger');
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
   const [locationError, setLocationError] = useState('');
 
   useEffect(() => {
@@ -30,27 +30,20 @@ export default function SosPage() {
       return;
     }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-        () => {
-          setLocationError('Location unavailable - using default coordinates.');
-          setLocation({ latitude: 0, longitude: 0 });
-        },
-        { timeout: 5000, enableHighAccuracy: true }
-      );
-    } else {
-      setLocation({ latitude: 0, longitude: 0 });
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported on this device. SOS will still be sent.');
+      return;
     }
+
+    void refreshLocation();
   }, [isAuthenticated, router]);
 
   const sosMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: ({ location }: { location?: { latitude: number; longitude: number; accuracy?: number } }) =>
       sosApi.create({
         triggerMethod: 'tap',
         alertType: selectedType,
-        latitude: location!.latitude,
-        longitude: location!.longitude,
+        location,
         description: description.trim() || undefined,
       }),
     onSuccess: (response) => {
@@ -59,10 +52,42 @@ export default function SosPage() {
     },
   });
 
-  const handleSos = useCallback(() => {
-    if (!location) return;
-    sosMutation.mutate();
-  }, [location, sosMutation]);
+  const handleSos = useCallback(async () => {
+    const liveLocation = await refreshLocation();
+
+    sosMutation.mutate({
+      location: liveLocation ?? undefined,
+    });
+  }, [sosMutation]);
+
+  async function refreshLocation() {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported on this device. SOS will still be sent.');
+      setLocation(null);
+      return null;
+    }
+
+    return new Promise<{ latitude: number; longitude: number; accuracy?: number } | null>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const nextLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          };
+          setLocation(nextLocation);
+          setLocationError('');
+          resolve(nextLocation);
+        },
+        () => {
+          setLocationError('Location permission denied or unavailable. SOS will still be sent.');
+          setLocation(null);
+          resolve(null);
+        },
+        { timeout: 5000, enableHighAccuracy: true, maximumAge: 0 }
+      );
+    });
+  }
 
   if (!isAuthenticated) return null;
 
@@ -83,11 +108,11 @@ export default function SosPage() {
         <div className={`rounded-2xl px-3 py-2 text-xs ${location ? 'bg-green-500/15 text-green-300' : 'bg-amber-500/10 text-amber-200'}`}>
           {location
             ? locationError || `Location acquired (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})`
-            : 'Acquiring your location...'}
+            : locationError || 'Acquiring your location... SOS can still be sent if this fails.'}
         </div>
 
         <div className="flex flex-col items-center gap-3 py-4">
-          <button className="btn-sos disabled:cursor-not-allowed disabled:opacity-60" onClick={handleSos} disabled={!location || sosMutation.isPending} aria-label="Send SOS emergency alert">
+          <button className="btn-sos disabled:cursor-not-allowed disabled:opacity-60" onClick={handleSos} disabled={sosMutation.isPending} aria-label="Send SOS emergency alert">
             {sosMutation.isPending ? '...' : 'SOS'}
           </button>
           <p className="text-center text-sm text-slate-300">

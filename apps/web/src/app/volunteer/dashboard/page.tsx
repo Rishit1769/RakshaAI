@@ -12,8 +12,8 @@ interface AlertItem {
   alertCode: string;
   alertType: string;
   severity: string;
-  triggerLatitude: number;
-  triggerLongitude: number;
+  triggerLatitude?: number | null;
+  triggerLongitude?: number | null;
   triggerAddress?: string;
   description?: string;
   createdAt: string;
