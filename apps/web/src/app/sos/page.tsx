@@ -111,15 +111,6 @@ export default function SosPage() {
             : locationError || 'Acquiring your location... SOS can still be sent if this fails.'}
         </div>
 
-        <div className="flex flex-col items-center gap-3 py-4">
-          <button className="btn-sos disabled:cursor-not-allowed disabled:opacity-60" onClick={handleSos} disabled={sosMutation.isPending} aria-label="Send SOS emergency alert">
-            {sosMutation.isPending ? '...' : 'SOS'}
-          </button>
-          <p className="text-center text-sm text-slate-300">
-            {sosMutation.isPending ? 'Sending emergency alert...' : 'Tap to send an immediate emergency alert'}
-          </p>
-        </div>
-
         <div>
           <h2 className="mb-3 text-sm font-semibold text-white">Type of Emergency</h2>
           <div className="grid grid-cols-2 gap-2">
@@ -154,6 +145,20 @@ export default function SosPage() {
             className="min-h-28 w-full resize-none rounded-2xl border border-white/10 bg-[#111827] px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <p className="mt-1 text-right text-xs text-slate-400">{description.length}/500</p>
+        </div>
+
+        <div className="space-y-3 pt-2">
+          <button
+            className="btn-sos mx-auto block disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleSos}
+            disabled={sosMutation.isPending}
+            aria-label="Send SOS emergency alert"
+          >
+            {sosMutation.isPending ? '...' : 'SOS'}
+          </button>
+          <p className="text-center text-sm text-slate-300">
+            {sosMutation.isPending ? 'Sending emergency alert...' : 'Tap to send your SOS after reviewing the details above'}
+          </p>
         </div>
 
         {sosMutation.isError ? (
