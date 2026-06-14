@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { AppShell } from '@/components/layout/AppShell';
 import { api } from '@/lib/api/fetcher';
 
 export default function VolunteerRegisterPage() {
@@ -33,33 +34,35 @@ export default function VolunteerRegisterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-light p-4 md:p-6">
-      <div className="max-w-xl mx-auto card">
-        <h1 className="text-xl font-bold text-navy">Volunteer Registration</h1>
-        <p className="text-sm text-muted mt-1">Complete your responder profile to receive nearby SOS alerts.</p>
-        <form onSubmit={submit} className="mt-6 space-y-4">
+    <AppShell title="Volunteer Registration" subtitle="Complete your responder profile to receive nearby SOS alerts." backLabel="Dashboard">
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="surface-panel p-8">
+          <span className="eyebrow">Community response</span>
+          <h2 className="display-subsection mt-6">Join the network that helps shorten the gap between alert and assistance.</h2>
+        </div>
+        <form onSubmit={submit} className="product-card space-y-4 p-8">
           <label className="block">
-            <span className="text-sm font-medium text-navy">Skills (comma separated)</span>
-            <input className="input-field mt-1" value={skills} onChange={(e) => setSkills(e.target.value)} />
+            <span className="text-sm font-medium text-ink">Skills (comma separated)</span>
+            <input className="input-field mt-2" value={skills} onChange={(e) => setSkills(e.target.value)} />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-navy">Languages (comma separated)</span>
-            <input className="input-field mt-1" value={languages} onChange={(e) => setLanguages(e.target.value)} />
+            <span className="text-sm font-medium text-ink">Languages (comma separated)</span>
+            <input className="input-field mt-2" value={languages} onChange={(e) => setLanguages(e.target.value)} />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-navy">Service radius (km)</span>
-            <input className="input-field mt-1" value={radius} onChange={(e) => setRadius(e.target.value.replace(/\D/g, ''))} />
+            <span className="text-sm font-medium text-ink">Service radius (km)</span>
+            <input className="input-field mt-2" value={radius} onChange={(e) => setRadius(e.target.value.replace(/\D/g, ''))} />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-navy">NGO Affiliation (optional)</span>
-            <input className="input-field mt-1" value={ngo} onChange={(e) => setNgo(e.target.value)} />
+            <span className="text-sm font-medium text-ink">NGO Affiliation (optional)</span>
+            <input className="input-field mt-2" value={ngo} onChange={(e) => setNgo(e.target.value)} />
           </label>
-          {error && <p className="text-sm text-emergency">{error}</p>}
+          {error ? <p className="text-sm text-emergency">{error}</p> : null}
           <button type="submit" className="btn-primary w-full" disabled={loading}>
             {loading ? 'Saving...' : 'Create Volunteer Profile'}
           </button>
         </form>
       </div>
-    </main>
+    </AppShell>
   );
 }

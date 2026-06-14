@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import MarketingNav from '@/components/layout/MarketingNav';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import PasswordStrength from '@/components/ui/PasswordStrength';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 import { authApi } from '@/lib/api/auth.api';
 import { ApiError } from '@/lib/api/fetcher';
 import { useAuthStore } from '@/store/auth.store';
@@ -80,14 +80,12 @@ function validateProfile(form: ProfileFormState): ProfileErrors {
 export default function RegisterPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
-
   const [step, setStep] = useState<RegisterStep>(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [otpVerified, setOtpVerified] = useState(false);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [resendAvailableAt, setResendAvailableAt] = useState<number | null>(null);
-
   const [profile, setProfile] = useState<ProfileFormState>({
     fullName: '',
     phone: '',
@@ -105,7 +103,6 @@ export default function RegisterPage() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [creatingAccount, setCreatingAccount] = useState(false);
-
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -231,39 +228,38 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-[#F7F8FC] via-[#EEF1F8] to-[#E6ECF7] px-4 py-12 dark:from-[#0B1026] dark:via-[#111827] dark:to-[#0B1026]">
-      <div className="fixed right-4 top-4 z-50"><ThemeToggle /></div>
-      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/15 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[#7B61FF]/10 blur-3xl" />
+    <main className="min-h-screen bg-background">
+      <MarketingNav />
+      <section className="page-container grid gap-8 py-10 lg:grid-cols-[0.88fr_1.02fr] lg:py-16">
+        <div className="surface-panel p-8 lg:p-12">
+          <span className="eyebrow">Account onboarding</span>
+          <h1 className="display-section mt-6">Set up a safety account that is ready before you need it.</h1>
+          <p className="mt-4 text-lg leading-8 text-body">
+            Verify identity, create protected credentials, and optionally enable MPIN for faster access during urgent moments.
+          </p>
 
-      <div className="relative z-10 w-full max-w-md">
-        <Link href="/" className="mb-6 inline-flex text-sm text-navy/55 transition-colors hover:text-navy dark:text-white/45 dark:hover:text-white/70">
-          Back
-        </Link>
+          <div className="mt-10 space-y-4">
+            {['Email verification before account creation', 'Structured profile fields for emergency use', 'Optional MPIN for quicker re-entry'].map((item) => (
+              <div key={item} className="rounded-xl border border-hairline bg-white px-4 py-4 dark:bg-[#14171d]">
+                <p className="text-sm leading-7 text-body">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-        <div className="animate-slide-up rounded-2xl border border-navy/10 bg-white/90 p-8 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-          <div className="mb-7">
-            <h1 className="text-2xl font-bold text-navy dark:text-white">Create Account</h1>
-            <p className="mt-1 text-sm text-navy/65 dark:text-white/45">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="font-medium text-primary transition-colors hover:text-primary-400">Sign in</Link>
-            </p>
+        <div className="product-card p-8 lg:p-10">
+          <div className="mb-8">
+            <p className="text-sm font-semibold text-ink">Create account</p>
+            <p className="mt-2 text-sm text-muted">Move from verification to full profile setup inside one consistent flow.</p>
           </div>
 
-          <div className="mb-6 flex items-center gap-2">
+          <div className="mb-6 flex items-center gap-3">
             {[1, 2, 3].map((item) => (
-              <div key={item} className="flex flex-1 items-center gap-2">
-                <div
-                  className={[
-                    'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors',
-                    step >= item ? 'bg-primary text-white' : 'bg-navy/10 text-navy/45 dark:bg-white/10 dark:text-white/40',
-                  ].join(' ')}
-                >
+              <div key={item} className="flex flex-1 items-center gap-3">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${step >= item ? 'bg-primary text-white' : 'bg-surface-card text-muted'}`}>
                   {item}
                 </div>
-                {item < 3 ? (
-                  <div className={`h-1 flex-1 rounded-full ${step > item ? 'bg-primary' : 'bg-navy/10 dark:bg-white/10'}`} />
-                ) : null}
+                {item < 3 ? <div className={`h-px flex-1 ${step > item ? 'bg-primary' : 'bg-hairline'}`} /> : null}
               </div>
             ))}
           </div>
@@ -277,26 +273,24 @@ export default function RegisterPage() {
           {step === 1 ? (
             <div className="space-y-4">
               <div>
-                <h2 className="text-base font-semibold text-navy dark:text-white">Step 1: Verify your email</h2>
-                <p className="mt-1 text-sm text-navy/60 dark:text-white/45">We&apos;ll send a 6-digit code to your inbox before creating the account.</p>
+                <h2 className="text-lg font-semibold text-ink">Step 1: Verify your email</h2>
+                <p className="mt-2 text-sm text-muted">We’ll send a 6-digit code before activating the account.</p>
               </div>
 
               <FloatingLabelInput
                 label="Email Address"
                 type="email"
                 value={email}
-                onChange={(event) => { setEmail(event.target.value); setFormError(''); }}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setFormError('');
+                }}
                 autoComplete="email"
                 disabled={sendingOtp}
               />
 
-              <button
-                type="button"
-                onClick={sendOtpRequest}
-                disabled={sendingOtp}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white transition-all hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {sendingOtp ? <><Spinner /> Sending code...</> : 'Send Verification Code'}
+              <button type="button" onClick={sendOtpRequest} disabled={sendingOtp} className="btn-primary w-full">
+                {sendingOtp ? 'Sending code...' : 'Send verification code'}
               </button>
             </div>
           ) : null}
@@ -304,13 +298,13 @@ export default function RegisterPage() {
           {step === 2 ? (
             <div className="space-y-4">
               <div>
-                <h2 className="text-base font-semibold text-navy dark:text-white">Step 2: Enter your code</h2>
-                <p className="mt-1 text-sm text-navy/60 dark:text-white/45">A 6-digit code has been sent to {email}.</p>
+                <h2 className="text-lg font-semibold text-ink">Step 2: Enter your code</h2>
+                <p className="mt-2 text-sm text-muted">A 6-digit code has been sent to {email}.</p>
               </div>
 
-              <div className="rounded-xl border border-navy/10 bg-navy/5 p-4 dark:border-white/10 dark:bg-white/5">
-                <p className="text-sm font-medium text-navy dark:text-white">Code expires in {formatCountdown(secondsRemaining)}</p>
-                <p className="mt-1 text-xs text-navy/55 dark:text-white/40">Keep this tab open while you complete verification.</p>
+              <div className="rounded-xl bg-surface-card p-4">
+                <p className="text-sm font-semibold text-ink">Code expires in {formatCountdown(secondsRemaining)}</p>
+                <p className="mt-1 text-xs text-muted">Keep this tab open while you complete verification.</p>
               </div>
 
               <FloatingLabelInput
@@ -327,34 +321,16 @@ export default function RegisterPage() {
                 className="text-center text-lg tracking-[0.4em]"
               />
 
-              <button
-                type="button"
-                onClick={verifyOtpRequest}
-                disabled={verifyingOtp}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white transition-all hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {verifyingOtp ? <><Spinner /> Verifying code...</> : 'Verify Code'}
+              <button type="button" onClick={verifyOtpRequest} disabled={verifyingOtp} className="btn-primary w-full">
+                {verifyingOtp ? 'Verifying code...' : 'Verify code'}
               </button>
 
               <div className="flex items-center justify-between text-sm">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep(1);
-                    setFormError('');
-                  }}
-                  className="font-medium text-navy/60 transition-colors hover:text-navy dark:text-white/45 dark:hover:text-white/70"
-                >
+                <button type="button" onClick={() => setStep(1)} className="font-medium text-muted">
                   Change email
                 </button>
-
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={resendCooldownRemaining > 0 || sendingOtp}
-                  className="font-medium text-primary transition-colors hover:text-primary-400 disabled:cursor-not-allowed disabled:text-navy/35 dark:disabled:text-white/25"
-                >
-                  {resendCooldownRemaining > 0 ? `Resend Code in ${resendCooldownRemaining}s` : 'Resend Code'}
+                <button type="button" onClick={handleResendOtp} disabled={resendCooldownRemaining > 0 || sendingOtp} className="font-medium text-ink disabled:text-muted-soft">
+                  {resendCooldownRemaining > 0 ? `Resend in ${resendCooldownRemaining}s` : 'Resend code'}
                 </button>
               </div>
             </div>
@@ -363,8 +339,8 @@ export default function RegisterPage() {
           {step === 3 ? (
             <form onSubmit={handleCreateAccount} noValidate className="space-y-4">
               <div>
-                <h2 className="text-base font-semibold text-navy dark:text-white">Step 3: Complete your profile</h2>
-                <p className="mt-1 text-sm text-navy/60 dark:text-white/45">Your email has been verified. Finish setting up your account.</p>
+                <h2 className="text-lg font-semibold text-ink">Step 3: Complete your profile</h2>
+                <p className="mt-2 text-sm text-muted">Finish account setup and decide whether MPIN should be enabled.</p>
               </div>
 
               <FloatingLabelInput label="Full Name" type="text" value={profile.fullName} onChange={(event) => updateProfileField('fullName', event.target.value)} error={errors.fullName} autoComplete="name" disabled={creatingAccount} />
@@ -381,7 +357,7 @@ export default function RegisterPage() {
                   autoComplete="new-password"
                   disabled={creatingAccount}
                   rightElement={
-                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="transition-colors hover:text-navy dark:hover:text-white/70" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="transition-colors hover:text-ink dark:hover:text-white" aria-label={showPassword ? 'Hide password' : 'Show password'}>
                       <EyeIcon />
                     </button>
                   }
@@ -398,19 +374,19 @@ export default function RegisterPage() {
                 autoComplete="new-password"
                 disabled={creatingAccount}
                 rightElement={
-                  <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="transition-colors hover:text-navy dark:hover:text-white/70" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                  <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="transition-colors hover:text-ink dark:hover:text-white" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
                     <EyeIcon />
                   </button>
                 }
               />
 
-              <div className="rounded-2xl border border-navy/10 bg-navy/5 p-4 dark:border-white/10 dark:bg-white/5">
+              <div className="rounded-xl bg-surface-card p-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-navy dark:text-white">Set up MPIN (optional)</h3>
-                    <p className="mt-1 text-xs text-navy/60 dark:text-white/40">Use a private 6-digit MPIN for faster sign-in later.</p>
+                    <h3 className="text-sm font-semibold text-ink">Set up MPIN (optional)</h3>
+                    <p className="mt-1 text-xs text-muted">Use a private 6-digit MPIN for faster sign-in later.</p>
                   </div>
-                  <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-navy dark:text-white">
+                  <label className="inline-flex items-center gap-2 text-sm font-medium text-ink">
                     <input
                       type="checkbox"
                       checked={profile.enableMpin}
@@ -422,7 +398,7 @@ export default function RegisterPage() {
                           setErrors((prev) => ({ ...prev, mpin: undefined, confirmMpin: undefined }));
                         }
                       }}
-                      className="h-4 w-4 rounded border-navy/20 text-primary focus:ring-primary"
+                      className="h-4 w-4 rounded border-hairline text-primary focus:ring-0"
                     />
                     Enable
                   </label>
@@ -430,47 +406,32 @@ export default function RegisterPage() {
 
                 {profile.enableMpin ? (
                   <div className="mt-4 space-y-4">
-                    <FloatingLabelInput
-                      label="Enter 6-digit MPIN"
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={profile.mpin}
-                      onChange={(event) => updateProfileField('mpin', event.target.value.replace(/\D/g, ''))}
-                      error={errors.mpin}
-                      disabled={creatingAccount}
-                    />
-                    <FloatingLabelInput
-                      label="Confirm MPIN"
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={profile.confirmMpin}
-                      onChange={(event) => updateProfileField('confirmMpin', event.target.value.replace(/\D/g, ''))}
-                      error={errors.confirmMpin}
-                      disabled={creatingAccount}
-                    />
+                    <FloatingLabelInput label="Enter 6-digit MPIN" type="password" inputMode="numeric" maxLength={6} value={profile.mpin} onChange={(event) => updateProfileField('mpin', event.target.value.replace(/\D/g, ''))} error={errors.mpin} disabled={creatingAccount} />
+                    <FloatingLabelInput label="Confirm MPIN" type="password" inputMode="numeric" maxLength={6} value={profile.confirmMpin} onChange={(event) => updateProfileField('confirmMpin', event.target.value.replace(/\D/g, ''))} error={errors.confirmMpin} disabled={creatingAccount} />
                   </div>
                 ) : null}
               </div>
 
-              <button type="submit" disabled={creatingAccount} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white transition-all hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60">
-                {creatingAccount ? <><Spinner /> Creating account...</> : 'Create Account'}
+              <button type="submit" disabled={creatingAccount} className="btn-primary w-full">
+                {creatingAccount ? 'Creating account...' : 'Create account'}
               </button>
             </form>
           ) : null}
 
-          <p className="mt-5 text-center text-xs leading-relaxed text-navy/60 dark:text-white/35">
+          <p className="mt-6 text-xs leading-relaxed text-muted">
             Your Aadhaar number is encrypted at rest and never shared with third parties.
           </p>
+
+          <p className="mt-4 text-sm text-muted">
+            Already have an account?{' '}
+            <Link href="/auth/login" className="font-semibold text-ink">
+              Sign in
+            </Link>
+          </p>
         </div>
-      </div>
+      </section>
     </main>
   );
-}
-
-function Spinner() {
-  return <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>;
 }
 
 function EyeIcon() {

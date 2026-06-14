@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { authApi, type AuthUser } from '@/lib/api/auth.api';
 import { ApiError } from '@/lib/api/fetcher';
 import { useAuthStore } from '@/store/auth.store';
+import { AppShell } from '@/components/layout/AppShell';
 
 type MpinMode = 'setup' | 'change' | 'disable' | null;
 
@@ -19,7 +18,6 @@ function validateNewMpin(value: string) {
 }
 
 export default function SettingsPage() {
-  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const [me, setMe] = useState<AuthUser | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -37,11 +35,7 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-      return;
-    }
-
+    if (!isAuthenticated) return;
     void (async () => {
       try {
         const response = await authApi.getMe();
@@ -52,17 +46,10 @@ export default function SettingsPage() {
         setLoadingProfile(false);
       }
     })();
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated]);
 
   function resetForms() {
-    setForm({
-      mpin: '',
-      confirmMpin: '',
-      currentMpin: '',
-      newMpin: '',
-      newConfirmMpin: '',
-      disableCurrentMpin: '',
-    });
+    setForm({ mpin: '', confirmMpin: '', currentMpin: '', newMpin: '', newConfirmMpin: '', disableCurrentMpin: '' });
     setFormError('');
     setSuccessMessage('');
   }
@@ -74,14 +61,7 @@ export default function SettingsPage() {
 
   function closeMode() {
     setActionMode(null);
-    setForm({
-      mpin: '',
-      confirmMpin: '',
-      currentMpin: '',
-      newMpin: '',
-      newConfirmMpin: '',
-      disableCurrentMpin: '',
-    });
+    setForm({ mpin: '', confirmMpin: '', currentMpin: '', newMpin: '', newConfirmMpin: '', disableCurrentMpin: '' });
     setFormError('');
   }
 
@@ -101,7 +81,6 @@ export default function SettingsPage() {
       setFormError('MPINs do not match.');
       return;
     }
-
     setSubmitting(true);
     setFormError('');
     try {
@@ -130,15 +109,10 @@ export default function SettingsPage() {
       setFormError('MPINs do not match.');
       return;
     }
-
     setSubmitting(true);
     setFormError('');
     try {
-      await authApi.changeMpin({
-        currentMpin: form.currentMpin,
-        newMpin: form.newMpin,
-        confirmMpin: form.newConfirmMpin,
-      });
+      await authApi.changeMpin({ currentMpin: form.currentMpin, newMpin: form.newMpin, confirmMpin: form.newConfirmMpin });
       setSuccessMessage('MPIN changed successfully.');
       closeMode();
     } catch (error) {
@@ -153,7 +127,6 @@ export default function SettingsPage() {
       setFormError('Current MPIN must be exactly 6 digits.');
       return;
     }
-
     setSubmitting(true);
     setFormError('');
     try {
@@ -171,47 +144,28 @@ export default function SettingsPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <main className="min-h-screen bg-light px-4 py-8 dark:bg-[#0B1026]">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <Link href="/dashboard" className="text-sm text-navy/55 transition-colors hover:text-navy dark:text-white/45 dark:hover:text-white/70">Back to dashboard</Link>
-            <h1 className="mt-2 text-2xl font-bold text-navy dark:text-white">Account Settings</h1>
-            <p className="mt-1 text-sm text-navy/60 dark:text-white/40">Manage your faster sign-in options and account security.</p>
-          </div>
-        </div>
-
-        {successMessage ? (
-          <div className="rounded-xl border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-300">{successMessage}</div>
-        ) : null}
-
-        <section className="rounded-2xl border border-navy/10 bg-white p-6 shadow-soft dark:border-white/10 dark:bg-white/5">
+    <AppShell title="Account Settings" subtitle="Manage sign-in speed and account security." backLabel="Dashboard">
+      <div className="space-y-6">
+        {successMessage ? <div className="rounded-xl border border-safe/20 bg-safe/10 p-3 text-sm text-safe-dark">{successMessage}</div> : null}
+        <section className="product-card">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-navy dark:text-white">MPIN Settings</h2>
-              <p className="mt-1 text-sm text-navy/60 dark:text-white/40">Use a private 6-digit MPIN as an alternative sign-in method.</p>
+              <h2 className="text-lg font-semibold text-ink">MPIN Settings</h2>
+              <p className="mt-1 text-sm text-muted">Use a private 6-digit MPIN as an alternative sign-in method.</p>
             </div>
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${me?.mpinEnabled ? 'bg-green-500/10 text-green-700 dark:text-green-300' : 'bg-navy/10 text-navy/60 dark:bg-white/10 dark:text-white/45'}`}>
-              {me?.mpinEnabled ? 'Enabled' : 'Disabled'}
-            </span>
+            <span className={me?.mpinEnabled ? 'badge-safe' : 'eyebrow bg-surface-soft'}>{me?.mpinEnabled ? 'Enabled' : 'Disabled'}</span>
           </div>
 
           {loadingProfile ? (
-            <p className="mt-4 text-sm text-navy/55 dark:text-white/40">Loading settings...</p>
+            <p className="mt-4 text-sm text-muted">Loading settings...</p>
           ) : (
             <div className="mt-6 flex flex-wrap gap-3">
               {!me?.mpinEnabled ? (
-                <button type="button" onClick={() => openMode('setup')} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600">
-                  Set Up MPIN
-                </button>
+                <button type="button" onClick={() => openMode('setup')} className="btn-primary">Set Up MPIN</button>
               ) : (
                 <>
-                  <button type="button" onClick={() => openMode('change')} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600">
-                    Change MPIN
-                  </button>
-                  <button type="button" onClick={() => openMode('disable')} className="rounded-xl border border-emergency/30 px-4 py-2.5 text-sm font-semibold text-emergency transition-colors hover:bg-emergency/10">
-                    Disable MPIN
-                  </button>
+                  <button type="button" onClick={() => openMode('change')} className="btn-primary">Change MPIN</button>
+                  <button type="button" onClick={() => openMode('disable')} className="btn-secondary">Disable MPIN</button>
                 </>
               )}
             </div>
@@ -219,53 +173,39 @@ export default function SettingsPage() {
         </section>
 
         {actionMode ? (
-          <section className="rounded-2xl border border-navy/10 bg-white p-6 shadow-soft dark:border-white/10 dark:bg-white/5">
+          <section className="product-card">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-lg font-semibold text-navy dark:text-white">
-                {actionMode === 'setup' ? 'Set Up MPIN' : actionMode === 'change' ? 'Change MPIN' : 'Disable MPIN'}
-              </h3>
-              <button type="button" onClick={closeMode} className="text-sm text-navy/55 transition-colors hover:text-navy dark:text-white/45 dark:hover:text-white/70">Cancel</button>
+              <h3 className="text-lg font-semibold text-ink">{actionMode === 'setup' ? 'Set Up MPIN' : actionMode === 'change' ? 'Change MPIN' : 'Disable MPIN'}</h3>
+              <button type="button" onClick={closeMode} className="text-sm text-muted">Cancel</button>
             </div>
-
-            {formError ? (
-              <div className="mt-4 rounded-xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{formError}</div>
-            ) : null}
-
+            {formError ? <div className="mt-4 rounded-xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{formError}</div> : null}
             <div className="mt-5 space-y-4">
               {actionMode === 'setup' ? (
                 <>
                   <FloatingLabelInput label="Enter 6-digit MPIN" type="password" inputMode="numeric" maxLength={6} value={form.mpin} onChange={(event) => setForm((prev) => ({ ...prev, mpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
                   <FloatingLabelInput label="Confirm MPIN" type="password" inputMode="numeric" maxLength={6} value={form.confirmMpin} onChange={(event) => setForm((prev) => ({ ...prev, confirmMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
-                  <button type="button" onClick={handleSetup} disabled={submitting} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60">
-                    {submitting ? 'Saving...' : 'Save MPIN'}
-                  </button>
+                  <button type="button" onClick={handleSetup} disabled={submitting} className="btn-primary">{submitting ? 'Saving...' : 'Save MPIN'}</button>
                 </>
               ) : null}
-
               {actionMode === 'change' ? (
                 <>
                   <FloatingLabelInput label="Current MPIN" type="password" inputMode="numeric" maxLength={6} value={form.currentMpin} onChange={(event) => setForm((prev) => ({ ...prev, currentMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
                   <FloatingLabelInput label="New MPIN" type="password" inputMode="numeric" maxLength={6} value={form.newMpin} onChange={(event) => setForm((prev) => ({ ...prev, newMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
                   <FloatingLabelInput label="Confirm New MPIN" type="password" inputMode="numeric" maxLength={6} value={form.newConfirmMpin} onChange={(event) => setForm((prev) => ({ ...prev, newConfirmMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
-                  <button type="button" onClick={handleChange} disabled={submitting} className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60">
-                    {submitting ? 'Updating...' : 'Update MPIN'}
-                  </button>
+                  <button type="button" onClick={handleChange} disabled={submitting} className="btn-primary">{submitting ? 'Updating...' : 'Update MPIN'}</button>
                 </>
               ) : null}
-
               {actionMode === 'disable' ? (
                 <>
-                  <p className="text-sm text-navy/60 dark:text-white/40">Confirm your current MPIN before disabling MPIN login for this account.</p>
+                  <p className="text-sm text-muted">Confirm your current MPIN before disabling MPIN login for this account.</p>
                   <FloatingLabelInput label="Current MPIN" type="password" inputMode="numeric" maxLength={6} value={form.disableCurrentMpin} onChange={(event) => setForm((prev) => ({ ...prev, disableCurrentMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
-                  <button type="button" onClick={handleDisable} disabled={submitting} className="rounded-xl border border-emergency/30 px-4 py-2.5 text-sm font-semibold text-emergency transition-colors hover:bg-emergency/10 disabled:opacity-60">
-                    {submitting ? 'Disabling...' : 'Disable MPIN'}
-                  </button>
+                  <button type="button" onClick={handleDisable} disabled={submitting} className="btn-secondary">{submitting ? 'Disabling...' : 'Disable MPIN'}</button>
                 </>
               ) : null}
             </div>
           </section>
         ) : null}
       </div>
-    </main>
+    </AppShell>
   );
 }

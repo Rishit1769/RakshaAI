@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
+import { AppShell } from '@/components/layout/AppShell';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { useAuthStore } from '@/store/auth.store';
 import { api } from '@/lib/api/fetcher';
@@ -17,9 +18,9 @@ const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
 
 const RISK_COLORS: Record<string, string> = {
   safe: 'text-safe',
-  low: 'text-green-600',
-  moderate: 'text-amber-600',
-  high: 'text-orange-600',
+  low: 'text-safe',
+  moderate: 'text-warning',
+  high: 'text-badge-orange',
   critical: 'text-emergency',
 };
 
@@ -53,9 +54,7 @@ export default function MapPage() {
     );
   }, [isAuthenticated, router]);
 
-  const baseParams = userLocation
-    ? `latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5`
-    : null;
+  const baseParams = userLocation ? `latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5` : null;
 
   const { data: volunteersData } = useQuery({
     queryKey: ['nearby-volunteers', userLocation],
@@ -158,66 +157,55 @@ export default function MapPage() {
   const risk = (riskData as { data?: { riskLevel?: string; recentIncidents?: number; safeZonesNearby?: number } } | undefined)?.data;
 
   return (
-    <div className="min-h-screen bg-light transition-colors duration-200 dark:bg-[#0B1026]">
-      <header className="flex items-center gap-3 border-b border-border bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0d1628]">
-        <button
-          onClick={() => router.back()}
-          className="interactive rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-navy hover:bg-gray-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
-        >
-          Back
-        </button>
-        <div>
-          <h1 className="text-base font-bold text-navy dark:text-white">Safety Map</h1>
-          <p className="text-xs text-muted">Incident density, nearby responders, and safe reporting points</p>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
+    <AppShell title="Safety Map" subtitle="Incident density, nearby responders, and safe support points." backLabel="Dashboard">
+      <div className="space-y-6">
         {risk ? (
-          <div className="card flex items-center justify-between gap-4">
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Area Risk</p>
-              <p className={`text-lg font-bold capitalize ${RISK_COLORS[risk.riskLevel ?? 'safe']}`}>
-                {risk.riskLevel}
-              </p>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="product-card">
+              <p className="text-xs uppercase tracking-[0.12em] text-muted">Area risk</p>
+              <p className={`mt-3 text-2xl font-semibold capitalize ${RISK_COLORS[risk.riskLevel ?? 'safe']}`}>{risk.riskLevel}</p>
             </div>
-            <div className="text-right text-xs text-muted">
-              <p>{risk.recentIncidents} incidents in 30 days</p>
-              <p>{risk.safeZonesNearby} safe zones nearby</p>
+            <div className="product-card">
+              <p className="text-xs uppercase tracking-[0.12em] text-muted">Recent incidents</p>
+              <p className="mt-3 text-2xl font-semibold text-ink">{risk.recentIncidents}</p>
+            </div>
+            <div className="product-card">
+              <p className="text-xs uppercase tracking-[0.12em] text-muted">Safe zones nearby</p>
+              <p className="mt-3 text-2xl font-semibold text-ink">{risk.safeZonesNearby}</p>
             </div>
           </div>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {(['safe_zones', 'volunteers', 'police'] as const).map((layer) => (
-            <button
-              key={layer}
-              onClick={() => setActiveLayer(layer)}
-              className={`interactive rounded-xl py-2 text-xs font-semibold ${
-                activeLayer === layer
-                  ? 'bg-primary text-white'
-                  : 'border border-border bg-white text-navy hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10'
-              }`}
-            >
-              {layer === 'safe_zones' ? 'Safe Zones' : layer === 'volunteers' ? 'Volunteers' : 'Police'}
-            </button>
-          ))}
-        </div>
+        <div className="product-card space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-ink">Layer controls</h2>
+              <p className="text-sm text-muted">Switch between community support, safe infrastructure, and official responders.</p>
+            </div>
+            <div className="nav-pill-group">
+              {(['safe_zones', 'volunteers', 'police'] as const).map((layer) => (
+                <button key={layer} onClick={() => setActiveLayer(layer)} className={activeLayer === layer ? 'nav-pill-active' : 'nav-pill'}>
+                  {layer === 'safe_zones' ? 'Safe Zones' : layer === 'volunteers' ? 'Volunteers' : 'Police'}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {userLocation ? (
-          <SafetyMap
-            center={userLocation}
-            zoom={14}
-            markers={buildMarkers()}
-            radiusKm={5}
-            className="h-[32rem] w-full"
-            showPoliceStations
-            showLegend
-          />
-        ) : (
-          <LoadingState label="Acquiring location..." className="h-[32rem] w-full" />
-        )}
-      </main>
-    </div>
+          {userLocation ? (
+            <SafetyMap
+              center={userLocation}
+              zoom={14}
+              markers={buildMarkers()}
+              radiusKm={5}
+              className="h-[32rem] w-full"
+              showPoliceStations
+              showLegend
+            />
+          ) : (
+            <LoadingState label="Acquiring location..." className="h-[32rem] w-full" />
+          )}
+        </div>
+      </div>
+    </AppShell>
   );
 }

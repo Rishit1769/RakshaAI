@@ -1,12 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
 
 export default function DownloadAppButton() {
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState('');
+
+  if (pathname === '/sos' || pathname.startsWith('/dashboard/sos-active')) {
+    return null;
+  }
 
   async function handleDownload() {
     setIsLoading(true);
@@ -45,7 +51,7 @@ export default function DownloadAppButton() {
         type="button"
         onClick={handleDownload}
         disabled={isLoading}
-        className="fixed bottom-6 right-6 z-50 inline-flex items-center justify-center rounded-full border border-white/10 bg-navy px-5 py-3 text-sm font-semibold text-white shadow-2xl transition hover:bg-navy/90 hover:shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-70"
+        className="fixed bottom-5 right-5 z-50 inline-flex items-center justify-center rounded-full border border-hairline bg-canvas px-5 py-3 text-sm font-semibold text-ink shadow-card transition-colors hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-[#14171d] dark:text-white dark:hover:bg-[#1a1d24]"
       >
         {isLoading ? 'Preparing download...' : 'Download Mobile App'}
       </button>
@@ -54,7 +60,7 @@ export default function DownloadAppButton() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-24 right-6 z-50 max-w-xs rounded-2xl border border-emergency/20 bg-white px-4 py-3 text-sm text-navy shadow-soft dark:border-white/10 dark:bg-[#111827] dark:text-white"
+          className="fixed bottom-24 right-6 z-50 max-w-xs rounded-xl border border-hairline bg-canvas px-4 py-3 text-sm text-ink shadow-card dark:border-white/10 dark:bg-[#14171d] dark:text-white"
         >
           {toast}
         </div>

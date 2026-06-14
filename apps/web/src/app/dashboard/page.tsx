@@ -8,10 +8,10 @@ import { authApi } from '@/lib/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
 
 const quickActions = [
-  { label: 'Journey Mode', href: '/journey', icon: 'Map', desc: 'Track your route safely' },
-  { label: 'Community', href: '/community', icon: 'People', desc: 'Area safety reports' },
-  { label: 'Contacts', href: '/dashboard/emergency-contacts', icon: 'Phone', desc: 'Emergency contacts & reports' },
-  { label: 'AI Assistant', href: '/ai', icon: 'AI', desc: 'Safety guidance' },
+  { label: 'Journey Mode', href: '/journey', icon: 'Journey', desc: 'Start monitored travel sessions with fallback escalation.' },
+  { label: 'Community', href: '/community', icon: 'Reports', desc: 'Review local safety signals and share verified observations.' },
+  { label: 'Contacts', href: '/dashboard/emergency-contacts', icon: 'Contacts', desc: 'Keep your trusted emergency contacts current.' },
+  { label: 'AI Assistant', href: '/ai', icon: 'AI', desc: 'Get fast guidance when you need calm next steps.' },
 ] as const;
 
 export default function DashboardPage() {
@@ -35,68 +35,82 @@ export default function DashboardPage() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-light flex items-center justify-center">
-        <div className="text-muted text-sm">Redirecting...</div>
+      <div className="min-h-screen bg-background">
+        <div className="page-container py-24 text-sm text-muted">Redirecting...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-light dark:bg-[#0B1026] transition-colors duration-200">
-      <header className="flex items-center justify-between border-b border-border bg-white px-4 py-3 dark:border-white/10 dark:bg-[#0d1628]">
-        <div>
-          <h1 className="text-lg font-bold text-navy dark:text-white">
-            Raksha<span className="text-primary">AI</span>
-          </h1>
-          <p className="text-xs text-muted dark:text-white/45">Welcome, {user.fullName.split(' ')[0]}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <Link
-            href="/dashboard/settings"
-            className="interactive rounded-lg px-3 py-1 text-xs text-muted hover:bg-gray-100 hover:text-navy dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white"
-          >
-            Settings
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="interactive rounded-lg px-3 py-1 text-xs text-muted hover:bg-gray-100 hover:text-navy dark:text-white/40 dark:hover:bg-white/5 dark:hover:text-white"
-          >
-            Sign out
-          </button>
+    <div className="min-h-screen bg-background">
+      <header className="app-header">
+        <div className="page-container flex flex-wrap items-center justify-between gap-4 py-4">
+          <div>
+            <div className="brand-lockup">
+              <span className="brand-mark">R</span>
+              <span className="display-label text-lg text-ink">RakshaAI</span>
+            </div>
+            <p className="mt-2 text-sm text-muted">Welcome back, {user.fullName.split(' ')[0]}.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link href="/dashboard/settings" className="btn-secondary">
+              Settings
+            </Link>
+            <button onClick={handleLogout} className="btn-secondary">
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
-        <div className="card flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs text-muted uppercase tracking-wider font-semibold mb-1">Safety Status</p>
-            <span className="font-semibold text-navy">You&apos;re Safe</span>
+      <main className="page-container space-y-6 py-8">
+        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="surface-panel space-y-5 p-8">
+            <span className="eyebrow">Safety operating system</span>
+            <h1 className="display-subsection">One dashboard for awareness, action, and escalation.</h1>
+            <p className="max-w-2xl text-base leading-7 text-body">
+              Move between proactive tools and emergency response without changing context. Your account, contacts, live map surfaces, and assistance flows stay connected.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl bg-white p-4 dark:bg-[#14171d]">
+                <p className="text-xs uppercase tracking-[0.12em] text-muted">Status</p>
+                <p className="mt-3 text-lg font-semibold text-ink">Prepared</p>
+              </div>
+              <div className="rounded-xl bg-white p-4 dark:bg-[#14171d]">
+                <p className="text-xs uppercase tracking-[0.12em] text-muted">Coverage</p>
+                <p className="mt-3 text-lg font-semibold text-ink">Live map</p>
+              </div>
+              <div className="rounded-xl bg-white p-4 dark:bg-[#14171d]">
+                <p className="text-xs uppercase tracking-[0.12em] text-muted">Support</p>
+                <p className="mt-3 text-lg font-semibold text-ink">AI + responders</p>
+              </div>
+            </div>
           </div>
-          <span className="text-sm font-semibold text-safe">Active Monitoring</span>
-        </div>
 
-        <div className="surface-panel flex flex-col items-center gap-3 px-4 py-8">
-          <button className="btn-sos" onClick={() => router.push('/sos')} aria-label="Trigger emergency SOS">
-            SOS
-          </button>
-          <p className="text-sm text-muted">Tap to activate emergency alert</p>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold text-navy mb-3">Quick Actions</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {quickActions.map((action) => (
-              <Link key={action.href} href={action.href} className="card interactive flex flex-col gap-2 hover:-translate-y-0.5 hover:shadow-md">
-                <span className="text-xs uppercase tracking-wide text-muted">{action.icon}</span>
-                <div>
-                  <p className="text-sm font-semibold text-navy">{action.label}</p>
-                  <p className="text-xs text-muted">{action.desc}</p>
-                </div>
-              </Link>
-            ))}
+          <div className="product-card flex flex-col items-center justify-center gap-4 p-8 text-center">
+            <p className="text-sm font-semibold text-muted">Emergency shortcut</p>
+            <button className="btn-sos" onClick={() => router.push('/sos')} aria-label="Trigger emergency SOS">
+              SOS
+            </button>
+            <p className="max-w-xs text-sm text-muted">Use only when you need immediate help. The flow will try to attach fresh location before sending.</p>
           </div>
-        </div>
+        </section>
+
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {quickActions.map((action) => (
+            <Link key={action.href} href={action.href} className="product-card flex flex-col gap-4 p-6">
+              <div className="flex items-center justify-between">
+                <span className="eyebrow bg-surface-soft">{action.icon}</span>
+                <span className="text-xs text-muted">Open</span>
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-ink">{action.label}</p>
+                <p className="mt-2 text-sm leading-7 text-body">{action.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </section>
       </main>
     </div>
   );
