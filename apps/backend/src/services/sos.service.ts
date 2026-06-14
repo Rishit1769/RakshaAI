@@ -298,7 +298,7 @@ async function notifyEmergencyContacts(
     await sendSOSAlert(
       {
         fullName: user.fullName,
-        phone: user.phone,
+        phone: user.phone ?? 'Unavailable',
         email: user.email,
         triggeredAt: new Date(),
         alertId,

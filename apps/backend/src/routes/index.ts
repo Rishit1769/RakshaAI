@@ -12,6 +12,10 @@ import appRoutes from './app.routes';
 import incidentsRoutes from './incidents.routes';
 import emergencyContactRoutes from './emergency-contact.routes';
 import hotspotRoutes from './hotspot.routes';
+import adminRoutes from './admin.routes';
+import departmentRoutes from './department.routes';
+import zoneRoutes from './zone.routes';
+import redZoneRoutes from './redzone.routes';
 
 const router = Router();
 
@@ -28,6 +32,10 @@ router.use('/app', appRoutes);
 router.use('/incidents', incidentsRoutes);
 router.use('/emergency-contacts', emergencyContactRoutes);
 router.use('/hotspots', hotspotRoutes);
+router.use('/admin', adminRoutes);
+router.use('/department', departmentRoutes);
+router.use('/zones', zoneRoutes);
+router.use('/redzones', redZoneRoutes);
 
 export default router;
 

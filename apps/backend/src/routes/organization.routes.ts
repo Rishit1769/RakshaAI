@@ -8,15 +8,15 @@ const router = Router();
 router.use(authenticate);
 
 // ─── Organization routes (Super Admin only) ──────────────────────────────────
-router.post('/', authorize('super_admin'), orgController.createOrganization);
-router.get('/', authorize('super_admin', 'organization_admin'), orgController.listOrganizations);
-router.get('/:id', authorize('super_admin', 'organization_admin'), orgController.getOrganization);
-router.patch('/:id/approve', authorize('super_admin'), orgController.approveOrganization);
-router.patch('/:id/suspend', authorize('super_admin'), orgController.suspendOrganization);
+router.post('/', authorize('super_admin', 'admin'), orgController.createOrganization);
+router.get('/', authorize('super_admin', 'admin', 'organization_admin'), orgController.listOrganizations);
+router.get('/:id', authorize('super_admin', 'admin', 'organization_admin'), orgController.getOrganization);
+router.patch('/:id/approve', authorize('super_admin', 'admin'), orgController.approveOrganization);
+router.patch('/:id/suspend', authorize('super_admin', 'admin'), orgController.suspendOrganization);
 
 // ─── Worker routes (Organization Admin only) ─────────────────────────────────
 router.post('/workers', authorize('organization_admin'), orgController.createWorker);
-router.get('/:orgId/workers', authorize('super_admin', 'organization_admin'), orgController.listWorkers);
+router.get('/:orgId/workers', authorize('super_admin', 'admin', 'organization_admin'), orgController.listWorkers);
 router.patch('/workers/:id/deactivate', authorize('organization_admin'), orgController.deactivateWorker);
 
 export default router;

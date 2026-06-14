@@ -17,6 +17,7 @@
     "db:generate": "npm run db:generate --workspace=apps/backend",
     "db:migrate": "npm run db:migrate --workspace=apps/backend",
     "db:studio": "npm run db:studio --workspace=apps/backend",
+    "seed:roles": "node scripts/seed.js",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present && rimraf node_modules"

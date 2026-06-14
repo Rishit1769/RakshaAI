@@ -1,5 +1,4 @@
 import { prisma } from '../config/database';
-import { haversineDistance } from '../utils/helpers';
 
 export interface NearbyQuery {
   latitude: number;

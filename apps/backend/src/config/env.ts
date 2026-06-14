@@ -78,4 +78,5 @@ export const env = {
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '900000', 10),
   RATE_LIMIT_MAX_REQUESTS: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS ?? '100', 10),
+  RED_ZONE_ALERT_RADIUS_KM: parseFloat(process.env.RED_ZONE_ALERT_RADIUS_KM ?? '5'),
 } as const;

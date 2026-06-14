@@ -19,6 +19,7 @@ datasource db {
 
 enum UserRole {
   user
+  department
   volunteer
   police
   admin
@@ -156,6 +157,12 @@ enum IncidentSeverity {
   critical
 }
 
+enum RedZoneSeverity {
+  low
+  medium
+  high
+}
+
 enum FakeCallStatus {
   scheduled
   active
@@ -187,12 +194,13 @@ model User {
   id                  String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   fullName            String    @map("full_name") @db.VarChar(100)
   email               String    @unique @db.VarChar(150)
-  phone               String    @unique @db.VarChar(15)
+  phone               String?   @unique @db.VarChar(15)
   aadhaarNumber       String?   @unique @map("aadhaar_number") @db.VarChar(12)
   passwordHash        String    @map("password_hash")
   mpinHash            String?   @map("mpin_hash")
   mpinEnabled         Boolean   @default(false) @map("mpin_enabled")
   role                UserRole  @default(user)
+  departmentId        String?   @map("department_id") @db.Uuid
   gender              Gender?
   dateOfBirth         DateTime? @map("date_of_birth") @db.Date
   profileImageUrl     String?   @map("profile_image_url")
@@ -235,12 +243,15 @@ model User {
   safeZonesAdded      SafeZone[]
   cyberAssigned       CyberReport[]       @relation("cyber_assigned")
   workerProfile       Worker?
+  department          Organization?       @relation("department_members", fields: [departmentId], references: [id])
+  redZonesTriggered   RedZone[]           @relation("redzone_triggered_by")
   auditLogs           AuditLog[]          @relation("audit_actor")
   organizationsCreated Organization[]     @relation("org_created_by")
 
   @@index([email], name: "idx_users_email")
   @@index([phone], name: "idx_users_phone")
   @@index([role], name: "idx_users_role")
+  @@index([departmentId], name: "idx_users_department_id")
   @@map("users")
 }
 
@@ -693,6 +704,9 @@ model SafeZone {
   type           String   @db.VarChar(50)
   latitude       Float
   longitude      Float
+  radiusMeters   Float?   @map("radius_meters")
+  departmentId   String?  @map("department_id") @db.Uuid
+  departmentType String?  @map("department_type") @db.VarChar(50)
   address        String?
   city           String?  @db.VarChar(100)
   phone          String?  @db.VarChar(15)
@@ -702,11 +716,30 @@ model SafeZone {
   isActive       Boolean  @default(true) @map("is_active")
   addedBy        String?  @map("added_by") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
-  addedByUser User? @relation(fields: [addedBy], references: [id])
+  addedByUser User?         @relation(fields: [addedBy], references: [id])
+  department Organization? @relation("department_safe_zones", fields: [departmentId], references: [id])
 
   @@index([type], name: "idx_safe_zones_type")
+  @@index([departmentId], name: "idx_safe_zones_department")
   @@map("safe_zones")
+}
+
+model RedZone {
+  id                  String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  triggeredById       String?           @map("triggered_by_id") @db.Uuid
+  latitude            Float
+  longitude           Float
+  severity            RedZoneSeverity
+  description         String
+  triggeredAt         DateTime          @default(now()) @map("triggered_at")
+
+  triggeredBy         User?             @relation("redzone_triggered_by", fields: [triggeredById], references: [id], onDelete: SetNull)
+  notifiedDepartments Organization[]    @relation("redzone_notified_departments")
+
+  @@index([triggeredAt(sort: Desc)], name: "idx_red_zones_triggered_at")
+  @@map("red_zones")
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1005,8 +1038,11 @@ model Organization {
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
 
-  createdBy User     @relation("org_created_by", fields: [createdById], references: [id])
-  workers   Worker[]
+  createdBy        User         @relation("org_created_by", fields: [createdById], references: [id])
+  workers          Worker[]
+  members          User[]       @relation("department_members")
+  safeZones        SafeZone[]   @relation("department_safe_zones")
+  notifiedRedZones RedZone[]    @relation("redzone_notified_departments")
 
   @@index([status], name: "idx_organizations_status")
   @@index([organizationType], name: "idx_organizations_type")

@@ -39,7 +39,7 @@ export interface SafeUser {
   id: string;
   fullName: string;
   email: string;
-  phone: string;
+  phone: string | null;
   role: UserRole;
   isVerified: boolean;
   mpinSet: boolean;
@@ -52,7 +52,7 @@ function toSafeUser(user: {
   id: string;
   fullName: string;
   email: string;
-  phone: string;
+  phone: string | null;
   role: UserRole;
   isVerified: boolean;
   mpinHash: string | null;
