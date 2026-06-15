@@ -3,8 +3,8 @@
 import { useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { sosApi } from '@/lib/api/sos.api';
-import { useAuthStore } from '@/store/auth.store';
 import { useSosRealtime } from '@/hooks/useSosRealtime';
 import { useLocationBroadcast } from '@/hooks/useLocationBroadcast';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -13,16 +13,12 @@ function SosActivePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const alertId = searchParams.get('alertId');
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const realtime = useSosRealtime(alertId);
 
   useLocationBroadcast({
     alertId: realtime.isResolved || realtime.isCancelled ? null : alertId,
   });
-
-  useEffect(() => {
-    if (!isAuthenticated) router.push('/auth/login');
-  }, [isAuthenticated, router]);
 
   useEffect(() => {
     if (realtime.isResolved || realtime.isCancelled) {
@@ -33,7 +29,7 @@ function SosActivePageContent() {
   const { data: singleAlert } = useQuery({
     queryKey: ['sos-alert', alertId],
     queryFn: () => sosApi.getById(alertId!),
-    enabled: isAuthenticated && !!alertId,
+    enabled: isAuthReady && isAuthenticated && !!alertId,
     staleTime: 30_000,
   });
 
@@ -53,6 +49,8 @@ function SosActivePageContent() {
       cancelMutation.mutate(alertId);
     }
   }, [alertId, cancelMutation, router]);
+
+  if (!isAuthReady) return <div className="min-h-screen bg-background" />;
 
   if (!isAuthenticated) return null;
 

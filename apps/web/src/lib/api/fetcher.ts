@@ -1,3 +1,6 @@
+import { useAuthStore } from '@/store/auth.store';
+import { readAccessToken, writeAccessToken } from '@/lib/auth-storage';
+
 /**
  * Core fetch wrapper for all RakshaAI API calls.
  * - Injects Bearer token from session state
@@ -34,8 +37,7 @@ export class ApiError extends Error {
 }
 
 function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
+  return readAccessToken();
 }
 
 let isRefreshing = false;
@@ -59,7 +61,8 @@ async function refreshAccessToken(): Promise<string | null> {
       const payload = (await res.json()) as ApiResponse<{ accessToken: string }>;
       if (!res.ok || !payload.success || !payload.data?.accessToken) return null;
 
-      localStorage.setItem('access_token', payload.data.accessToken);
+      writeAccessToken(payload.data.accessToken);
+      useAuthStore.getState().setAccessToken(payload.data.accessToken);
       return payload.data.accessToken;
     } catch {
       return null;
@@ -127,6 +130,10 @@ export async function fetcher<T>(
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return fetcher<T>(path, options, true);
+      }
+
+      if (token) {
+        useAuthStore.getState().clearAuth();
       }
     }
     throw new ApiError(data.message ?? 'Request failed', response.status, data);

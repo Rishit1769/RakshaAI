@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth.store';
 import { AppShell } from '@/components/layout/AppShell';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 
@@ -28,7 +28,7 @@ interface Stats {
 
 export default function SuperAdminDashboard() {
   const router = useRouter();
-  const { user, accessToken } = useAuthStore();
+  const { user, accessToken, isAuthenticated, isAuthReady } = useProtectedRoute();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [stats, setStats] = useState<Stats>({ totalOrgs: 0, pendingApprovals: 0, approvedOrgs: 0, suspendedOrgs: 0 });
   const [loading, setLoading] = useState(true);
@@ -39,14 +39,12 @@ export default function SuperAdminDashboard() {
   const [suspendTarget, setSuspendTarget] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      router.replace('/auth/login');
-      return;
-    }
+    if (!isAuthReady || !isAuthenticated || !user) return;
+
     if (user.role !== 'super_admin') {
       router.replace('/dashboard');
     }
-  }, [user, router]);
+  }, [isAuthReady, isAuthenticated, router, user]);
 
   const authHeaders = { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken ?? ''}` };
 
@@ -77,8 +75,11 @@ export default function SuperAdminDashboard() {
   }, [statusFilter, accessToken]);
 
   useEffect(() => {
+    if (!isAuthReady || !isAuthenticated || !user || user.role !== 'super_admin') {
+      return;
+    }
     void fetchOrgs();
-  }, [fetchOrgs]);
+  }, [fetchOrgs, isAuthReady, isAuthenticated, user]);
 
   async function approveOrg(id: string) {
     setActionLoading(id);
@@ -124,7 +125,11 @@ export default function SuperAdminDashboard() {
     }
   }
 
-  if (!user || user.role !== 'super_admin') return null;
+  if (!isAuthReady) {
+    return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
+  }
+
+  if (!isAuthenticated || !user || user.role !== 'super_admin') return null;
 
   return (
     <AppShell title="Super Admin" subtitle={`Signed in as ${user.email}`} backLabel="Dashboard">

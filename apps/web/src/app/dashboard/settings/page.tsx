@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { authApi, type AuthUser } from '@/lib/api/auth.api';
 import { ApiError } from '@/lib/api/fetcher';
-import { useAuthStore } from '@/store/auth.store';
 import { AppShell } from '@/components/layout/AppShell';
 
 type MpinMode = 'setup' | 'change' | 'disable' | null;
@@ -18,7 +18,7 @@ function validateNewMpin(value: string) {
 }
 
 export default function SettingsPage() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const [me, setMe] = useState<AuthUser | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [actionMode, setActionMode] = useState<MpinMode>(null);
@@ -35,7 +35,7 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthReady || !isAuthenticated) return;
     void (async () => {
       try {
         const response = await authApi.getMe();
@@ -46,7 +46,7 @@ export default function SettingsPage() {
         setLoadingProfile(false);
       }
     })();
-  }, [isAuthenticated]);
+  }, [isAuthReady, isAuthenticated]);
 
   function resetForms() {
     setForm({ mpin: '', confirmMpin: '', currentMpin: '', newMpin: '', newConfirmMpin: '', disableCurrentMpin: '' });
@@ -140,6 +140,8 @@ export default function SettingsPage() {
       setSubmitting(false);
     }
   }
+
+  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
 
   if (!isAuthenticated) return null;
 

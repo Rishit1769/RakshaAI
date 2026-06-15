@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { ApiError } from '@/lib/api/fetcher';
 import { userApi, type EmergencyContact, type EmergencyContactPayload } from '@/lib/api/user.api';
-import { useAuthStore } from '@/store/auth.store';
 import { AppShell } from '@/components/layout/AppShell';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 
 type ModalMode = 'add' | 'edit' | null;
 
@@ -46,7 +46,7 @@ function validateContact(form: ContactFormState): ContactFormErrors {
 }
 
 export default function EmergencyContactsPage() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [maxContacts, setMaxContacts] = useState(5);
   const [loading, setLoading] = useState(true);
@@ -64,9 +64,9 @@ export default function EmergencyContactsPage() {
   const sortedContacts = useMemo(() => [...contacts].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary)), [contacts]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthReady || !isAuthenticated) return;
     void loadContacts();
-  }, [isAuthenticated]);
+  }, [isAuthReady, isAuthenticated]);
 
   useEffect(() => {
     if (!toast) return;
@@ -185,6 +185,8 @@ export default function EmergencyContactsPage() {
       setSaving(false);
     }
   }
+
+  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
 
   if (!isAuthenticated) return null;
 

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppShell } from '@/components/layout/AppShell';
 import { EmptyState, LoadingState } from '@/components/ui/LoadingState';
-import { useAuthStore } from '@/store/auth.store';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { api } from '@/lib/api/fetcher';
 
 interface AlertItem {
@@ -21,27 +21,23 @@ interface AlertItem {
 
 export default function PoliceDashboard() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const queryClient = useQueryClient();
   const [escalateId, setEscalateId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
-
-  useEffect(() => {
-    if (!isAuthenticated) router.push('/auth/login');
-  }, [isAuthenticated, router]);
 
   const { data: profileData, isError: noProfile } = useQuery({
     queryKey: ['police-profile'],
     queryFn: () => api.get('/police/profile'),
     retry: false,
-    enabled: isAuthenticated,
+    enabled: isAuthReady && isAuthenticated,
   });
 
   const { data: alertsData, isLoading } = useQuery({
     queryKey: ['police-alerts'],
     queryFn: () => api.get('/police/alerts'),
     refetchInterval: 10_000,
-    enabled: isAuthenticated && !noProfile,
+    enabled: isAuthReady && isAuthenticated && !noProfile,
   });
 
   const dutyMutation = useMutation({
@@ -62,6 +58,8 @@ export default function PoliceDashboard() {
       queryClient.invalidateQueries({ queryKey: ['police-alerts'] });
     },
   });
+
+  if (!isAuthReady) return <LoadingState label="Checking session..." />;
 
   if (!isAuthenticated) return null;
 

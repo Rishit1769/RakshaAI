@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { AppShell } from '@/components/layout/AppShell';
-import { useAuthStore } from '@/store/auth.store';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { ApiError, api } from '@/lib/api/fetcher';
 
 interface Message {
@@ -20,8 +20,7 @@ const QUICK_PROMPTS = [
 ];
 
 export default function AiPage() {
-  const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -30,10 +29,6 @@ export default function AiPage() {
   ]);
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isAuthenticated) router.push('/auth/login');
-  }, [isAuthenticated, router]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -67,6 +62,8 @@ export default function AiPage() {
     setInput('');
     chatMutation.mutate(newMessages.filter((_, index) => index > 0));
   }
+
+  if (!isAuthReady) return <LoadingState label="Checking session..." className="h-80 w-full" />;
 
   if (!isAuthenticated) return null;
 

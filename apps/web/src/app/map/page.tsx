@@ -1,12 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { AppShell } from '@/components/layout/AppShell';
 import { LoadingState } from '@/components/ui/LoadingState';
-import { useAuthStore } from '@/store/auth.store';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { api } from '@/lib/api/fetcher';
 import type { MapMarker } from '@/components/SafetyMap';
 import { buildIncidentPopupHtml } from '@/components/SafetyMap';
@@ -37,22 +36,18 @@ type IncidentRow = {
 };
 
 export default function MapPage() {
-  const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [activeLayer, setActiveLayer] = useState<'volunteers' | 'police' | 'safe_zones'>('safe_zones');
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-      return;
-    }
+    if (!isAuthReady || !isAuthenticated) return;
 
     navigator.geolocation?.getCurrentPosition(
       (position) => setUserLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
       () => setUserLocation({ latitude: 20.5937, longitude: 78.9629 })
     );
-  }, [isAuthenticated, router]);
+  }, [isAuthReady, isAuthenticated]);
 
   const baseParams = userLocation ? `latitude=${userLocation.latitude}&longitude=${userLocation.longitude}&radius=5` : null;
 
@@ -85,7 +80,7 @@ export default function MapPage() {
     queryKey: ['incidents-map'],
     queryFn: () => api.get('/incidents'),
     refetchInterval: 30_000,
-    enabled: isAuthenticated,
+    enabled: isAuthReady && isAuthenticated,
   });
 
   const buildMarkers = useCallback((): MapMarker[] => {
@@ -151,6 +146,8 @@ export default function MapPage() {
 
     return built;
   }, [activeLayer, incidentsData, policeData, safeZonesData, userLocation, volunteersData]);
+
+  if (!isAuthReady) return <LoadingState label="Checking session..." className="h-80 w-full" />;
 
   if (!isAuthenticated) return null;
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useMutation } from '@tanstack/react-query';
 import { AppShell } from '@/components/layout/AppShell';
-import { useAuthStore } from '@/store/auth.store';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { api } from '@/lib/api/fetcher';
 import { LoadingState } from '@/components/ui/LoadingState';
 
@@ -27,7 +27,7 @@ const CATEGORIES = [
 
 export default function CreateReportPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const [form, setForm] = useState({
     category: '' as string,
     title: '',
@@ -43,10 +43,7 @@ export default function CreateReportPage() {
   const [pinError, setPinError] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated) router.push('/auth/login');
-  }, [isAuthenticated, router]);
-
-  useEffect(() => {
+    if (!isAuthReady || !isAuthenticated) return;
     setLocating(true);
     navigator.geolocation?.getCurrentPosition(
       (position) => {
@@ -55,12 +52,14 @@ export default function CreateReportPage() {
       },
       () => setLocating(false)
     );
-  }, []);
+  }, [isAuthReady, isAuthenticated]);
 
   const mutation = useMutation({
     mutationFn: () => api.post('/community', { ...form, latitude: form.latitude!, longitude: form.longitude! }),
     onSuccess: () => router.push('/community'),
   });
+
+  if (!isAuthReady) return <LoadingState label="Checking session..." className="h-80 w-full" />;
 
   if (!isAuthenticated) return null;
 

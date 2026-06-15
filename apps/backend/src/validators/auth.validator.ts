@@ -108,7 +108,7 @@ export const disableMpinSchema = z.object({
 });
 
 export const refreshTokenSchema = z.object({
-  refreshToken: z.string({ required_error: 'Refresh token is required' }).min(1),
+  refreshToken: z.string().min(1).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

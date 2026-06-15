@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { authApi } from '@/lib/api/auth.api';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -25,7 +25,8 @@ const metricCards = [
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isAuthenticated, clearAuth } = useAuthStore();
+  const { clearAuth } = useAuthStore();
+  const { user, isAuthenticated, isAuthReady } = useProtectedRoute();
 
   const handleLogout = async () => {
     try {
@@ -38,9 +39,9 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => {
-    if (!isAuthenticated) router.push('/auth/login');
-  }, [isAuthenticated, router]);
+  if (!isAuthReady) {
+    return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
+  }
 
   if (!isAuthenticated || !user) {
     return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Redirecting...</div>;

@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
+import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { sosApi, AlertType } from '@/lib/api/sos.api';
-import { useAuthStore } from '@/store/auth.store';
 
 const ALERT_TYPES: { value: AlertType; label: string }[] = [
   { value: 'general_danger', label: 'General Danger' },
@@ -17,17 +17,14 @@ const ALERT_TYPES: { value: AlertType; label: string }[] = [
 
 export default function SosPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAuthReady } = useProtectedRoute();
   const [selectedType, setSelectedType] = useState<AlertType>('general_danger');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState<{ latitude: number; longitude: number; accuracy?: number } | null>(null);
   const [locationError, setLocationError] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-      return;
-    }
+    if (!isAuthReady || !isAuthenticated) return;
 
     if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported on this device. SOS will still be sent.');
@@ -35,7 +32,7 @@ export default function SosPage() {
     }
 
     void refreshLocation();
-  }, [isAuthenticated, router]);
+  }, [isAuthReady, isAuthenticated]);
 
   const sosMutation = useMutation({
     mutationFn: ({ location: liveLocation }: { location?: { latitude: number; longitude: number; accuracy?: number } }) =>
@@ -84,6 +81,8 @@ export default function SosPage() {
       );
     });
   }
+
+  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
 
   if (!isAuthenticated) return null;
 

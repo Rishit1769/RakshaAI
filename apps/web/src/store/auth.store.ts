@@ -2,8 +2,9 @@
 
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { readAccessToken, syncAccessToken } from '@/lib/auth-storage';
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   fullName: string;
   email: string;
@@ -18,17 +19,15 @@ interface AuthState {
   accessToken: string | null;
   isAuthenticated: boolean;
   preferredIdentifier: string | null;
+  isHydrated: boolean;
+  isBootstrapping: boolean;
   setAuth: (user: AuthUser, accessToken: string) => void;
-  setAccessToken: (accessToken: string) => void;
+  setAccessToken: (accessToken: string | null) => void;
+  setBootstrapping: (value: boolean) => void;
   rememberIdentifier: (identifier: string) => void;
+  markHydrated: () => void;
   clearAuth: () => void;
 }
-
-const syncAccessToken = (token: string | null) => {
-  if (typeof window === 'undefined') return;
-  if (token) localStorage.setItem('access_token', token);
-  else localStorage.removeItem('access_token');
-};
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -37,6 +36,8 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       isAuthenticated: false,
       preferredIdentifier: null,
+      isHydrated: false,
+      isBootstrapping: true,
       setAuth: (user, accessToken) => {
         syncAccessToken(accessToken);
         set({
@@ -48,10 +49,16 @@ export const useAuthStore = create<AuthState>()(
       },
       setAccessToken: (accessToken) => {
         syncAccessToken(accessToken);
-        set((state) => ({ ...state, accessToken, isAuthenticated: !!state.user }));
+        set((state) => ({ ...state, accessToken, isAuthenticated: Boolean(accessToken && state.user) }));
+      },
+      setBootstrapping: (value) => {
+        set({ isBootstrapping: value });
       },
       rememberIdentifier: (identifier) => {
         set({ preferredIdentifier: identifier });
+      },
+      markHydrated: () => {
+        set({ isHydrated: true });
       },
       clearAuth: () => {
         syncAccessToken(null);
@@ -60,13 +67,20 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'rakshaai-auth',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,
-        isAuthenticated: state.isAuthenticated,
         preferredIdentifier: state.preferredIdentifier,
       }),
+      onRehydrateStorage: () => (state) => {
+        const token = state?.accessToken ?? readAccessToken();
+
+        if (state) {
+          state.setAccessToken(token);
+          state.markHydrated();
+        }
+      },
     }
   )
 );
