@@ -79,12 +79,12 @@ function SosActivePageContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" data-emergency="true">
       <header className="app-header">
         <div className="page-container flex items-center justify-between py-4">
           <div>
-            <h1 className="text-lg font-semibold text-ink">{realtime.isResolved ? 'You are safe' : 'Emergency Alert Active'}</h1>
-            <p className="text-sm text-muted">{statusLabel[currentStatus] ?? 'Coordinating response...'}</p>
+            <h1 className="text-lg font-semibold text-white">{realtime.isResolved ? 'You are safe' : 'Emergency Alert Active'}</h1>
+            <p className="text-sm text-white/70">{statusLabel[currentStatus] ?? 'Coordinating response...'}</p>
           </div>
           <ThemeToggle size="sm" />
         </div>
@@ -92,14 +92,14 @@ function SosActivePageContent() {
 
       <main className="page-container grid gap-6 py-8 lg:grid-cols-[0.82fr_1.18fr]">
         <div className="surface-panel flex flex-col items-center justify-center gap-6 p-8 text-center">
-          <div className={`relative flex h-44 w-44 items-center justify-center rounded-full ${realtime.isResolved ? 'bg-safe text-white' : 'bg-emergency text-white'} shadow-card`}>
+          <div className={`relative flex h-48 w-48 items-center justify-center rounded-full ${realtime.isResolved ? 'bg-safe text-white' : 'bg-emergency text-white'} shadow-emergency`}>
             <div className="text-center">
               <span className="block text-3xl font-semibold tracking-[0.18em]">{realtime.isResolved ? 'SAFE' : 'SOS'}</span>
               <span className="mt-2 block text-xs uppercase tracking-[0.2em] text-white/80">{realtime.isResolved ? 'Resolved' : currentStatus}</span>
             </div>
           </div>
           {alertData?.alertCode ? (
-            <div className="rounded-xl bg-white px-5 py-3 text-sm text-ink dark:bg-[#14171d] dark:text-white">
+            <div className="rounded-[var(--rounded-lg)] bg-white/10 px-5 py-3 text-sm text-white">
               Code: <span className="font-semibold">{alertData.alertCode}</span>
             </div>
           ) : null}
@@ -108,16 +108,16 @@ function SosActivePageContent() {
               {cancelMutation.isPending ? 'Cancelling...' : "I'm Safe - Cancel Alert"}
             </button>
           ) : null}
-          {realtime.isResolved || realtime.isCancelled ? <p className="text-sm text-safe">Returning to dashboard...</p> : null}
-          {cancelMutation.isError ? <p className="text-sm text-emergency">Failed to cancel. Please try again.</p> : null}
+          {realtime.isResolved || realtime.isCancelled ? <p className="text-sm text-white/75">Returning to dashboard...</p> : null}
+          {cancelMutation.isError ? <p className="text-sm text-white/85">Failed to cancel. Please try again.</p> : null}
         </div>
 
         <div className="product-card space-y-4 p-8">
-          <p className="text-sm font-semibold text-ink">Response timeline</p>
+          <p className="text-sm font-semibold text-white">Response timeline</p>
           {responderRows.map((item) => (
-            <div key={item.label} className="flex items-center justify-between rounded-xl bg-surface-card px-4 py-4">
-              <span className="text-sm font-medium text-ink">{item.label}</span>
-              <span className="text-sm text-body">{item.status}</span>
+            <div key={item.label} className="flex items-center justify-between rounded-[var(--rounded-md)] border border-white/10 bg-white/5 px-4 py-4">
+              <span className="text-sm font-medium text-white">{item.label}</span>
+              <span className="text-sm text-white/75">{item.status}</span>
             </div>
           ))}
         </div>

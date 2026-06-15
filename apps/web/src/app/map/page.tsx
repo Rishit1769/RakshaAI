@@ -197,12 +197,12 @@ export default function MapPage() {
               zoom={14}
               markers={buildMarkers()}
               radiusKm={5}
-              className="h-[32rem] w-full"
+              className="h-[calc(100vh-64px)] min-h-[32rem] w-full"
               showPoliceStations
               showLegend
             />
           ) : (
-            <LoadingState label="Acquiring location..." className="h-[32rem] w-full" />
+            <LoadingState label="Acquiring location..." className="h-[calc(100vh-64px)] min-h-[32rem] w-full" />
           )}
         </div>
       </div>

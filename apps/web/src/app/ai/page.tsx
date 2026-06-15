@@ -72,7 +72,7 @@ export default function AiPage() {
 
   return (
     <AppShell title="AI Support Assistant" subtitle="Safety guidance, emotional grounding, and escalation help." backLabel="Dashboard">
-      <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+      <div className="grid min-h-[calc(100vh-160px)] gap-6 lg:grid-cols-[0.72fr_1.28fr]">
         <div className="surface-panel space-y-4 p-6">
           <span className="eyebrow">Suggested prompts</span>
           <h2 className="text-xl font-semibold text-ink">Start from a concrete situation.</h2>
@@ -107,7 +107,7 @@ export default function AiPage() {
             <div ref={bottomRef} />
           </div>
 
-          <div className="border-t border-hairline px-5 py-4">
+          <div className="mt-auto border-t border-[var(--color-border)] bg-[var(--color-canvas)] px-5 py-4">
             <form
               onSubmit={(event) => {
                 event.preventDefault();

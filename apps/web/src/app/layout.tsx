@@ -12,16 +12,16 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'RakshaAI - Coordinated Women Safety Response',
+    default: 'RakshaAI - Women Safety and Emergency Response',
     template: '%s | RakshaAI',
   },
-  description: 'Emergency response infrastructure for women with SOS activation, live tracking, community intelligence, and coordinated responder workflows.',
-  keywords: ['women safety', 'emergency response', 'SOS', 'community safety', 'live tracking'],
+  description: 'AI-powered women safety and emergency response ecosystem with SOS activation, live tracking, responder coordination, and community intelligence.',
+  keywords: ['women safety', 'emergency response', 'SOS', 'live tracking', 'community safety'],
   authors: [{ name: 'RakshaAI Team' }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   openGraph: {
-    title: 'RakshaAI - Coordinated Women Safety Response',
-    description: 'Emergency response ecosystem for women with faster alerts and calmer coordination.',
+    title: 'RakshaAI - Women Safety and Emergency Response',
+    description: 'AI-powered emergency response ecosystem for women.',
     type: 'website',
   },
 };
@@ -32,11 +32,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var stored=localStorage.getItem('theme');var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var theme=stored?(stored==='dark'?'dark':'light'):(prefersDark?'dark':'light');document.documentElement.classList.toggle('dark',theme==='dark');document.documentElement.setAttribute('data-theme',theme);document.documentElement.style.colorScheme=theme;}catch(e){}})();`,
+            __html: `(function(){try{const saved=localStorage.getItem('raksha-theme');const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;const theme=saved||(prefersDark?'dark':'light');document.documentElement.setAttribute('data-theme',theme);document.documentElement.style.colorScheme=theme;}catch(e){}})();`,
           }}
         />
       </head>
-      <body className="min-h-screen bg-background text-body antialiased transition-colors duration-200">
+      <body className="min-h-screen bg-background font-sans text-body antialiased">
         <Providers>
           {children}
           <DownloadAppButton />

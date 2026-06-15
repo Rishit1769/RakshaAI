@@ -9,8 +9,8 @@ interface LoadingStateProps {
 
 export function LoadingState({ label = 'Loading...', className = '' }: LoadingStateProps) {
   return (
-    <div className={`flex items-center justify-center gap-3 rounded-xl border border-hairline bg-canvas px-4 py-8 text-sm text-muted dark:border-white/10 dark:bg-[#14171d] ${className}`}>
-      <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+    <div className={`card flex items-center justify-center gap-3 text-sm text-[var(--color-muted)] ${className}`}>
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-[color-mix(in_srgb,var(--color-primary)_30%,transparent)] border-t-[var(--color-primary)]" />
       <span>{label}</span>
     </div>
   );
@@ -45,9 +45,9 @@ interface EmptyStateProps {
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
     <div className="empty-state">
-      {icon ? <div className="mb-3 text-base font-medium text-muted">{icon}</div> : null}
-      <h3 className="text-base font-semibold text-ink dark:text-white">{title}</h3>
-      {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
+      {icon ? <div className="mb-3 text-base font-medium text-[var(--color-muted)]">{icon}</div> : null}
+      <h3 className="text-base font-semibold text-[var(--color-ink)]">{title}</h3>
+      {description ? <p className="mt-1 text-sm text-[var(--color-muted)]">{description}</p> : null}
       {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );

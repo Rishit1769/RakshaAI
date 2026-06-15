@@ -4,60 +4,131 @@
 
 @import 'leaflet/dist/leaflet.css';
 
-@layer base {
-  :root {
-    --color-primary: #111111;
-    --color-primary-active: #242424;
-    --color-canvas: #ffffff;
-    --color-surface-soft: #f8f9fa;
-    --color-surface-card: #f5f5f5;
-    --color-surface-strong: #e5e7eb;
-    --color-surface-dark: #101010;
-    --color-surface-dark-elevated: #1a1a1a;
-    --color-ink: #111111;
-    --color-body: #374151;
-    --color-muted: #6b7280;
-    --color-muted-soft: #898989;
-    --color-hairline: #e5e7eb;
-    --color-success: #10b981;
-    --color-warning: #f59e0b;
-    --color-error: #ef4444;
-  }
+:root {
+  --bg-page: #F7F8FC;
+  --bg-card: #FFFFFF;
+  --bg-nav: #FFFFFF;
+  --text-primary: #0B1026;
+  --text-secondary: #374151;
+  --text-muted: #7E8794;
+  --border: #E5E7EB;
+  --surface-muted: #F1F3F8;
 
-  * {
-    box-sizing: border-box;
-  }
+  --color-primary: #FF6B2D;
+  --color-primary-hover: #E55A1F;
+  --color-emergency: #D72638;
+  --color-emergency-hover: #B71C2C;
+  --color-safe: #4CAF50;
+  --color-warning: #FFB020;
+  --color-ai: #7B61FF;
+  --color-canvas: #FFFFFF;
+  --color-background: var(--bg-page);
+  --color-surface-card: var(--bg-card);
+  --color-surface-muted: var(--surface-muted);
+  --color-navy: #0B1026;
+  --color-border: var(--border);
+  --color-border-soft: #F3F4F6;
+  --color-ink: var(--text-primary);
+  --color-body: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-on-primary: #FFFFFF;
+  --color-on-emergency: #FFFFFF;
+  --color-on-dark: #FFFFFF;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-emergency: 0 4px 20px rgba(215,38,56,0.3);
+  --rounded-sm: 6px;
+  --rounded-md: 10px;
+  --rounded-lg: 16px;
+  --rounded-xl: 24px;
+  --rounded-full: 9999px;
+}
 
-  html {
-    font-family: var(--font-inter), Inter, system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
-  }
+[data-theme='dark'] {
+  --bg-page: #0D0F1A;
+  --bg-card: #151827;
+  --bg-nav: #0D0F1A;
+  --text-primary: #F7F8FC;
+  --text-secondary: #C9CDD8;
+  --text-muted: #7E8794;
+  --border: #252840;
+  --surface-muted: #1C2033;
 
-  body {
-    margin: 0;
-    background: var(--color-canvas);
-    color: var(--color-body);
-  }
+  --color-primary: #FF7A40;
+  --color-primary-hover: #FF6B2D;
+  --color-emergency: #FF3B4E;
+  --color-emergency-hover: #D72638;
+  --color-safe: #5EC462;
+  --color-warning: #FFC107;
+  --color-ai: #9B85FF;
+  --color-canvas: #0A0C14;
+  --color-background: var(--bg-page);
+  --color-surface-card: var(--bg-card);
+  --color-surface-muted: var(--surface-muted);
+  --color-navy: #0D0F1A;
+  --color-border: var(--border);
+  --color-border-soft: #1C2033;
+  --color-ink: var(--text-primary);
+  --color-body: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-on-primary: #FFFFFF;
+  --color-on-emergency: #FFFFFF;
+  --color-on-dark: #F7F8FC;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-emergency: 0 4px 24px rgba(255,59,78,0.4);
+}
 
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@keyframes map-pin-pulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  70% { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes sos-emergency-pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.92; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 @layer components {
   .page-container {
-    @apply mx-auto w-full max-w-marketing px-4 sm:px-6;
+    @apply mx-auto max-w-6xl px-6;
   }
 
   .top-nav {
-    @apply sticky top-0 z-40 border-b border-hairline bg-canvas/95 backdrop-blur;
+    height: 4rem;
+    background: var(--bg-nav);
+    border-bottom: 1px solid var(--border);
   }
 
   .app-header {
-    @apply sticky top-0 z-30 border-b border-hairline bg-canvas/95 backdrop-blur;
+    background: var(--bg-nav);
+    border-bottom: 1px solid var(--border);
   }
 
   .brand-lockup {
@@ -65,202 +136,220 @@
   }
 
   .brand-mark {
-    @apply inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white;
-  }
-
-  .brand-mark-dark {
-    @apply bg-white text-black;
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
   }
 
   .display-hero {
-    @apply font-display text-hero-mobile font-semibold leading-none tracking-[-0.04em] text-ink sm:text-5xl lg:text-hero;
+    @apply text-4xl font-bold leading-tight md:text-5xl;
+    color: var(--text-primary);
   }
 
-  .display-section {
-    @apply font-display text-4xl font-semibold leading-tight tracking-[-0.03em] text-ink md:text-section;
-  }
-
+  .display-section,
   .display-subsection {
-    @apply font-display text-3xl font-semibold leading-tight tracking-[-0.025em] text-ink md:text-subsection;
+    @apply text-3xl font-bold leading-tight;
+    color: var(--text-primary);
   }
 
   .display-label {
-    @apply font-display font-semibold tracking-[-0.03em];
+    @apply font-semibold;
+    color: var(--text-primary);
   }
 
   .eyebrow {
-    @apply inline-flex items-center rounded-full bg-surface-card px-3 py-1 text-caption font-medium text-ink;
+    @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
+    background: var(--surface-muted);
+    color: var(--text-primary);
   }
 
   .nav-link {
-    @apply text-sm font-medium text-muted transition-colors hover:text-ink;
+    @apply text-sm font-medium;
+    color: var(--text-secondary);
   }
 
   .btn-primary {
-    @apply inline-flex h-10 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-white transition-colors active:bg-primary-active disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center px-6 py-3 text-sm font-semibold;
+    min-height: 2.75rem;
+    border-radius: var(--rounded-md);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    box-shadow: var(--shadow-sm);
   }
 
-  .btn-secondary {
-    @apply inline-flex h-10 items-center justify-center rounded-md border border-hairline bg-canvas px-5 text-sm font-semibold text-ink transition-colors hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-60;
+  .btn-primary:hover {
+    background: var(--color-primary-hover);
   }
 
+  .btn-secondary,
   .btn-secondary-dark {
-    @apply inline-flex h-10 items-center justify-center rounded-md border border-white/15 bg-white/5 px-5 text-sm font-semibold text-white transition-colors hover:bg-white/10;
+    @apply inline-flex items-center justify-center px-6 py-3 text-sm font-semibold;
+    min-height: 2.75rem;
+    border-radius: var(--rounded-md);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
   }
 
   .btn-text-link {
-    @apply inline-flex items-center justify-center text-sm font-medium text-ink;
+    @apply inline-flex items-center justify-center text-sm font-semibold;
+    color: var(--text-primary);
   }
 
   .btn-sos {
-    @apply relative flex h-40 w-40 select-none items-center justify-center rounded-full bg-emergency text-2xl font-semibold text-white shadow-emergency transition-transform active:scale-95 md:h-48 md:w-48;
-    animation: sosPulse 1.8s ease-in-out infinite;
+    @apply relative flex items-center justify-center rounded-full text-2xl font-bold;
+    width: 12rem;
+    height: 12rem;
+    background: var(--color-emergency);
+    color: var(--color-on-emergency);
+    box-shadow: var(--shadow-emergency);
+    animation: sos-emergency-pulse 1.8s ease-in-out infinite;
   }
 
-  .card {
-    @apply rounded-xl border border-hairline bg-canvas p-6 shadow-soft;
+  .card,
+  .product-card,
+  .feature-card,
+  .testimonial-card,
+  .surface-panel,
+  .cta-band,
+  .empty-state {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-lg);
+    box-shadow: var(--shadow-md);
   }
 
-  .surface-panel {
-    @apply rounded-xl bg-surface-card p-6;
+  .card,
+  .product-card,
+  .surface-panel,
+  .testimonial-card {
+    @apply p-6;
   }
 
   .feature-card {
-    @apply rounded-xl bg-surface-card p-8;
-  }
-
-  .product-card {
-    @apply rounded-xl border border-hairline bg-canvas p-6 shadow-card;
-  }
-
-  .testimonial-card {
-    @apply rounded-xl bg-surface-card p-6;
+    @apply p-8;
   }
 
   .cta-band {
-    @apply rounded-xl bg-surface-card px-6 py-12 md:px-12;
+    @apply px-6 py-12 md:px-12;
   }
 
-  .input-field {
-    @apply h-10 w-full rounded-md border border-hairline bg-canvas px-4 text-sm text-ink placeholder:text-muted outline-none transition-colors focus:border-ink focus:ring-0;
-  }
-
+  .input-field,
   .textarea-field {
-    @apply w-full rounded-xl border border-hairline bg-canvas px-4 py-3 text-sm text-ink placeholder:text-muted outline-none transition-colors focus:border-ink focus:ring-0;
+    @apply w-full px-4 py-3 text-base;
+    border: 1px solid var(--border);
+    border-radius: var(--rounded-md);
+    background: var(--bg-page);
+    color: var(--text-primary);
+  }
+
+  .input-field::placeholder,
+  .textarea-field::placeholder {
+    color: var(--text-muted);
+  }
+
+  .input-field:focus,
+  .textarea-field:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(255, 107, 45, 0.2);
   }
 
   .nav-pill-group {
-    @apply inline-flex flex-wrap items-center gap-2 rounded-full bg-surface-soft p-1.5;
+    @apply inline-flex flex-wrap items-center gap-2 p-1;
+    border-radius: var(--rounded-full);
+    background: var(--surface-muted);
   }
 
   .nav-pill {
-    @apply rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors;
+    @apply px-4 py-2 text-sm font-medium;
+    border-radius: var(--rounded-full);
+    color: var(--text-muted);
   }
 
   .nav-pill-active {
-    @apply rounded-full bg-canvas px-4 py-2 text-sm font-semibold text-ink shadow-soft;
+    @apply px-4 py-2 text-sm font-semibold;
+    border-radius: var(--rounded-full);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .badge-safe,
+  .badge-warning,
+  .badge-emergency {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold;
   }
 
   .badge-safe {
-    @apply inline-flex items-center rounded-full bg-safe/10 px-2.5 py-1 text-xs font-semibold text-safe-dark;
+    background: color-mix(in srgb, var(--color-safe) 12%, transparent);
+    color: var(--color-safe);
   }
 
   .badge-warning {
-    @apply inline-flex items-center rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning;
+    background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+    color: var(--color-warning);
   }
 
   .badge-emergency {
-    @apply inline-flex items-center rounded-full bg-emergency/10 px-2.5 py-1 text-xs font-semibold text-emergency;
+    background: color-mix(in srgb, var(--color-emergency) 12%, transparent);
+    color: var(--color-emergency);
   }
 
   .site-footer {
-    @apply mt-24 bg-surface-dark text-white;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
   }
 
   .footer-link {
-    @apply block text-sm text-white/65 transition-colors hover:text-white;
-  }
-
-  .empty-state {
-    @apply rounded-xl border border-dashed border-hairline bg-canvas px-6 py-10 text-center;
+    @apply block text-sm;
+    color: var(--text-muted);
   }
 
   .skeleton {
-    @apply animate-pulse rounded-xl bg-black/5;
+    @apply animate-pulse rounded-xl;
+    background: var(--color-border-soft);
   }
 
-  .interactive {
-    @apply transition-colors;
+  .raksha-map {
+    overflow: hidden;
+    border-radius: var(--rounded-lg);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-md);
+  }
+
+  [data-theme='dark'] .raksha-map .leaflet-tile {
+    filter: invert(90%) hue-rotate(180deg);
+  }
+
+  [data-emergency='true'] {
+    background: #0B0D14 !important;
+    color: var(--color-on-dark) !important;
+  }
+
+  [data-emergency='true'] .app-header,
+  [data-emergency='true'] .product-card,
+  [data-emergency='true'] .surface-panel,
+  [data-emergency='true'] .card {
+    background: #0B0D14 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    color: var(--color-on-dark) !important;
   }
 }
 
-@layer base {
-  .dark {
-    --color-canvas: #0f1115;
-    --color-surface-soft: #17191f;
-    --color-surface-card: #17191f;
-    --color-surface-strong: #23262f;
-    --color-surface-dark: #070809;
-    --color-surface-dark-elevated: #121317;
-    --color-ink: #f5f5f5;
-    --color-body: #d1d5db;
-    --color-muted: #9ca3af;
-    --color-muted-soft: #71717a;
-    --color-hairline: #262a32;
+@media (max-width: 767px) {
+  .page-container {
+    @apply px-4;
   }
 
-  .dark body {
-    background: var(--color-canvas);
-    color: var(--color-body);
-  }
-}
-
-@layer components {
-  .dark .top-nav,
-  .dark .app-header {
-    @apply border-white/10 bg-[#0f1115]/95;
+  .display-hero {
+    @apply text-4xl;
   }
 
-  .dark .card,
-  .dark .product-card,
-  .dark .empty-state {
-    @apply border-white/10 bg-[#14171d] text-white shadow-none;
-  }
-
-  .dark .surface-panel,
-  .dark .feature-card,
-  .dark .testimonial-card,
-  .dark .cta-band {
-    @apply bg-[#17191f] text-white;
-  }
-
-  .dark .btn-secondary {
-    @apply border-white/10 bg-[#14171d] text-white hover:bg-[#1a1d24];
-  }
-
-  .dark .btn-text-link,
-  .dark .nav-link {
-    @apply text-white/75 hover:text-white;
-  }
-
-  .dark .input-field,
-  .dark .textarea-field {
-    @apply border-white/10 bg-[#14171d] text-white placeholder:text-white/35 focus:border-white;
-  }
-
-  .dark .nav-pill-group {
-    @apply bg-[#17191f];
-  }
-
-  .dark .nav-pill-active {
-    @apply bg-[#0f1115] text-white;
-  }
-
-  .dark .brand-mark {
-    @apply bg-white text-black;
-  }
-
-  .dark .skeleton {
-    @apply bg-white/10;
+  .btn-sos {
+    width: 11rem;
+    height: 11rem;
   }
 }

@@ -39,12 +39,12 @@ type PoliceStationElement = {
 };
 
 const MARKER_COLORS: Record<'user' | 'volunteer' | 'police' | 'safe_zone' | 'alert' | 'hotspot', string> = {
-  user: '#7C3AED',
-  volunteer: '#10B981',
-  police: '#2563EB',
-  safe_zone: '#059669',
-  alert: '#EF4444',
-  hotspot: '#F59E0B',
+  user: 'var(--color-ai)',
+  volunteer: 'var(--color-safe)',
+  police: 'var(--color-primary)',
+  safe_zone: 'var(--color-safe)',
+  alert: 'var(--color-emergency)',
+  hotspot: 'var(--color-warning)',
 };
 
 const MARKER_LABELS: Record<'user' | 'volunteer' | 'police' | 'safe_zone' | 'alert' | 'hotspot', string> = {
@@ -58,7 +58,7 @@ const MARKER_LABELS: Record<'user' | 'volunteer' | 'police' | 'safe_zone' | 'ale
 
 function truncateText(value?: string | null, maxLength = 100): string {
   if (!value) return 'No description provided';
-  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
+  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}...` : value;
 }
 
 export default function SafetyMap({
@@ -197,8 +197,8 @@ export default function SafetyMap({
 
     circleRef.current = L.circle([center.latitude, center.longitude], {
       radius: radiusKm * 1000,
-      color: '#F97316',
-      fillColor: '#F97316',
+      color: 'var(--color-primary)',
+      fillColor: 'var(--color-primary)',
       fillOpacity: 0.08,
       weight: 1.5,
       dashArray: '6 4',
@@ -231,10 +231,7 @@ export default function SafetyMap({
 
     if (!placementMode || !selectedLocation) return;
 
-    placementMarkerRef.current = L.marker(
-      [selectedLocation.latitude, selectedLocation.longitude],
-      { icon: buildPlacementIcon(L) }
-    )
+    placementMarkerRef.current = L.marker([selectedLocation.latitude, selectedLocation.longitude], { icon: buildPlacementIcon(L) })
       .addTo(map)
       .bindPopup('Marked unsafe area')
       .openPopup();
@@ -276,7 +273,7 @@ export default function SafetyMap({
             `<div style="min-width:180px">
               <strong>${name}</strong><br/>
               <span>${address}</span><br/>
-              <span style="color:#1d4ed8;font-weight:700;">Safe Reporting Point</span>
+              <span style="color:var(--color-primary);font-weight:700;">Safe Reporting Point</span>
             </div>`
           )
           .addTo(layer);
@@ -287,7 +284,7 @@ export default function SafetyMap({
   }
 
   return (
-    <div className={`overflow-hidden rounded-2xl border border-border bg-white/80 shadow-soft ${className}`}>
+    <div className={`raksha-map ${className}`}>
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );
@@ -299,12 +296,12 @@ function buildLegendControl(L: typeof import('leaflet')): Control {
   legend.onAdd = () => {
     const div = L.DomUtil.create('div', 'leaflet-map-legend');
     div.innerHTML = `
-      <div style="background:rgba(11,16,38,0.92);color:#F8FAFC;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);box-shadow:0 8px 24px rgba(15,23,42,0.25);font-size:12px;line-height:1.6;">
+      <div style="background:var(--color-navy);color:var(--color-on-dark);padding:10px 12px;border-radius:16px;border:1px solid rgba(255,255,255,0.12);box-shadow:var(--shadow-md);font-size:12px;line-height:1.6;">
         <div style="font-weight:700;margin-bottom:6px;">Legend</div>
-        <div><span style="color:#FFFFFF;">●</span> White — No reported incidents</div>
-        <div><span style="color:#F59E0B;">●</span> Yellow — Some activity reported</div>
-        <div><span style="color:#EF4444;">●</span> Red — High-density incident zone</div>
-        <div><span style="color:#1D4ED8;">■</span> Blue — Police station / Safe spot</div>
+        <div><span style="color:var(--color-canvas);">●</span> White - No reported incidents</div>
+        <div><span style="color:var(--color-warning);">●</span> Yellow - Some activity reported</div>
+        <div><span style="color:var(--color-emergency);">●</span> Red - High-density incident zone</div>
+        <div><span style="color:var(--color-primary);">■</span> Orange - Police station / Safe spot</div>
       </div>
     `;
     return div;
@@ -333,7 +330,7 @@ function buildMarkerIcon(L: typeof import('leaflet'), marker: MapMarker) {
   return L.divIcon({
     html: `<div style="
       background:${color};
-      border:2px solid white;
+      border:2px solid var(--color-canvas);
       border-radius:999px;
       min-width:42px;
       height:28px;
@@ -344,8 +341,8 @@ function buildMarkerIcon(L: typeof import('leaflet'), marker: MapMarker) {
       font-size:10px;
       font-weight:800;
       letter-spacing:0.04em;
-      color:white;
-      box-shadow:0 8px 18px rgba(15,23,42,0.22);
+      color:var(--color-on-primary);
+      box-shadow:var(--shadow-md);
     ">${label}</div>`,
     className: '',
     iconSize: [42, 28],
@@ -356,16 +353,16 @@ function buildMarkerIcon(L: typeof import('leaflet'), marker: MapMarker) {
 
 function getIncidentPinIcon(L: typeof import('leaflet'), color: 'white' | 'yellow' | 'red') {
   const colorMap = {
-    white: '#FFFFFF',
-    yellow: '#F59E0B',
-    red: '#EF4444',
+    white: 'var(--color-canvas)',
+    yellow: 'var(--color-warning)',
+    red: 'var(--color-emergency)',
   };
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="36" viewBox="0 0 24 36">
       <path d="M12 0C5.373 0 0 5.373 0 12c0 9 12 24 12 24S24 21 24 12C24 5.373 18.627 0 12 0z"
-            fill="${colorMap[color]}" stroke="#374151" stroke-width="1.5"/>
-      <circle cx="12" cy="12" r="4" fill="#374151" opacity="0.6"/>
+            fill="${colorMap[color]}" stroke="var(--color-body)" stroke-width="1.5"/>
+      <circle cx="12" cy="12" r="4" fill="var(--color-body)" opacity="0.6"/>
     </svg>`;
 
   return L.divIcon({
@@ -380,8 +377,8 @@ function getIncidentPinIcon(L: typeof import('leaflet'), color: 'white' | 'yello
 function buildPlacementIcon(L: typeof import('leaflet')) {
   const svg = `
     <div style="position:relative;width:28px;height:28px;">
-      <span style="position:absolute;inset:0;border-radius:999px;background:rgba(239,68,68,0.25);animation:map-pin-pulse 1.8s ease-out infinite;"></span>
-      <span style="position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:999px;background:#EF4444;border:2px solid #FFFFFF;box-shadow:0 6px 16px rgba(127,29,29,0.4);"></span>
+      <span style="position:absolute;inset:0;border-radius:999px;background:color-mix(in srgb, var(--color-emergency) 25%, transparent);animation:map-pin-pulse 1.8s ease-out infinite;"></span>
+      <span style="position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:999px;background:var(--color-emergency);border:2px solid var(--color-canvas);box-shadow:var(--shadow-emergency);"></span>
     </div>
   `;
 
@@ -397,14 +394,14 @@ function buildPlacementIcon(L: typeof import('leaflet')) {
 function buildPoliceStationIcon(L: typeof import('leaflet')) {
   return L.divIcon({
     html: `<div style="
-      background:#1d4ed8;
-      color:white;
+      background:var(--color-primary);
+      color:var(--color-on-primary);
       font-size:11px;
       font-weight:700;
       padding:4px 7px;
       border-radius:6px;
-      border:2px solid white;
-      box-shadow:0 2px 6px rgba(0,0,0,0.4);
+      border:2px solid var(--color-canvas);
+      box-shadow:var(--shadow-sm);
       white-space:nowrap;
     ">POLICE</div>`,
     className: '',
@@ -427,6 +424,6 @@ export function buildIncidentPopupHtml(incident: {
     <span><strong>Score:</strong> ${incident.score}</span><br/>
     <span><strong>Likes:</strong> ${incident.likes}</span><br/>
     <span><strong>Comments:</strong> ${incident.comments}</span><br/><br/>
-    <a href="/community#report-${incident.id}" style="color:#f97316;font-weight:700;">View Full Report</a>
+    <a href="/community#report-${incident.id}" style="color:var(--color-primary);font-weight:700;">View Full Report</a>
   </div>`;
 }

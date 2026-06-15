@@ -32,16 +32,7 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
               setFocused(false);
               props.onBlur?.(e);
             }}
-            className={[
-              'peer w-full rounded-md border bg-canvas px-4 pb-2 pt-6 text-sm text-ink dark:bg-[#14171d] dark:text-white',
-              'placeholder-transparent outline-none transition-all duration-200',
-              'focus:border-ink focus:ring-0',
-              error
-                ? 'border-emergency focus:border-emergency'
-                : 'border-hairline hover:border-ink/30 dark:border-white/10 dark:hover:border-white/30',
-              rightElement ? 'pr-12' : '',
-              className,
-            ].join(' ')}
+            className={['peer input-field pt-6 pb-2 placeholder-transparent', rightElement ? 'pr-12' : '', error ? 'border-[var(--color-emergency)]' : '', className].join(' ')}
             placeholder={label}
             {...props}
           />
@@ -50,24 +41,18 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
             htmlFor={inputId}
             className={[
               'pointer-events-none absolute left-4 select-none transition-all duration-200',
-              'peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted dark:peer-placeholder-shown:text-white/35',
-              'peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-ink dark:peer-focus:text-white',
-              floated && !focused ? 'top-1.5 text-[10px] text-muted dark:text-white/40' : '',
-              !floated ? 'top-4 text-sm text-muted dark:text-white/35' : '',
+              floated ? 'top-1.5 text-[10px]' : 'top-4 text-sm',
             ].join(' ')}
+            style={{ color: floated ? 'var(--color-primary)' : 'var(--color-muted)' }}
           >
             {label}
           </label>
 
-          {rightElement ? (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted dark:text-white/40">
-              {rightElement}
-            </div>
-          ) : null}
+          {rightElement ? <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)]">{rightElement}</div> : null}
         </div>
 
         {error ? (
-          <p id={`${inputId}-error`} role="alert" className="mt-1.5 flex items-center gap-1 text-xs text-emergency">
+          <p id={`${inputId}-error`} role="alert" className="mt-1.5 flex items-center gap-1 text-xs text-[var(--color-emergency)]">
             <svg className="h-3 w-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>

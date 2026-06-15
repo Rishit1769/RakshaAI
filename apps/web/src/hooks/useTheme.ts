@@ -4,7 +4,7 @@ import { createContext, createElement, useContext, useEffect, useMemo, useState 
 
 type Theme = 'light' | 'dark';
 
-const STORAGE_KEY = 'theme';
+const STORAGE_KEY = 'raksha-theme';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -17,31 +17,26 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
-  root.classList.toggle('dark', theme === 'dark');
   root.setAttribute('data-theme', theme);
   root.style.colorScheme = theme;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'dark';
-
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') return stored;
-
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  const [theme, setThemeState] = useState<Theme>('light');
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initial: Theme = saved === 'dark' || saved === 'light' ? saved : prefersDark ? 'dark' : 'light';
+    setThemeState(initial);
+    applyTheme(initial);
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleMediaChange = (event: MediaQueryListEvent) => {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored === 'light' || stored === 'dark') return;
-
       const nextTheme: Theme = event.matches ? 'dark' : 'light';
       setThemeState(nextTheme);
       applyTheme(nextTheme);
@@ -49,7 +44,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const handleStorage = (event: StorageEvent) => {
       if (event.key !== STORAGE_KEY) return;
-      const nextTheme: Theme = event.newValue === 'light' ? 'light' : 'dark';
+      const nextTheme: Theme = event.newValue === 'dark' ? 'dark' : 'light';
       setThemeState(nextTheme);
       applyTheme(nextTheme);
     };
@@ -66,21 +61,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = (nextTheme: Theme) => {
     setThemeState(nextTheme);
     window.localStorage.setItem(STORAGE_KEY, nextTheme);
-    document.documentElement.classList.toggle('dark', nextTheme === 'dark');
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    document.documentElement.style.colorScheme = nextTheme;
+    applyTheme(nextTheme);
   };
 
   const toggle = () => {
     const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
-    setThemeState(nextTheme);
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
-    document.documentElement.classList.toggle('dark', nextTheme === 'dark');
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    document.documentElement.style.colorScheme = nextTheme;
+    setTheme(nextTheme);
   };
 
-  const value = useMemo<ThemeContextValue>(
+  const value = useMemo(
     () => ({
       theme,
       isDark: theme === 'dark',
@@ -95,10 +84,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-
   if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
-
   return context;
 }
