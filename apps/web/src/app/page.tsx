@@ -71,7 +71,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="w-full max-w-[560px] overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-[var(--shadow-md)] md:ml-auto">
+          <div className="w-full max-w-[480px] overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-[var(--shadow-md)] md:ml-auto">
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-[var(--text-primary)]">Live safety console</p>
@@ -80,7 +80,7 @@ export default function HomePage() {
               <span className="badge-safe">System online</span>
             </div>
 
-            <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+            <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2">
               <div className="min-w-0 flex flex-col gap-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Emergency trigger</p>
                 <div className="flex items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--surface-muted)] py-6">
@@ -98,36 +98,38 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="min-w-0 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-card)] p-4">
-                <div className="nav-pill-group w-fit justify-start">
-                  <span className="nav-pill-active">Safe Zones</span>
-                  <span className="nav-pill">Volunteers</span>
-                  <span className="nav-pill">Police</span>
+              <div className="min-w-0 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-card)] p-3">
+                <div className="-mx-1 overflow-x-auto px-1 pb-1">
+                  <div className="nav-pill-group inline-flex min-w-max flex-nowrap whitespace-nowrap">
+                    <span className="nav-pill-active shrink-0">Safe Zones</span>
+                    <span className="nav-pill shrink-0">Volunteers</span>
+                    <span className="nav-pill shrink-0">Police</span>
+                  </div>
                 </div>
 
-                <div className="mt-4 overflow-hidden rounded-[12px] bg-[var(--surface-muted)] p-4">
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-4">
+                <div className="mt-3 overflow-hidden rounded-[12px] bg-[var(--surface-muted)] p-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
                       <p className="text-xs text-[var(--text-muted)]">Area risk</p>
-                      <p className="mt-3 min-w-0 text-lg font-semibold leading-tight text-[var(--text-primary)]">Moderate</p>
+                      <p className="mt-2 whitespace-normal break-words text-sm font-bold leading-snug text-[var(--text-primary)]">Moderate</p>
                     </div>
-                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-4">
+                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
                       <p className="text-xs text-[var(--text-muted)]">Safe zones</p>
-                      <p className="mt-3 min-w-0 text-lg font-semibold leading-tight text-[var(--text-primary)]">6 nearby</p>
+                      <p className="mt-2 whitespace-normal break-words text-sm font-bold leading-snug text-[var(--text-primary)]">6 nearby</p>
                     </div>
-                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-4">
+                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
                       <p className="text-xs text-[var(--text-muted)]">Responders</p>
-                      <p className="mt-3 min-w-0 text-lg font-semibold leading-tight text-[var(--text-primary)]">14 active</p>
+                      <p className="mt-2 whitespace-normal break-words text-sm font-bold leading-snug text-[var(--text-primary)]">14 active</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-page)] p-4">
-                    <div className="grid grid-cols-5 gap-2">
-                      {Array.from({ length: 15 }).map((_, index) => (
+                  <div className="mt-3 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({ length: 12 }).map((_, index) => (
                         <div
                           key={index}
-                          className={`h-6 rounded-[8px] border border-[var(--border)] ${
-                            index === 4 || index === 9 ? 'bg-[var(--surface-muted)]' : 'bg-[var(--bg-card)]'
+                          className={`aspect-square rounded-[8px] border border-[var(--border)] ${
+                            index === 3 || index === 7 ? 'bg-[var(--surface-muted)]' : 'bg-[var(--bg-card)]'
                           }`}
                         />
                       ))}
