@@ -80,7 +80,7 @@ export default function HomePage() {
               <span className="badge-safe">System online</span>
             </div>
 
-            <div className="grid grid-cols-1 items-start gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-1 items-start gap-4">
               <div className="min-w-0 flex flex-col gap-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Emergency trigger</p>
                 <div className="flex items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--surface-muted)] py-6">
@@ -94,46 +94,6 @@ export default function HomePage() {
                   <div className="flex min-w-0 w-full items-center justify-between gap-3 rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-secondary)]">
                     <span className="min-w-0">Status</span>
                     <span className="min-w-0 text-right font-medium text-[var(--text-primary)]">Contacts notified</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="min-w-0 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-card)] p-3">
-                <div className="-mx-1 overflow-x-auto px-1 pb-1">
-                  <div className="nav-pill-group inline-flex min-w-max flex-nowrap whitespace-nowrap">
-                    <span className="nav-pill-active shrink-0">Safe Zones</span>
-                    <span className="nav-pill shrink-0">Volunteers</span>
-                    <span className="nav-pill shrink-0">Police</span>
-                  </div>
-                </div>
-
-                <div className="mt-3 overflow-hidden rounded-[12px] bg-[var(--surface-muted)] p-3">
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
-                      <p className="text-xs text-[var(--text-muted)]">Area risk</p>
-                      <p className="mt-2 whitespace-normal break-words text-sm font-bold leading-snug text-[var(--text-primary)]">Moderate</p>
-                    </div>
-                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
-                      <p className="text-xs text-[var(--text-muted)]">Safe zones</p>
-                      <p className="mt-2 whitespace-normal break-words text-sm font-bold leading-snug text-[var(--text-primary)]">6 nearby</p>
-                    </div>
-                    <div className="min-w-0 overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
-                      <p className="text-xs text-[var(--text-muted)]">Responders</p>
-                      <p className="mt-2 whitespace-normal break-words text-sm font-bold leading-snug text-[var(--text-primary)]">14 active</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-page)] p-3">
-                    <div className="grid grid-cols-4 gap-2">
-                      {Array.from({ length: 12 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className={`aspect-square rounded-[8px] border border-[var(--border)] ${
-                            index === 3 || index === 7 ? 'bg-[var(--surface-muted)]' : 'bg-[var(--bg-card)]'
-                          }`}
-                        />
-                      ))}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -165,7 +125,7 @@ export default function HomePage() {
       </section>
 
       <section id="solutions" className="border-y border-[var(--border)] bg-[var(--surface-muted)] py-20">
-        <div className="page-container grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="page-container grid items-start gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
             <span className="eyebrow">Real product fragments</span>
             <h2 className="display-section">Show the actual workflows, not generic safety illustrations.</h2>
@@ -174,29 +134,23 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid items-stretch gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
             {featureRows.map((row) => (
               <article key={row.title} className="flex h-full flex-col overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--bg-card)] shadow-[var(--shadow-md)]">
                 <div className="h-40 overflow-hidden bg-[var(--surface-muted)] p-4">
-                  <div className="flex h-full flex-col overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-card)] p-4">
-                    <div className="nav-pill-group w-fit justify-start">
-                      <span className="nav-pill-active">Overview</span>
-                      <span className="nav-pill">Signals</span>
-                    </div>
-                    <div className="mt-4 grid flex-1 auto-rows-fr grid-cols-2 gap-3 overflow-hidden">
-                      <div className="overflow-hidden rounded-[10px] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-muted)]">Signal density</div>
-                      <div className="overflow-hidden rounded-[10px] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-muted)]">Coverage</div>
-                      <div className="overflow-hidden rounded-[10px] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-muted)]">Nearby support</div>
-                      <div className="overflow-hidden rounded-[10px] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-muted)]">Escalation path</div>
+                  <div className="flex h-full items-center justify-center overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-card)] p-4">
+                    <div className="flex flex-col items-center justify-center gap-3 text-center">
+                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Overview</span>
+                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Signals</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-1 flex-col justify-between p-6">
+                <div className="flex h-full flex-1 flex-col p-6">
                   <div>
                     <h3 className="text-lg font-semibold text-[var(--text-primary)]">{row.title}</h3>
                     <p className="mt-2 text-sm text-[var(--text-secondary)]">{row.copy}</p>
                   </div>
-                  <Link href={row.href} className="pt-4 text-sm font-semibold text-[var(--text-primary)]">
+                  <Link href={row.href} className="mt-auto pt-4 text-sm font-semibold text-[var(--text-primary)]">
                     Explore surface
                   </Link>
                 </div>
