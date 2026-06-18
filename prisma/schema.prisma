@@ -27,6 +27,11 @@ enum UserRole {
   super_admin
   organization_admin
   worker
+  SUPERADMIN
+  POLICE_DEPARTMENT
+  POLICEMAN
+  NGO
+  VOLUNTEER
 }
 
 enum OrganizationType {
@@ -208,6 +213,7 @@ model User {
   isVerified          Boolean   @default(false) @map("is_verified")
   isPhoneVerified     Boolean   @default(false) @map("is_phone_verified")
   isEmailVerified     Boolean   @default(false) @map("is_email_verified")
+  isSeed              Boolean   @default(false) @map("is_seed")
   lastLoginAt         DateTime? @map("last_login_at")
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
