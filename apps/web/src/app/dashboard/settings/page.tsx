@@ -6,6 +6,8 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { authApi, type AuthUser } from '@/lib/api/auth.api';
 import { ApiError } from '@/lib/api/fetcher';
 import { AppShell } from '@/components/layout/AppShell';
+import { Card } from '@/components/ui/card';
+import { SectionBadge } from '@/components/ui/section-badge';
 
 type MpinMode = 'setup' | 'change' | 'disable' | null;
 
@@ -141,21 +143,21 @@ export default function SettingsPage() {
     }
   }
 
-  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
+  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-muted">Checking session...</div>;
 
   if (!isAuthenticated) return null;
 
   return (
     <AppShell title="Account Settings" subtitle="Manage sign-in speed and account security." backLabel="Dashboard">
       <div className="space-y-6">
-        {successMessage ? <div className="rounded-xl border border-safe/20 bg-safe/10 p-3 text-sm text-safe-dark">{successMessage}</div> : null}
-        <section className="product-card">
+        {successMessage ? <div className="rounded-2xl border border-safe/20 bg-safe/10 p-3 text-sm text-safe-dark">{successMessage}</div> : null}
+        <Card>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-ink">MPIN Settings</h2>
-              <p className="mt-1 text-sm text-muted">Use a private 6-digit MPIN as an alternative sign-in method.</p>
+              <SectionBadge label="MPIN settings" />
+              <h2 className="mt-4 text-lg font-semibold text-ink">Use a private 6-digit MPIN as an alternative sign-in method.</h2>
             </div>
-            <span className={me?.mpinEnabled ? 'badge-safe' : 'eyebrow bg-surface-soft'}>{me?.mpinEnabled ? 'Enabled' : 'Disabled'}</span>
+            <span className={me?.mpinEnabled ? 'badge-safe' : 'eyebrow'}>{me?.mpinEnabled ? 'Enabled' : 'Disabled'}</span>
           </div>
 
           {loadingProfile ? (
@@ -172,15 +174,15 @@ export default function SettingsPage() {
               )}
             </div>
           )}
-        </section>
+        </Card>
 
         {actionMode ? (
-          <section className="product-card">
+          <Card>
             <div className="flex items-center justify-between gap-4">
               <h3 className="text-lg font-semibold text-ink">{actionMode === 'setup' ? 'Set Up MPIN' : actionMode === 'change' ? 'Change MPIN' : 'Disable MPIN'}</h3>
               <button type="button" onClick={closeMode} className="text-sm text-muted">Cancel</button>
             </div>
-            {formError ? <div className="mt-4 rounded-xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{formError}</div> : null}
+            {formError ? <div className="mt-4 rounded-2xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{formError}</div> : null}
             <div className="mt-5 space-y-4">
               {actionMode === 'setup' ? (
                 <>
@@ -205,7 +207,7 @@ export default function SettingsPage() {
                 </>
               ) : null}
             </div>
-          </section>
+          </Card>
         ) : null}
       </div>
     </AppShell>

@@ -1,6 +1,7 @@
 'use client';
 
 import { InputHTMLAttributes, forwardRef, useState } from 'react';
+import { cn } from '@/lib/cn';
 
 interface FloatingLabelInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'placeholder'> {
   label: string;
@@ -32,17 +33,22 @@ const FloatingLabelInput = forwardRef<HTMLInputElement, FloatingLabelInputProps>
               setFocused(false);
               props.onBlur?.(e);
             }}
-            className={['peer input-field pt-6 pb-2 placeholder-transparent', rightElement ? 'pr-12' : '', error ? 'border-[var(--color-emergency)]' : '', className].join(' ')}
+            className={cn(
+              'peer input-field rounded-2xl pt-6 pb-2 placeholder-transparent',
+              rightElement && 'pr-12',
+              error && 'border-emergency focus:border-emergency focus:ring-emergency/10',
+              className
+            )}
             placeholder={label}
             {...props}
           />
 
           <label
             htmlFor={inputId}
-            className={[
+            className={cn(
               'pointer-events-none absolute left-4 select-none transition-all duration-200',
               floated ? 'top-1.5 text-[10px]' : 'top-4 text-sm',
-            ].join(' ')}
+            )}
             style={{ color: floated ? 'var(--color-primary)' : 'var(--color-muted)' }}
           >
             {label}

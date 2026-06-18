@@ -1,7 +1,7 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const NAV_LINKS = [
   { href: '/#product', label: 'Product' },
@@ -17,10 +17,10 @@ export default function MarketingNav() {
   return (
     <header className="top-nav">
       <div className="page-container flex h-16 items-center justify-between gap-6">
-        <a href="/" className="brand-lockup">
+        <Link href="/" className="brand-lockup">
           <span className="brand-mark">R</span>
           <span className="display-label text-base">RakshaAI</span>
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
           {NAV_LINKS.map((item) => (
@@ -35,13 +35,12 @@ export default function MarketingNav() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <a href="/auth/login" className="btn-text-link hidden sm:inline-flex">
+          <Link href="/auth/login" className="btn-text-link hidden sm:inline-flex">
             Sign in
-          </a>
-          <a href="/auth/register" className="btn-primary">
+          </Link>
+          <Link href="/auth/register" className="btn-primary">
             Create account
-          </a>
+          </Link>
         </div>
       </div>
     </header>

@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.32.1",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.40.0",
     "leaflet": "^1.9.4",
     "next": "14.2.3",
     "react": "^18.3.1",

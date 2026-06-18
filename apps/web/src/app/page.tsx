@@ -1,6 +1,13 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import MarketingFooter from '@/components/layout/MarketingFooter';
 import MarketingNav from '@/components/layout/MarketingNav';
+import { Card } from '@/components/ui/card';
+import { PageHero } from '@/components/ui/page-hero';
+import { SectionHeader } from '@/components/ui/section-header';
+import { fadeInUp, stagger } from '@/lib/motion';
 
 const trustBadges = ['Emergency-ready workflows', 'Community intelligence', 'Live responder coordination'];
 
@@ -37,136 +44,163 @@ const featureRows = [
   },
 ] as const;
 
+function HeroConsole() {
+  return (
+    <div className="relative hidden lg:block">
+      <div className="motion-safe-spin-slow absolute inset-x-10 top-10 aspect-square rounded-full border border-dashed border-primary/20" />
+      <Card padding="lg" className="relative overflow-hidden shadow-panel">
+        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+        <div className="grid gap-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">Live safety console</p>
+              <p className="mt-2 text-sm text-muted">Shared view across alert, location, and response.</p>
+            </div>
+            <span className="badge-safe">System online</span>
+          </div>
+
+          <div className="motion-safe-float rounded-[1.75rem] border border-border bg-surface-soft/85 p-6">
+            <div className="flex items-center justify-center rounded-full bg-[image:var(--gradient-accent)] px-6 py-16 text-3xl font-semibold tracking-[0.12em] text-white shadow-accent-lg">
+              SOS
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            {[
+              ['Location', 'Live GPS'],
+              ['Status', 'Contacts + responders notified'],
+              ['Context', 'Community + AI guidance available'],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between rounded-2xl border border-border bg-white/80 px-4 py-3 text-sm">
+                <span className="text-muted">{label}</span>
+                <span className="font-medium text-ink">{value}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            {['Map', 'Signals', 'Responders'].map((item, index) => (
+              <div key={item} className={`rounded-2xl p-4 text-center text-sm ${index === 0 ? 'bg-surface-inverted text-white' : 'bg-surface-soft/80 text-ink'}`}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
     <main className="bg-background">
       <MarketingNav />
 
-      <section className="border-b border-[var(--border)] bg-[var(--bg-page)]">
-        <div className="page-container grid grid-cols-1 items-center gap-12 py-20 md:grid-cols-2">
-          <div className="space-y-8">
-            <span className="eyebrow">Built for real emergency coordination</span>
-            <div className="space-y-5">
-              <h1 className="display-hero">Safety infrastructure that reacts fast, stays calm, and keeps everyone aligned.</h1>
-              <p className="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)]">
-                RakshaAI combines emergency SOS, live responder workflows, safety mapping, community intelligence, and AI-guided support into one coordinated surface.
-              </p>
-            </div>
+      <section className="border-b border-border py-14 md:py-20">
+        <div className="page-container">
+          <PageHero
+            badge="Built for real emergency coordination"
+            title={
+              <>
+                Safety infrastructure that reacts fast, stays calm, and keeps everyone <span className="gradient-text">aligned</span>.
+              </>
+            }
+            description="RakshaAI combines emergency SOS, live responder workflows, safety mapping, community intelligence, and AI-guided support into one coordinated surface."
+            actions={
+              <>
+                <Link href="/auth/register" className="btn-primary">
+                  Create account
+                </Link>
+                <Link href="/auth/login" className="btn-secondary">
+                  Sign in
+                </Link>
+              </>
+            }
+            aside={<HeroConsole />}
+          />
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/auth/register" className="btn-primary">
-                Create account
-              </Link>
-              <Link href="/auth/login" className="btn-secondary">
-                Sign in
-              </Link>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              {trustBadges.map((badge) => (
-                <span key={badge} className="eyebrow">
-                  {badge}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full max-w-[480px] overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--bg-card)] p-8 shadow-[var(--shadow-md)] md:ml-auto">
-            <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Live safety console</p>
-                <p className="text-sm text-[var(--text-muted)]">Shared view across alert, location, and response.</p>
-              </div>
-              <span className="badge-safe">System online</span>
-            </div>
-
-            <div className="grid grid-cols-1 items-start gap-4">
-              <div className="min-w-0 flex flex-col gap-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Emergency trigger</p>
-                <div className="flex items-center justify-center rounded-[12px] border border-[var(--border)] bg-[var(--surface-muted)] py-6">
-                  <div className="flex h-32 w-32 items-center justify-center rounded-full bg-[var(--color-emergency)] text-xl font-bold text-[var(--color-on-emergency)]">SOS</div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex min-w-0 w-full items-center justify-between gap-3 rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-                    <span className="min-w-0">Location</span>
-                    <span className="min-w-0 text-right font-medium text-[var(--text-primary)]">Live GPS</span>
-                  </div>
-                  <div className="flex min-w-0 w-full items-center justify-between gap-3 rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-                    <span className="min-w-0">Status</span>
-                    <span className="min-w-0 text-right font-medium text-[var(--text-primary)]">Contacts notified</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="product" className="py-20">
-        <div className="page-container space-y-12">
-          <div className="max-w-3xl space-y-4">
-            <span className="eyebrow">Purpose-built product surface</span>
-            <h2 className="display-section">Every critical action has one clear next step.</h2>
-            <p className="text-base leading-relaxed text-[var(--text-secondary)]">
-              The platform is designed to reduce confusion during stressful moments: trigger, confirm, route, monitor, and resolve.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {workflowCards.map((card) => (
-              <article key={card.title} className="feature-card">
-                <div className="mb-6 h-10 w-10 rounded-full bg-[var(--surface-muted)]" />
-                <h3 className="text-lg font-semibold text-[var(--text-primary)]">{card.title}</h3>
-                <p className="mt-3 text-base leading-relaxed text-[var(--text-secondary)]">{card.body}</p>
-              </article>
+          <div className="mt-8 flex flex-wrap gap-3">
+            {trustBadges.map((badge) => (
+              <span key={badge} className="eyebrow">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                {badge}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="solutions" className="border-y border-[var(--border)] bg-[var(--surface-muted)] py-20">
-        <div className="page-container grid items-start gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="space-y-4">
-            <span className="eyebrow">Real product fragments</span>
-            <h2 className="display-section">Show the actual workflows, not generic safety illustrations.</h2>
-            <p className="text-base leading-relaxed text-[var(--text-secondary)]">
-              The marketing surface borrows from the same flows users and responders actually rely on: map layers, alert cards, conversation support, and routing context.
-            </p>
-          </div>
+      <section id="product" className="py-20 md:py-28">
+        <div className="page-container space-y-12">
+          <SectionHeader
+            badge="Purpose-built product surface"
+            title={
+              <>
+                Every critical action has <span className="gradient-text">one clear next step</span>.
+              </>
+            }
+            description="The platform is designed to reduce confusion during stressful moments: trigger, confirm, route, monitor, and resolve."
+          />
 
-          <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {featureRows.map((row) => (
-              <article key={row.title} className="flex h-full flex-col overflow-hidden rounded-[16px] border border-[var(--border)] bg-[var(--bg-card)] shadow-[var(--shadow-md)]">
-                <div className="h-40 overflow-hidden bg-[var(--surface-muted)] p-4">
-                  <div className="flex h-full items-center justify-center overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--bg-card)] p-4">
-                    <div className="flex flex-col items-center justify-center gap-3 text-center">
-                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Overview</span>
-                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">Signals</span>
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15, margin: '-60px' }} className="grid gap-6 md:grid-cols-3">
+            {workflowCards.map((card, index) => (
+              <motion.article key={card.title} variants={fadeInUp}>
+                <Card variant={index === 1 ? 'featured' : 'default'} padding="lg" className="h-full">
+                  <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[image:var(--gradient-accent)] text-base font-semibold text-white shadow-accent">
+                    0{index + 1}
+                  </div>
+                  <h3 className="text-xl font-semibold tracking-[-0.01em] text-ink">{card.title}</h3>
+                  <p className="mt-3 text-base leading-8 text-body">{card.body}</p>
+                </Card>
+              </motion.article>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <section id="solutions" className="inverted-section py-20 md:py-28">
+        <div className="page-container space-y-12">
+          <SectionHeader
+            badge="Real product fragments"
+            title="Show the actual workflows, not generic safety illustrations."
+            description="The marketing surface borrows from the same flows users and responders actually rely on: map layers, alert cards, conversation support, and routing context."
+          />
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {featureRows.map((row, index) => (
+              <Card key={row.title} variant={index === 1 ? 'featured' : 'inverted'} padding="none" className="overflow-hidden">
+                <div className="relative h-44 overflow-hidden border-b border-white/10 p-5">
+                  <div className="dot-grid absolute inset-0 opacity-20" />
+                  <div className="relative flex h-full items-center justify-center rounded-[1.75rem] border border-white/10 bg-white/5">
+                    <div className="grid gap-3 text-center">
+                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-white/70">Overview</span>
+                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-white/70">Signals</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex h-full flex-1 flex-col p-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--text-primary)]">{row.title}</h3>
-                    <p className="mt-2 text-sm text-[var(--text-secondary)]">{row.copy}</p>
-                  </div>
-                  <Link href={row.href} className="mt-auto pt-4 text-sm font-semibold text-[var(--text-primary)]">
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-white">{row.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-white/72">{row.copy}</p>
+                  <Link href={row.href} className="mt-5 inline-flex text-sm font-semibold text-white">
                     Explore surface
                   </Link>
                 </div>
-              </article>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20">
+      <section className="py-20 md:py-28">
         <div className="page-container">
-          <div className="cta-band text-center">
-            <h2 className="display-subsection">Smarter coordination starts before the emergency peaks.</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-[var(--text-secondary)]">
-              Create an account, set up your safety profile, and move between awareness, prevention, and response inside one consistent system.
-            </p>
+          <Card padding="lg" className="accent-glow text-center">
+            <div className="mx-auto max-w-3xl">
+              <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">Get started</p>
+              <h2 className="display-subsection mt-4">Smarter coordination starts before the emergency peaks.</h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-body">
+                Create an account, set up your safety profile, and move between awareness, prevention, and response inside one consistent system.
+              </p>
+            </div>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/auth/register" className="btn-primary">
                 Create account
@@ -175,7 +209,7 @@ export default function HomePage() {
                 View dashboard
               </Link>
             </div>
-          </div>
+          </Card>
         </div>
       </section>
 

@@ -1,32 +1,31 @@
 import type { ReactNode } from 'react';
+import { Card } from '@/components/ui/card';
+import { DataTable } from '@/components/ui/data-table';
+import { MetricCard } from '@/components/ui/metric-card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function MetricGrid({ items }: { items: Array<{ label: string; value: string | number }> }) {
   return (
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map((item) => (
-        <div key={item.label} className="product-card">
-          <p className="text-sm font-medium text-muted">{item.label}</p>
-          <p className="mt-3 text-3xl font-semibold text-ink">{item.value}</p>
-        </div>
-      ))}
+      {items.map((item) => <MetricCard key={item.label} label={item.label} value={item.value} />)}
     </section>
   );
 }
 
 export function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
-    <section className="product-card">
+    <Card>
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-ink">{title}</h2>
         {subtitle ? <p className="mt-2 text-sm text-muted">{subtitle}</p> : null}
       </div>
       {children}
-    </section>
+    </Card>
   );
 }
 
 export function EmptyBlock({ message }: { message: string }) {
-  return <div className="rounded-xl border border-dashed border-hairline p-6 text-sm text-muted">{message}</div>;
+  return <EmptyState title="Nothing to show yet" description={message} />;
 }
 
 export function SimpleTable<T extends Record<string, ReactNode>>({
@@ -36,30 +35,5 @@ export function SimpleTable<T extends Record<string, ReactNode>>({
   rows: T[];
   columns: Array<{ key: keyof T; label: string }>;
 }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-hairline text-muted">
-            {columns.map((column) => (
-              <th key={String(column.key)} className="px-3 py-3 font-medium">
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={index} className="border-b border-hairline/60 align-top">
-              {columns.map((column) => (
-                <td key={String(column.key)} className="px-3 py-3 text-body">
-                  {row[column.key]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  return <DataTable rows={rows} columns={columns} />;
 }

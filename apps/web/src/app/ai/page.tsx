@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { AppShell } from '@/components/layout/AppShell';
+import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/field';
 import { LoadingState } from '@/components/ui/LoadingState';
+import { SectionBadge } from '@/components/ui/section-badge';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { ApiError, api } from '@/lib/api/fetcher';
 
@@ -70,41 +73,41 @@ export default function AiPage() {
   return (
     <AppShell title="AI Support Assistant" subtitle="Safety guidance, emotional grounding, and escalation help." backLabel="Dashboard">
       <div className="grid min-h-[calc(100vh-160px)] gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-        <div className="surface-panel space-y-4 p-6">
-          <span className="eyebrow">Suggested prompts</span>
+        <Card className="space-y-4">
+          <SectionBadge label="Suggested prompts" />
           <h2 className="text-xl font-semibold text-ink">Start from a concrete situation.</h2>
           <div className="space-y-3">
             {QUICK_PROMPTS.map((prompt) => (
-              <button key={prompt} onClick={() => send(prompt)} className="w-full rounded-xl border border-hairline bg-white px-4 py-3 text-left text-sm text-body hover:bg-surface-soft dark:bg-[#14171d]">
+              <button key={prompt} onClick={() => send(prompt)} className="w-full rounded-2xl border border-border bg-white/75 px-4 py-3 text-left text-sm text-body transition-colors hover:bg-surface-soft">
                 {prompt}
               </button>
             ))}
           </div>
-        </div>
+        </Card>
 
-        <div className="product-card flex min-h-[38rem] flex-col overflow-hidden p-0">
+        <Card padding="none" className="flex min-h-[38rem] flex-col overflow-hidden">
           <div className="border-b border-hairline px-5 py-4">
-            <p className="text-sm font-semibold text-ink">Conversation</p>
-            <p className="text-sm text-muted">Use the assistant for guidance, not as a replacement for emergency services.</p>
+            <p className="font-mono text-xs uppercase tracking-[0.15em] text-primary">Conversation</p>
+            <p className="mt-2 text-sm text-muted">Use the assistant for guidance, not as a replacement for emergency services.</p>
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-5 py-5">
             {messages.map((msg, index) => (
               <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-7 ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-surface-card text-body'}`}>
+                <div className={`max-w-[85%] rounded-[1.5rem] px-4 py-3 text-sm leading-7 ${msg.role === 'user' ? 'bg-[image:var(--gradient-accent)] text-white shadow-accent' : 'bg-surface-soft/80 text-body'}`}>
                   {msg.content}
                 </div>
               </div>
             ))}
             {chatMutation.isPending ? (
               <div className="flex justify-start">
-                <div className="rounded-2xl bg-surface-card px-4 py-3 text-sm text-body">Generating response...</div>
+                <div className="rounded-[1.5rem] bg-surface-soft/80 px-4 py-3 text-sm text-body">Generating response...</div>
               </div>
             ) : null}
             <div ref={bottomRef} />
           </div>
 
-          <div className="mt-auto border-t border-[var(--color-border)] bg-[var(--color-canvas)] px-5 py-4">
+          <div className="mt-auto border-t border-border bg-white/85 px-5 py-4">
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -112,7 +115,7 @@ export default function AiPage() {
               }}
               className="flex items-end gap-3"
             >
-              <textarea
+              <Textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={(event) => {
@@ -123,14 +126,14 @@ export default function AiPage() {
                 }}
                 placeholder="Ask anything about safety..."
                 rows={1}
-                className="textarea-field min-h-12 flex-1 resize-none"
+                className="min-h-12 flex-1 resize-none"
               />
               <button type="submit" disabled={!input.trim() || chatMutation.isPending} className="btn-primary">
                 Send
               </button>
             </form>
           </div>
-        </div>
+        </Card>
       </div>
     </AppShell>
   );

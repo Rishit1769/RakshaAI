@@ -4,7 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { AppShell } from '@/components/layout/AppShell';
+import { FilterPills } from '@/components/ui/filter-pills';
 import { LoadingState } from '@/components/ui/LoadingState';
+import { MetricCard } from '@/components/ui/metric-card';
+import { SectionBadge } from '@/components/ui/section-badge';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { api } from '@/lib/api/fetcher';
 import type { MapMarker } from '@/components/SafetyMap';
@@ -158,34 +161,28 @@ export default function MapPage() {
       <div className="space-y-6">
         {risk ? (
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="product-card">
-              <p className="text-xs uppercase tracking-[0.12em] text-muted">Area risk</p>
-              <p className={`mt-3 text-2xl font-semibold capitalize ${RISK_COLORS[risk.riskLevel ?? 'safe']}`}>{risk.riskLevel}</p>
-            </div>
-            <div className="product-card">
-              <p className="text-xs uppercase tracking-[0.12em] text-muted">Recent incidents</p>
-              <p className="mt-3 text-2xl font-semibold text-ink">{risk.recentIncidents}</p>
-            </div>
-            <div className="product-card">
-              <p className="text-xs uppercase tracking-[0.12em] text-muted">Safe zones nearby</p>
-              <p className="mt-3 text-2xl font-semibold text-ink">{risk.safeZonesNearby}</p>
-            </div>
+            <MetricCard label="Area risk" value={<span className={`capitalize ${RISK_COLORS[risk.riskLevel ?? 'safe']}`}>{risk.riskLevel}</span>} />
+            <MetricCard label="Recent incidents" value={risk.recentIncidents ?? 0} />
+            <MetricCard label="Safe zones nearby" value={risk.safeZonesNearby ?? 0} />
           </div>
         ) : null}
 
         <div className="product-card space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-ink">Layer controls</h2>
-              <p className="text-sm text-muted">Switch between community support, safe infrastructure, and official responders.</p>
+              <SectionBadge label="Layer controls" />
+              <h2 className="mt-3 text-lg font-semibold text-ink">Switch between support layers and official infrastructure.</h2>
+              <p className="mt-1 text-sm text-muted">Move between community support, safe infrastructure, and official responders.</p>
             </div>
-            <div className="nav-pill-group">
-              {(['safe_zones', 'volunteers', 'police'] as const).map((layer) => (
-                <button key={layer} onClick={() => setActiveLayer(layer)} className={activeLayer === layer ? 'nav-pill-active' : 'nav-pill'}>
-                  {layer === 'safe_zones' ? 'Safe Zones' : layer === 'volunteers' ? 'Volunteers' : 'Police'}
-                </button>
-              ))}
-            </div>
+            <FilterPills
+              options={[
+                { label: 'Safe Zones', value: 'safe_zones' },
+                { label: 'Volunteers', value: 'volunteers' },
+                { label: 'Police', value: 'police' },
+              ]}
+              selectedValue={activeLayer}
+              onChange={(value) => setActiveLayer(value as 'safe_zones' | 'volunteers' | 'police')}
+            />
           </div>
 
           {userLocation ? (

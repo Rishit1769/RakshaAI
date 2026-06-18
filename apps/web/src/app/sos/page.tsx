@@ -82,7 +82,7 @@ export default function SosPage() {
     });
   }
 
-  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
+  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-muted">Checking session...</div>;
 
   if (!isAuthenticated) return null;
 
@@ -94,7 +94,8 @@ export default function SosPage() {
             Back
           </button>
           <div>
-            <h1 className="text-lg font-semibold text-white">Emergency SOS</h1>
+            <p className="font-mono text-xs uppercase tracking-[0.16em] text-white/70">High urgency flow</p>
+            <h1 className="mt-1 text-xl font-semibold text-white">Emergency SOS</h1>
             <p className="text-sm text-white/70">High-priority alerting with freshest available location.</p>
           </div>
         </div>
@@ -102,12 +103,15 @@ export default function SosPage() {
 
       <main className="page-container grid gap-6 py-8 lg:grid-cols-[0.92fr_1.08fr]">
         <div className="surface-panel p-8">
-          <span className="eyebrow bg-white">High urgency flow</span>
+          <span className="eyebrow border-white/15 bg-white/10 text-white">
+            <span className="h-2 w-2 rounded-full bg-white animate-pulse-dot" />
+            High urgency flow
+          </span>
           <h2 className="display-subsection mt-6 text-white">The action stays obvious when every second matters.</h2>
           <p className="mt-4 text-base leading-7 text-white/80">
             RakshaAI keeps this surface focused: choose the situation, add context if it helps, and send the alert without waiting on non-critical systems.
           </p>
-          <div className={`mt-6 rounded-xl px-4 py-3 text-sm ${location ? 'bg-safe/10 text-safe-dark' : 'bg-warning/10 text-warning'}`}>
+          <div className={`mt-6 rounded-2xl px-4 py-3 text-sm ${location ? 'bg-safe/10 text-green-200' : 'bg-warning/10 text-orange-200'}`}>
             {location ? locationError || `Location acquired (${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)})` : locationError || 'Acquiring your location... SOS can still be sent if this fails.'}
           </div>
           <a href="tel:112" className="btn-secondary mt-6">
@@ -138,7 +142,7 @@ export default function SosPage() {
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Briefly describe the situation..."
               maxLength={500}
-              className="textarea-field min-h-28 resize-none"
+              className="textarea-field min-h-28 resize-none bg-white/95 text-ink"
             />
             <p className="mt-1 text-right text-xs text-white/65">{description.length}/500</p>
           </div>
@@ -152,7 +156,7 @@ export default function SosPage() {
             </p>
           </div>
 
-          {sosMutation.isError ? <div className="rounded-xl border border-emergency/30 bg-emergency/10 px-4 py-3 text-sm text-emergency">Failed to send SOS. Please try again or call 112.</div> : null}
+          {sosMutation.isError ? <div className="rounded-2xl border border-emergency/30 bg-emergency/10 px-4 py-3 text-sm text-rose-200">Failed to send SOS. Please try again or call 112.</div> : null}
         </div>
       </main>
     </div>

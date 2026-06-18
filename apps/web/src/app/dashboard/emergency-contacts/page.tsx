@@ -6,6 +6,10 @@ import { ApiError } from '@/lib/api/fetcher';
 import { userApi, type EmergencyContact, type EmergencyContactPayload } from '@/lib/api/user.api';
 import { AppShell } from '@/components/layout/AppShell';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SectionBadge } from '@/components/ui/section-badge';
+import { Select } from '@/components/ui/field';
 
 type ModalMode = 'add' | 'edit' | null;
 
@@ -186,7 +190,7 @@ export default function EmergencyContactsPage() {
     }
   }
 
-  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Checking session...</div>;
+  if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-muted">Checking session...</div>;
 
   if (!isAuthenticated) return null;
 
@@ -198,25 +202,25 @@ export default function EmergencyContactsPage() {
       actions={<button type="button" onClick={openAddModal} disabled={disableAdd} className="btn-primary">Add contact</button>}
     >
       <div className="space-y-6">
-        <div className="product-card flex items-center justify-between">
-          <p className="text-sm text-body">{contactCount} of {maxContacts} contacts configured.</p>
-          <span className="eyebrow bg-surface-soft">Primary contact first</span>
-        </div>
+        <Card className="flex items-center justify-between">
+          <div>
+            <SectionBadge label="Response network" />
+            <p className="mt-3 text-sm text-body">{contactCount} of {maxContacts} contacts configured.</p>
+          </div>
+          <span className="eyebrow">Primary contact first</span>
+        </Card>
 
-        {toast ? <div className="rounded-xl border border-safe/20 bg-safe/10 p-3 text-sm text-safe-dark">{toast}</div> : null}
-        {error ? <div className="rounded-xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{error}</div> : null}
+        {toast ? <div className="rounded-2xl border border-safe/20 bg-safe/10 p-3 text-sm text-safe-dark">{toast}</div> : null}
+        {error ? <div className="rounded-2xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{error}</div> : null}
 
         {loading ? (
-          <div className="product-card text-sm text-muted">Loading emergency contacts...</div>
+          <Card className="text-sm text-muted">Loading emergency contacts...</Card>
         ) : sortedContacts.length === 0 ? (
-          <div className="empty-state">
-            <h2 className="text-lg font-semibold text-ink dark:text-white">No emergency contacts added yet.</h2>
-            <p className="mt-2 text-sm text-muted">Add your first contact to stay protected.</p>
-          </div>
+          <EmptyState title="No emergency contacts added yet." description="Add your first contact to stay protected." />
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {sortedContacts.map((contact) => (
-              <article key={contact.id} className="product-card">
+              <Card key={contact.id}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-semibold text-ink">{contact.name}</h2>
@@ -233,33 +237,33 @@ export default function EmergencyContactsPage() {
                   <button type="button" onClick={() => openEditModal(contact)} className="btn-secondary">Edit</button>
                   <button type="button" onClick={() => setDeleteTarget(contact)} className="btn-secondary">Delete</button>
                 </div>
-              </article>
+              </Card>
             ))}
           </div>
         )}
       </div>
 
       {modalMode ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-lg rounded-xl border border-hairline bg-canvas p-6 shadow-card dark:border-white/10 dark:bg-[#14171d]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-[var(--radius-xl)] border border-border bg-canvas p-6 shadow-panel">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold text-ink dark:text-white">{modalMode === 'add' ? 'Add Contact' : 'Edit Contact'}</h2>
+              <h2 className="text-xl font-semibold text-ink">{modalMode === 'add' ? 'Add Contact' : 'Edit Contact'}</h2>
               <button type="button" onClick={closeModal} className="text-sm text-muted">Cancel</button>
             </div>
             <div className="mt-5 space-y-4">
               <FloatingLabelInput label="Name" type="text" value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} error={formErrors.name} disabled={saving} />
               <div>
-                <label className="mb-2 block text-sm font-medium text-ink dark:text-white">Relationship</label>
-                <select value={form.relationship} onChange={(event) => setForm((prev) => ({ ...prev, relationship: event.target.value }))} disabled={saving} className="input-field">
+                <label className="mb-2 block text-sm font-medium text-ink">Relationship</label>
+                <Select value={form.relationship} onChange={(event) => setForm((prev) => ({ ...prev, relationship: event.target.value }))} disabled={saving}>
                   {RELATIONSHIP_OPTIONS.map((option) => (
                     <option key={option} value={option}>{option}</option>
                   ))}
-                </select>
+                </Select>
                 {formErrors.relationship ? <p className="mt-1.5 text-xs text-emergency">{formErrors.relationship}</p> : null}
               </div>
               <FloatingLabelInput label="Phone Number" type="tel" value={form.phone} onChange={(event) => setForm((prev) => ({ ...prev, phone: event.target.value }))} error={formErrors.phone} disabled={saving} />
               <FloatingLabelInput label="Email (optional)" type="email" value={form.email} onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))} error={formErrors.email} disabled={saving} />
-              <label className="inline-flex items-center gap-3 text-sm font-medium text-ink dark:text-white">
+              <label className="inline-flex items-center gap-3 text-sm font-medium text-ink">
                 <input type="checkbox" checked={form.isPrimary} onChange={(event) => setForm((prev) => ({ ...prev, isPrimary: event.target.checked }))} disabled={saving} className="h-4 w-4 rounded border-hairline text-primary focus:ring-0" />
                 Set as primary contact
               </label>
@@ -275,9 +279,9 @@ export default function EmergencyContactsPage() {
       ) : null}
 
       {deleteTarget ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-xl border border-hairline bg-canvas p-6 shadow-card dark:border-white/10 dark:bg-[#14171d]">
-            <h2 className="text-xl font-semibold text-ink dark:text-white">Remove Contact</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[var(--radius-xl)] border border-border bg-canvas p-6 shadow-panel">
+            <h2 className="text-xl font-semibold text-ink">Remove Contact</h2>
             <p className="mt-3 text-sm text-muted">Are you sure you want to remove {deleteTarget.name} from your emergency contacts?</p>
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" onClick={() => setDeleteTarget(null)} className="btn-secondary">Cancel</button>

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Calistoga, Inter, JetBrains_Mono } from 'next/font/google';
 import DownloadAppButton from '@/components/ui/DownloadAppButton';
 import './globals.css';
 import { Providers } from './providers';
@@ -7,6 +7,19 @@ import { Providers } from './providers';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+  display: 'swap',
+});
+
+const calistoga = Calistoga({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-calistoga',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
   display: 'swap',
 });
 
@@ -28,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${calistoga.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import MarketingNav from '@/components/layout/MarketingNav';
+import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import PasswordStrength from '@/components/ui/PasswordStrength';
 import { authApi } from '@/lib/api/auth.api';
@@ -228,209 +228,200 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <MarketingNav />
-      <section className="page-container grid gap-8 py-10 lg:grid-cols-[0.88fr_1.02fr] lg:py-16">
-        <div className="surface-panel p-8 lg:p-12">
-          <span className="eyebrow">Account onboarding</span>
-          <h1 className="display-section mt-6">Set up a safety account that is ready before you need it.</h1>
-          <p className="mt-4 text-lg leading-8 text-body">
-            Verify identity, create protected credentials, and optionally enable MPIN for faster access during urgent moments.
-          </p>
-
-          <div className="mt-10 space-y-4">
-            {['Email verification before account creation', 'Structured profile fields for emergency use', 'Optional MPIN for quicker re-entry'].map((item) => (
-              <div key={item} className="rounded-xl border border-hairline bg-white px-4 py-4 dark:bg-[#14171d]">
-                <p className="text-sm leading-7 text-body">{item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="product-card p-8 lg:p-10">
-          <div className="mb-8">
-            <p className="text-sm font-semibold text-ink">Create account</p>
-            <p className="mt-2 text-sm text-muted">Move from verification to full profile setup inside one consistent flow.</p>
-          </div>
-
-          <div className="mb-6 flex items-center gap-3">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="flex flex-1 items-center gap-3">
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${step >= item ? 'bg-primary text-white' : 'bg-surface-card text-muted'}`}>
-                  {item}
-                </div>
-                {item < 3 ? <div className={`h-px flex-1 ${step > item ? 'bg-primary' : 'bg-hairline'}`} /> : null}
-              </div>
-            ))}
-          </div>
-
-          {formError ? (
-            <div role="alert" className="mb-5 rounded-xl border border-emergency/30 bg-emergency/10 p-3.5">
-              <p className="text-sm text-emergency">{formError}</p>
-            </div>
-          ) : null}
-
-          {step === 1 ? (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold text-ink">Step 1: Verify your email</h2>
-                <p className="mt-2 text-sm text-muted">We’ll send a 6-digit code before activating the account.</p>
-              </div>
-
-              <FloatingLabelInput
-                label="Email Address"
-                type="email"
-                value={email}
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setFormError('');
-                }}
-                autoComplete="email"
-                disabled={sendingOtp}
-              />
-
-              <button type="button" onClick={sendOtpRequest} disabled={sendingOtp} className="btn-primary w-full">
-                {sendingOtp ? 'Sending code...' : 'Send verification code'}
-              </button>
-            </div>
-          ) : null}
-
-          {step === 2 ? (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold text-ink">Step 2: Enter your code</h2>
-                <p className="mt-2 text-sm text-muted">A 6-digit code has been sent to {email}.</p>
-              </div>
-
-              <div className="rounded-xl bg-surface-card p-4">
-                <p className="text-sm font-semibold text-ink">Code expires in {formatCountdown(secondsRemaining)}</p>
-                <p className="mt-1 text-xs text-muted">Keep this tab open while you complete verification.</p>
-              </div>
-
-              <FloatingLabelInput
-                label="Verification Code"
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={otp}
-                onChange={(event) => {
-                  setOtp(event.target.value.replace(/\D/g, ''));
-                  setFormError('');
-                }}
-                disabled={verifyingOtp}
-                className="text-center text-lg tracking-[0.4em]"
-              />
-
-              <button type="button" onClick={verifyOtpRequest} disabled={verifyingOtp} className="btn-primary w-full">
-                {verifyingOtp ? 'Verifying code...' : 'Verify code'}
-              </button>
-
-              <div className="flex items-center justify-between text-sm">
-                <button type="button" onClick={() => setStep(1)} className="font-medium text-muted">
-                  Change email
-                </button>
-                <button type="button" onClick={handleResendOtp} disabled={resendCooldownRemaining > 0 || sendingOtp} className="font-medium text-ink disabled:text-muted-soft">
-                  {resendCooldownRemaining > 0 ? `Resend in ${resendCooldownRemaining}s` : 'Resend code'}
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          {step === 3 ? (
-            <form onSubmit={handleCreateAccount} noValidate className="space-y-4">
-              <div>
-                <h2 className="text-lg font-semibold text-ink">Step 3: Complete your profile</h2>
-                <p className="mt-2 text-sm text-muted">Finish account setup and decide whether MPIN should be enabled.</p>
-              </div>
-
-              <FloatingLabelInput label="Full Name" type="text" value={profile.fullName} onChange={(event) => updateProfileField('fullName', event.target.value)} error={errors.fullName} autoComplete="name" disabled={creatingAccount} />
-              <FloatingLabelInput label="Phone Number (Indian)" type="tel" value={profile.phone} onChange={(event) => updateProfileField('phone', event.target.value)} error={errors.phone} autoComplete="tel" disabled={creatingAccount} maxLength={13} />
-              <FloatingLabelInput label="Aadhaar Card Number (12 digits)" type="text" inputMode="numeric" value={profile.aadhaarNumber} onChange={(event) => updateProfileField('aadhaarNumber', event.target.value.replace(/\D/g, ''))} error={errors.aadhaarNumber} maxLength={12} disabled={creatingAccount} />
-
-              <div>
-                <FloatingLabelInput
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={profile.password}
-                  onChange={(event) => updateProfileField('password', event.target.value)}
-                  error={errors.password}
-                  autoComplete="new-password"
-                  disabled={creatingAccount}
-                  rightElement={
-                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="transition-colors hover:text-ink dark:hover:text-white" aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                      <EyeIcon />
-                    </button>
-                  }
-                />
-                <PasswordStrength password={profile.password} />
-              </div>
-
-              <FloatingLabelInput
-                label="Confirm Password"
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={profile.confirmPassword}
-                onChange={(event) => updateProfileField('confirmPassword', event.target.value)}
-                error={errors.confirmPassword}
-                autoComplete="new-password"
-                disabled={creatingAccount}
-                rightElement={
-                  <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="transition-colors hover:text-ink dark:hover:text-white" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
-                    <EyeIcon />
-                  </button>
-                }
-              />
-
-              <div className="rounded-xl bg-surface-card p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-ink">Set up MPIN (optional)</h3>
-                    <p className="mt-1 text-xs text-muted">Use a private 6-digit MPIN for faster sign-in later.</p>
-                  </div>
-                  <label className="inline-flex items-center gap-2 text-sm font-medium text-ink">
-                    <input
-                      type="checkbox"
-                      checked={profile.enableMpin}
-                      onChange={(event) => {
-                        const checked = event.target.checked;
-                        updateProfileField('enableMpin', checked);
-                        if (!checked) {
-                          setProfile((prev) => ({ ...prev, mpin: '', confirmMpin: '', enableMpin: false }));
-                          setErrors((prev) => ({ ...prev, mpin: undefined, confirmMpin: undefined }));
-                        }
-                      }}
-                      className="h-4 w-4 rounded border-hairline text-primary focus:ring-0"
-                    />
-                    Enable
-                  </label>
-                </div>
-
-                {profile.enableMpin ? (
-                  <div className="mt-4 space-y-4">
-                    <FloatingLabelInput label="Enter 6-digit MPIN" type="password" inputMode="numeric" maxLength={6} value={profile.mpin} onChange={(event) => updateProfileField('mpin', event.target.value.replace(/\D/g, ''))} error={errors.mpin} disabled={creatingAccount} />
-                    <FloatingLabelInput label="Confirm MPIN" type="password" inputMode="numeric" maxLength={6} value={profile.confirmMpin} onChange={(event) => updateProfileField('confirmMpin', event.target.value.replace(/\D/g, ''))} error={errors.confirmMpin} disabled={creatingAccount} />
-                  </div>
-                ) : null}
-              </div>
-
-              <button type="submit" disabled={creatingAccount} className="btn-primary w-full">
-                {creatingAccount ? 'Creating account...' : 'Create account'}
-              </button>
-            </form>
-          ) : null}
-
-          <p className="mt-6 text-xs leading-relaxed text-muted">
+    <AuthSplitLayout
+      badge="Account onboarding"
+      title={
+        <>
+          Set up a safety account that is <span className="gradient-text">ready before you need it</span>.
+        </>
+      }
+      description="Verify identity, create protected credentials, and optionally enable MPIN for faster access during urgent moments."
+      highlights={[
+        'Email verification before account creation',
+        'Structured profile fields for emergency use',
+        'Optional MPIN for quicker re-entry',
+      ]}
+      formTitle="Create account"
+      formDescription="Move from verification to full profile setup inside one consistent flow."
+      footer={
+        <>
+          <p className="text-xs leading-relaxed text-muted">
             Your Aadhaar number is encrypted at rest and never shared with third parties.
           </p>
-
           <p className="mt-4 text-sm text-muted">
             Already have an account?{' '}
             <Link href="/auth/login" className="font-semibold text-ink">
               Sign in
             </Link>
           </p>
+        </>
+      }
+    >
+      <div className="mb-6 flex items-center gap-3">
+        {[1, 2, 3].map((item) => (
+          <div key={item} className="flex flex-1 items-center gap-3">
+            <div className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold ${step >= item ? 'bg-[image:var(--gradient-accent)] text-white' : 'bg-surface-soft text-muted'}`}>
+              {item}
+            </div>
+            {item < 3 ? <div className={`h-px flex-1 ${step > item ? 'bg-primary' : 'bg-hairline'}`} /> : null}
+          </div>
+        ))}
+      </div>
+
+      {formError ? (
+        <div role="alert" className="mb-5 rounded-2xl border border-emergency/20 bg-emergency/10 p-4">
+          <p className="text-sm text-emergency">{formError}</p>
         </div>
-      </section>
-    </main>
+      ) : null}
+
+      {step === 1 ? (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-ink">Step 1: Verify your email</h2>
+            <p className="mt-2 text-sm text-muted">We&apos;ll send a 6-digit code before activating the account.</p>
+          </div>
+
+          <FloatingLabelInput
+            label="Email Address"
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setFormError('');
+            }}
+            autoComplete="email"
+            disabled={sendingOtp}
+          />
+
+          <button type="button" onClick={sendOtpRequest} disabled={sendingOtp} className="btn-primary w-full">
+            {sendingOtp ? 'Sending code...' : 'Send verification code'}
+          </button>
+        </div>
+      ) : null}
+
+      {step === 2 ? (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-ink">Step 2: Enter your code</h2>
+            <p className="mt-2 text-sm text-muted">A 6-digit code has been sent to {email}.</p>
+          </div>
+
+          <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4">
+            <p className="text-sm font-semibold text-ink">Code expires in {formatCountdown(secondsRemaining)}</p>
+            <p className="mt-1 text-xs text-muted">Keep this tab open while you complete verification.</p>
+          </div>
+
+          <FloatingLabelInput
+            label="Verification Code"
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={otp}
+            onChange={(event) => {
+              setOtp(event.target.value.replace(/\D/g, ''));
+              setFormError('');
+            }}
+            disabled={verifyingOtp}
+            className="text-center text-lg tracking-[0.4em]"
+          />
+
+          <button type="button" onClick={verifyOtpRequest} disabled={verifyingOtp} className="btn-primary w-full">
+            {verifyingOtp ? 'Verifying code...' : 'Verify code'}
+          </button>
+
+          <div className="flex items-center justify-between text-sm">
+            <button type="button" onClick={() => setStep(1)} className="font-medium text-muted">
+              Change email
+            </button>
+            <button type="button" onClick={handleResendOtp} disabled={resendCooldownRemaining > 0 || sendingOtp} className="font-medium text-ink disabled:text-muted-soft">
+              {resendCooldownRemaining > 0 ? `Resend in ${resendCooldownRemaining}s` : 'Resend code'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {step === 3 ? (
+        <form onSubmit={handleCreateAccount} noValidate className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-ink">Step 3: Complete your profile</h2>
+            <p className="mt-2 text-sm text-muted">Finish account setup and decide whether MPIN should be enabled.</p>
+          </div>
+
+          <FloatingLabelInput label="Full Name" type="text" value={profile.fullName} onChange={(event) => updateProfileField('fullName', event.target.value)} error={errors.fullName} autoComplete="name" disabled={creatingAccount} />
+          <FloatingLabelInput label="Phone Number (Indian)" type="tel" value={profile.phone} onChange={(event) => updateProfileField('phone', event.target.value)} error={errors.phone} autoComplete="tel" disabled={creatingAccount} maxLength={13} />
+          <FloatingLabelInput label="Aadhaar Card Number (12 digits)" type="text" inputMode="numeric" value={profile.aadhaarNumber} onChange={(event) => updateProfileField('aadhaarNumber', event.target.value.replace(/\D/g, ''))} error={errors.aadhaarNumber} maxLength={12} disabled={creatingAccount} />
+
+          <div>
+            <FloatingLabelInput
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              value={profile.password}
+              onChange={(event) => updateProfileField('password', event.target.value)}
+              error={errors.password}
+              autoComplete="new-password"
+              disabled={creatingAccount}
+              rightElement={
+                <button type="button" onClick={() => setShowPassword((value) => !value)} className="transition-colors hover:text-ink" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  <EyeIcon />
+                </button>
+              }
+            />
+            <PasswordStrength password={profile.password} />
+          </div>
+
+          <FloatingLabelInput
+            label="Confirm Password"
+            type={showConfirmPassword ? 'text' : 'password'}
+            value={profile.confirmPassword}
+            onChange={(event) => updateProfileField('confirmPassword', event.target.value)}
+            error={errors.confirmPassword}
+            autoComplete="new-password"
+            disabled={creatingAccount}
+            rightElement={
+              <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} className="transition-colors hover:text-ink" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                <EyeIcon />
+              </button>
+            }
+          />
+
+          <div className="rounded-2xl border border-border bg-surface-soft/65 p-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-ink">Set up MPIN (optional)</h3>
+                <p className="mt-1 text-xs text-muted">Use a private 6-digit MPIN for faster sign-in later.</p>
+              </div>
+              <label className="inline-flex items-center gap-2 text-sm font-medium text-ink">
+                <input
+                  type="checkbox"
+                  checked={profile.enableMpin}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    updateProfileField('enableMpin', checked);
+                    if (!checked) {
+                      setProfile((prev) => ({ ...prev, mpin: '', confirmMpin: '', enableMpin: false }));
+                      setErrors((prev) => ({ ...prev, mpin: undefined, confirmMpin: undefined }));
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-hairline text-primary focus:ring-0"
+                />
+                Enable
+              </label>
+            </div>
+
+            {profile.enableMpin ? (
+              <div className="mt-4 space-y-4">
+                <FloatingLabelInput label="Enter 6-digit MPIN" type="password" inputMode="numeric" maxLength={6} value={profile.mpin} onChange={(event) => updateProfileField('mpin', event.target.value.replace(/\D/g, ''))} error={errors.mpin} disabled={creatingAccount} />
+                <FloatingLabelInput label="Confirm MPIN" type="password" inputMode="numeric" maxLength={6} value={profile.confirmMpin} onChange={(event) => updateProfileField('confirmMpin', event.target.value.replace(/\D/g, ''))} error={errors.confirmMpin} disabled={creatingAccount} />
+              </div>
+            ) : null}
+          </div>
+
+          <button type="submit" disabled={creatingAccount} className="btn-primary w-full">
+            {creatingAccount ? 'Creating account...' : 'Create account'}
+          </button>
+        </form>
+      ) : null}
+    </AuthSplitLayout>
   );
 }
 

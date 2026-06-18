@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 import { authApi } from '@/lib/api/auth.api';
 import { getDashboardNavigation } from '@/lib/dashboard-navigation';
 import { useAuthStore } from '@/store/auth.store';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface DashboardLayoutProps {
   title: string;
@@ -34,13 +35,13 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
   return (
     <div className="min-h-screen bg-background">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface-card)] xl:block">
-          <div className="flex h-full flex-col px-5 py-6">
+        <aside className="hidden w-80 shrink-0 border-r border-border bg-white/72 backdrop-blur-xl xl:block">
+          <div className="flex h-full flex-col px-6 py-7">
             <div className="brand-lockup mb-8">
               <span className="brand-mark">R</span>
               <div>
                 <p className="display-label text-base">RakshaAI</p>
-                <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-muted)]">{user?.role ?? 'workspace'}</p>
+                <p className="font-mono text-[0.72rem] uppercase tracking-[0.16em] text-muted">{user?.role ?? 'workspace'}</p>
               </div>
             </div>
 
@@ -51,10 +52,10 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
                   <Link
                     key={item.href}
                     href={item.href as never}
-                    className={`block rounded-[var(--rounded-md)] px-4 py-3 text-sm font-medium transition-colors ${
+                    className={`block rounded-2xl px-4 py-3 text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-[var(--color-surface-muted)] text-[var(--color-ink)]'
-                        : 'text-[var(--color-body)] hover:bg-[var(--color-surface-muted)]'
+                        ? 'bg-primary/[0.07] text-ink shadow-soft ring-1 ring-primary/10'
+                        : 'text-body hover:bg-surface-soft/80 hover:text-ink'
                     }`}
                   >
                     {item.label}
@@ -63,34 +64,34 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
               })}
             </nav>
 
-            <div className="mt-auto rounded-[var(--rounded-lg)] bg-[var(--color-surface-muted)] p-4">
-              <p className="text-sm font-semibold text-[var(--color-ink)]">Signed in as</p>
-              <p className="mt-2 text-sm text-[var(--color-body)]">{user?.email}</p>
-              <button onClick={handleLogout} className="btn-secondary mt-4 w-full">
+            <Card className="mt-auto border-primary/10 bg-surface-soft/80">
+              <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">Signed in</p>
+              <p className="mt-3 text-sm text-body">{user?.email}</p>
+              <Button onClick={handleLogout} variant="secondary" className="mt-5 w-full">
                 Logout
-              </button>
-            </div>
+              </Button>
+            </Card>
           </div>
         </aside>
 
         <div className="flex min-h-screen flex-1 flex-col">
           <header className="app-header">
-            <div className="page-container flex min-h-16 flex-wrap items-center justify-between gap-4 py-3">
+            <div className="page-container flex min-h-16 flex-wrap items-center justify-between gap-4 py-4">
               <div>
-                <h1 className="text-2xl font-bold text-[var(--color-ink)]">{title}</h1>
-                <p className="text-sm text-[var(--color-muted)]">{subtitle}</p>
+                <p className="font-mono text-xs uppercase tracking-[0.16em] text-primary">Operational workspace</p>
+                <h1 className="mt-2 text-[1.75rem] font-semibold tracking-[-0.02em] text-ink">{title}</h1>
+                <p className="mt-1 text-sm text-muted">{subtitle}</p>
               </div>
               <div className="flex items-center gap-3">
                 <Link href={'/dashboard/settings' as never} className="btn-secondary">
                   Settings
                 </Link>
                 {actions}
-                <ThemeToggle />
               </div>
             </div>
           </header>
 
-          <main className="page-container flex-1 py-8 md:py-12">{children}</main>
+          <main className="page-container flex-1 py-8 md:py-10">{children}</main>
         </div>
       </div>
     </div>

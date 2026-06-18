@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import MarketingNav from '@/components/layout/MarketingNav';
+import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
+import { FilterPills } from '@/components/ui/filter-pills';
 import { authApi } from '@/lib/api/auth.api';
 import { getPostLoginRoute } from '@/lib/auth-routing';
 import { ApiError } from '@/lib/api/fetcher';
@@ -76,107 +77,88 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <MarketingNav />
-      <section className="page-container grid gap-8 py-10 lg:grid-cols-[0.95fr_0.85fr] lg:py-16">
-        <div className="surface-panel flex flex-col justify-between p-8 lg:p-12">
-          <div>
-            <span className="eyebrow">Secure access portal</span>
-            <h1 className="display-section mt-6">Sign in to your RakshaAI workspace.</h1>
-            <p className="mt-4 max-w-xl text-lg leading-8 text-body">
-              Return to your dashboard, safety routes, responder tools, and live community intelligence without changing products or mental context.
-            </p>
-          </div>
+    <AuthSplitLayout
+      badge="Secure access portal"
+      title={
+        <>
+          Sign in to your <span className="gradient-text">RakshaAI workspace</span>.
+        </>
+      }
+      description="Return to your dashboard, safety routes, responder tools, and live community intelligence without changing products or mental context."
+      highlights={benefits}
+      formTitle="Account access"
+      formDescription="Use your password or the 6-digit MPIN attached to your profile."
+      footer={
+        <p className="text-sm text-muted">
+          Don&apos;t have an account?{' '}
+          <Link href="/auth/register" className="font-semibold text-ink">
+            Create one
+          </Link>
+        </p>
+      }
+    >
+      <FilterPills
+        className="mb-6"
+        options={[
+          { label: 'Password', value: 'password' },
+          { label: 'MPIN', value: 'mpin' },
+        ]}
+        selectedValue={loginMethod}
+        onChange={(value) => {
+          setLoginMethod(value as LoginMethod);
+          setCredential('');
+          setError('');
+        }}
+      />
 
-          <div className="mt-10 space-y-4">
-            {benefits.map((benefit) => (
-              <div key={benefit} className="rounded-xl border border-hairline bg-white px-4 py-4 dark:bg-[#14171d]">
-                <p className="text-sm leading-7 text-body">{benefit}</p>
-              </div>
-            ))}
-          </div>
+      {error ? (
+        <div role="alert" className="mb-5 rounded-2xl border border-emergency/20 bg-emergency/10 p-4">
+          <p className="text-sm text-emergency">{error}</p>
         </div>
+      ) : null}
 
-        <div className="product-card p-8 lg:p-10">
-          <div className="mb-8">
-            <p className="text-sm font-semibold text-ink">Account access</p>
-            <p className="mt-2 text-sm text-muted">Use your password or the 6-digit MPIN attached to your profile.</p>
-          </div>
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <FloatingLabelInput
+          label="Email or Phone"
+          type="text"
+          value={identifier}
+          onChange={(event) => {
+            setIdentifier(event.target.value);
+            setError('');
+          }}
+          autoComplete="username"
+          disabled={loading}
+        />
 
-          <div className="nav-pill-group mb-6">
-            {(['password', 'mpin'] as LoginMethod[]).map((method) => (
-              <button
-                key={method}
-                type="button"
-                onClick={() => {
-                  setLoginMethod(method);
-                  setCredential('');
-                  setError('');
-                }}
-                className={loginMethod === method ? 'nav-pill-active' : 'nav-pill'}
-              >
-                {method === 'password' ? 'Password' : 'MPIN'}
-              </button>
-            ))}
-          </div>
-
-          {error ? (
-            <div role="alert" className="mb-5 rounded-xl border border-emergency/30 bg-emergency/10 p-3">
-              <p className="text-sm text-emergency">{error}</p>
-            </div>
-          ) : null}
-
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            <FloatingLabelInput
-              label="Email or Phone"
-              type="text"
-              value={identifier}
-              onChange={(event) => {
-                setIdentifier(event.target.value);
-                setError('');
-              }}
-              autoComplete="username"
-              disabled={loading}
-            />
-
-            <FloatingLabelInput
-              label={loginMethod === 'password' ? 'Password' : '6-digit MPIN'}
-              type={showCredential ? 'text' : 'password'}
-              value={credential}
-              onChange={(event) => {
-                setCredential(loginMethod === 'mpin' ? event.target.value.replace(/\D/g, '') : event.target.value);
-                setError('');
-              }}
-              autoComplete={loginMethod === 'password' ? 'current-password' : 'one-time-code'}
-              inputMode={loginMethod === 'mpin' ? 'numeric' : undefined}
-              maxLength={loginMethod === 'mpin' ? 6 : undefined}
-              disabled={loading}
-              className={loginMethod === 'mpin' ? 'tracking-[0.35em]' : ''}
-              rightElement={
-                <button type="button" onClick={() => setShowCredential((value) => !value)} className="transition-colors hover:text-ink dark:hover:text-white" aria-label={showCredential ? 'Hide credential' : 'Show credential'}>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-              }
-            />
-
-            {loginMethod === 'mpin' ? <p className="text-sm text-muted">Use the 6-digit MPIN you set up for faster access.</p> : null}
-
-            <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Signing in...' : loginMethod === 'password' ? 'Sign in' : 'Sign in with MPIN'}
+        <FloatingLabelInput
+          label={loginMethod === 'password' ? 'Password' : '6-digit MPIN'}
+          type={showCredential ? 'text' : 'password'}
+          value={credential}
+          onChange={(event) => {
+            setCredential(loginMethod === 'mpin' ? event.target.value.replace(/\D/g, '') : event.target.value);
+            setError('');
+          }}
+          autoComplete={loginMethod === 'password' ? 'current-password' : 'one-time-code'}
+          inputMode={loginMethod === 'mpin' ? 'numeric' : undefined}
+          maxLength={loginMethod === 'mpin' ? 6 : undefined}
+          disabled={loading}
+          className={loginMethod === 'mpin' ? 'tracking-[0.35em]' : ''}
+          rightElement={
+            <button type="button" onClick={() => setShowCredential((value) => !value)} className="transition-colors hover:text-ink" aria-label={showCredential ? 'Hide credential' : 'Show credential'}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
             </button>
-          </form>
+          }
+        />
 
-          <p className="mt-6 text-sm text-muted">
-            Don&apos;t have an account?{' '}
-            <Link href="/auth/register" className="font-semibold text-ink">
-              Create one
-            </Link>
-          </p>
-        </div>
-      </section>
-    </main>
+        {loginMethod === 'mpin' ? <p className="text-sm text-muted">Use the 6-digit MPIN you set up for faster access.</p> : null}
+
+        <button type="submit" disabled={loading} className="btn-primary w-full">
+          {loading ? 'Signing in...' : loginMethod === 'password' ? 'Sign in' : 'Sign in with MPIN'}
+        </button>
+      </form>
+    </AuthSplitLayout>
   );
 }
