@@ -14,6 +14,7 @@ import emergencyContactRoutes from './emergency-contact.routes';
 import hotspotRoutes from './hotspot.routes';
 import adminRoutes from './admin.routes';
 import departmentRoutes from './department.routes';
+import ngoRoutes from './ngo.routes';
 import zoneRoutes from './zone.routes';
 import redZoneRoutes from './redzone.routes';
 
@@ -34,6 +35,7 @@ router.use('/emergency-contacts', emergencyContactRoutes);
 router.use('/hotspots', hotspotRoutes);
 router.use('/admin', adminRoutes);
 router.use('/department', departmentRoutes);
+router.use('/ngo', ngoRoutes);
 router.use('/zones', zoneRoutes);
 router.use('/redzones', redZoneRoutes);
 

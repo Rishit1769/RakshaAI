@@ -19,7 +19,7 @@ interface AlertItem {
 
 export default function VolunteerDashboard() {
   const router = useRouter();
-  const { isAuthenticated, isAuthReady } = useProtectedRoute();
+  const { user, isAuthenticated, isAuthReady } = useProtectedRoute();
   const queryClient = useQueryClient();
   const [accepting, setAccepting] = useState<string | null>(null);
 
@@ -55,18 +55,20 @@ export default function VolunteerDashboard() {
 
   if (!isAuthenticated) return null;
 
+  if (user?.role !== 'VOLUNTEER') {
+    router.replace('/dashboard');
+    return null;
+  }
+
   const profile = (profileData as { data?: { status?: string; verificationStatus?: string; totalResponses?: number; rating?: number } } | undefined)?.data;
   const alerts = ((alertsData as { data?: AlertItem[] } | undefined)?.data) ?? [];
 
   if (noProfile) {
     return (
-      <AppShell title="Volunteer Dashboard" subtitle="Register to receive nearby SOS alerts." backLabel="Dashboard">
+      <AppShell title="Volunteer Dashboard" subtitle="Your account is managed by your NGO." backLabel="Dashboard">
         <div className="empty-state">
-          <h1 className="text-xl font-semibold text-ink dark:text-white">Become a Volunteer</h1>
-          <p className="mt-2 text-sm text-muted">Register as a RakshaAI volunteer to help women in your area during emergencies.</p>
-          <button onClick={() => router.push('/volunteer/register')} className="btn-primary mt-6">
-            Register as Volunteer
-          </button>
+          <h1 className="text-xl font-semibold text-ink dark:text-white">Profile Setup Pending</h1>
+          <p className="mt-2 text-sm text-muted">This volunteer account was created by your NGO. Additional volunteer-profile setup has not been completed yet.</p>
         </div>
       </AppShell>
     );

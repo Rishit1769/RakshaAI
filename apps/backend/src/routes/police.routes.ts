@@ -22,7 +22,7 @@ router.get('/profile', PoliceController.getProfile);
 // PATCH /api/police/duty — toggle on-duty status
 router.patch(
   '/duty',
-  authorize('police', 'admin'),
+  authorize('POLICEMAN', 'SUPERADMIN'),
   validateBody(dutyStatusSchema),
   PoliceController.setDutyStatus
 );
@@ -30,7 +30,7 @@ router.patch(
 // POST /api/police/assign — assign alert to self
 router.post(
   '/assign',
-  authorize('police', 'admin'),
+  authorize('POLICEMAN', 'SUPERADMIN'),
   validateBody(assignAlertSchema),
   PoliceController.assignAlert
 );
@@ -38,12 +38,12 @@ router.post(
 // POST /api/police/escalate — escalate alert
 router.post(
   '/escalate',
-  authorize('police', 'admin'),
+  authorize('POLICEMAN', 'SUPERADMIN'),
   validateBody(escalateAlertSchema),
   PoliceController.escalateAlert
 );
 
 // GET /api/police/alerts — all active/escalated alerts feed
-router.get('/alerts', authorize('police', 'admin'), PoliceController.getAlertsFeed);
+router.get('/alerts', authorize('POLICEMAN', 'SUPERADMIN'), PoliceController.getAlertsFeed);
 
 export default router;

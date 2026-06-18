@@ -1,14 +1,11 @@
 import { Request, Response } from 'express';
 import * as PoliceService from '../services/police.service';
 import { asyncHandler } from '../utils/asyncHandler';
-import { sendSuccess, sendCreated } from '../utils/response';
+import { sendSuccess } from '../utils/response';
+import { AppError } from '../middleware/error.middleware';
 
 export const createAccount = asyncHandler(async (req: Request, res: Response) => {
-  const account = await PoliceService.createPoliceAccount({
-    userId: req.user!.id,
-    ...req.body,
-  });
-  sendCreated(res, account, 'Police account created successfully');
+  throw new AppError('Public police account registration has been disabled. Policeman accounts must be created by a police department.', 403);
 });
 
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {

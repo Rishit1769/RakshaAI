@@ -13,6 +13,9 @@ export interface AuthUser {
   role: string;
   isVerified: boolean;
   mpinEnabled?: boolean;
+  mustChangePassword: boolean;
+  departmentId?: string | null;
+  ngoId?: string | null;
 }
 
 export interface AuthResponse {
@@ -65,6 +68,12 @@ export interface DisableMpinPayload {
   currentMpin: string;
 }
 
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export const authApi = {
   sendRegistrationOtp: (payload: SendOtpPayload) =>
     api.post<null>('/auth/register/send-otp', payload),
@@ -89,6 +98,9 @@ export const authApi = {
 
   disableMpin: (payload: DisableMpinPayload) =>
     api.delete<null>('/auth/mpin/disable', { body: payload }),
+
+  changePassword: (payload: ChangePasswordPayload) =>
+    api.post<null>('/auth/change-password', payload),
 
   refreshToken: (refreshToken: string) =>
     api.post<{ accessToken: string }>('/auth/refresh', { refreshToken }),

@@ -16,7 +16,6 @@ export interface RegisterInput {
   phone: string;
   aadhaarNumber: string;
   password: string;
-  role?: UserRole;
   mpin?: string;
 }
 
@@ -44,6 +43,9 @@ export interface SafeUser {
   isVerified: boolean;
   mpinSet: boolean;
   mpinEnabled: boolean;
+  mustChangePassword: boolean;
+  departmentId: string | null;
+  ngoId: string | null;
   profileImageUrl: string | null;
   createdAt: Date;
 }
@@ -57,6 +59,9 @@ function toSafeUser(user: {
   isVerified: boolean;
   mpinHash: string | null;
   mpinEnabled: boolean;
+  mustChangePassword: boolean;
+  departmentId: string | null;
+  ngoId: string | null;
   profileImageUrl: string | null;
   createdAt: Date;
 }): SafeUser {
@@ -69,6 +74,9 @@ function toSafeUser(user: {
     isVerified: user.isVerified,
     mpinSet: !!user.mpinHash,
     mpinEnabled: user.mpinEnabled,
+    mustChangePassword: user.mustChangePassword,
+    departmentId: user.departmentId,
+    ngoId: user.ngoId,
     profileImageUrl: user.profileImageUrl,
     createdAt: user.createdAt,
   };
@@ -97,11 +105,7 @@ async function ensureUserDoesNotExist(email: string, phone: string, aadhaarNumbe
 }
 
 async function createUserRecord(input: RegisterInput) {
-  const { fullName, email, phone, aadhaarNumber, password, role = UserRole.user, mpin } = input;
-
-  if (!(['user'] as string[]).includes(role)) {
-    throw new AppError('Self-registration is only allowed for regular users', 403);
-  }
+  const { fullName, email, phone, aadhaarNumber, password, mpin } = input;
 
   validateOptionalMpin(mpin);
   await ensureUserDoesNotExist(email, phone, aadhaarNumber);
@@ -118,9 +122,10 @@ async function createUserRecord(input: RegisterInput) {
       passwordHash,
       mpinHash,
       mpinEnabled: !!mpinHash,
-      role,
+      role: UserRole.user,
       isVerified: true,
       isEmailVerified: true,
+      mustChangePassword: false,
     },
   });
 }
@@ -231,7 +236,6 @@ export async function verifyRegistrationOtp(input: VerifyOtpInput): Promise<{ us
     aadhaarNumber: input.aadhaarNumber,
     password: input.password,
     mpin: input.mpin,
-    role: input.role,
   });
 
   await prisma.otpVerification.update({
@@ -313,6 +317,25 @@ export async function changeMpin(userId: string, currentMpin: string, newMpin: s
     data: { mpinHash, mpinEnabled: true },
   });
   logger.info('MPIN changed', { userId });
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.isActive) throw new AppError('User not found', 404);
+
+  const isCurrentValid = await comparePassword(currentPassword, user.passwordHash);
+  if (!isCurrentValid) throw new AppError('Current password is incorrect.', 401);
+
+  const passwordHash = await hashPassword(newPassword);
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash,
+      mustChangePassword: false,
+    },
+  });
+
+  logger.info('Password changed', { userId });
 }
 
 export async function disableMpin(userId: string, currentMpin: string): Promise<void> {

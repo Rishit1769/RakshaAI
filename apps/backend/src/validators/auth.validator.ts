@@ -36,7 +36,6 @@ export const registerSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
-  role: z.enum(['user']).optional().default('user'),
   mpin: mpinField.optional(),
 });
 
@@ -107,6 +106,23 @@ export const disableMpinSchema = z.object({
   currentMpin: z.string({ required_error: 'Current MPIN is required' }).trim().regex(/^\d{6}$/, 'Current MPIN must be exactly 6 digits'),
 });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string({ required_error: 'Current password is required' }).min(1, 'Current password is required'),
+    newPassword: z
+      .string({ required_error: 'New password is required' })
+      .min(8, 'Password must be at least 8 characters')
+      .max(72, 'Password must not exceed 72 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
+    confirmPassword: z.string({ required_error: 'Please confirm your new password' }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1).optional(),
 });
@@ -119,4 +135,5 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type SetupMpinInput = z.infer<typeof setupMpinSchema>;
 export type ChangeMpinInput = z.infer<typeof changeMpinSchema>;
 export type DisableMpinInput = z.infer<typeof disableMpinSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;

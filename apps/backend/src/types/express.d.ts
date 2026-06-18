@@ -11,6 +11,8 @@ declare global {
         fullName: string;
         phone: string;
         departmentId: string | null;
+        ngoId: string | null;
+        mustChangePassword: boolean;
       };
     }
   }

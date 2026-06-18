@@ -34,14 +34,6 @@ export async function triggerRedZone(
           organizationName: true,
           organizationType: true,
           email: true,
-          members: {
-            where: { role: UserRole.department, isActive: true },
-            select: {
-              email: true,
-              fullName: true,
-            },
-            take: 1,
-          },
         },
       },
     },
@@ -64,7 +56,7 @@ export async function triggerRedZone(
   for (const zone of nearbyZones) {
     if (!zone.department) continue;
 
-    const departmentEmail = zone.department.members[0]?.email ?? zone.department.email ?? null;
+    const departmentEmail = zone.department.email ?? null;
     if (!departmentEmail) continue;
 
     departmentMap.set(zone.department.id, {

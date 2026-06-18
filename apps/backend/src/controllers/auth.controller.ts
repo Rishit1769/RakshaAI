@@ -75,6 +75,12 @@ export const changeMpin = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, null, 'MPIN changed successfully');
 });
 
+export const changePassword = asyncHandler(async (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+  await AuthService.changePassword(req.user!.id, currentPassword, newPassword);
+  sendSuccess(res, null, 'Password changed successfully');
+});
+
 export const disableMpin = asyncHandler(async (req: Request, res: Response) => {
   const { currentMpin } = req.body as { currentMpin: string };
   await AuthService.disableMpin(req.user!.id, currentMpin);
@@ -116,6 +122,9 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
       isVerified: true,
       profileImageUrl: true,
       mpinEnabled: true,
+      mustChangePassword: true,
+      departmentId: true,
+      ngoId: true,
       createdAt: true,
     },
   });

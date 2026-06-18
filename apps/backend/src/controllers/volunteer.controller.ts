@@ -1,14 +1,11 @@
 import { Request, Response } from 'express';
 import * as VolunteerService from '../services/volunteer.service';
 import { asyncHandler } from '../utils/asyncHandler';
-import { sendSuccess, sendCreated } from '../utils/response';
+import { sendSuccess } from '../utils/response';
+import { AppError } from '../middleware/error.middleware';
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const volunteer = await VolunteerService.registerVolunteer({
-    userId: req.user!.id,
-    ...req.body,
-  });
-  sendCreated(res, volunteer, 'Volunteer profile created successfully');
+  throw new AppError('Public volunteer registration has been disabled. Volunteer accounts must be created by an NGO.', 403);
 });
 
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {

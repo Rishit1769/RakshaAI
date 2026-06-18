@@ -33,6 +33,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
         fullName: true,
         phone: true,
         departmentId: true,
+        ngoId: true,
+        mustChangePassword: true,
         isActive: true,
       },
     });
@@ -49,6 +51,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       fullName: user.fullName,
       phone: user.phone ?? '',
       departmentId: user.departmentId,
+      ngoId: user.ngoId,
+      mustChangePassword: user.mustChangePassword,
     };
 
     next();
@@ -74,6 +78,35 @@ export function authorize(...roles: UserRole[]) {
 }
 
 export const requireAdmin = authorize(UserRole.admin, UserRole.super_admin);
+export const requireSuperAdmin = authorize(UserRole.SUPERADMIN);
+
+export function requirePoliceDepartment(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    sendUnauthorized(res);
+    return;
+  }
+
+  if (req.user.role !== UserRole.POLICE_DEPARTMENT) {
+    sendForbidden(res, 'Police department access required');
+    return;
+  }
+
+  next();
+}
+
+export function requireNgo(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    sendUnauthorized(res);
+    return;
+  }
+
+  if (req.user.role !== UserRole.NGO) {
+    sendForbidden(res, 'NGO access required');
+    return;
+  }
+
+  next();
+}
 
 export function requireDepartment(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {

@@ -206,6 +206,8 @@ model User {
   mpinEnabled         Boolean   @default(false) @map("mpin_enabled")
   role                UserRole  @default(user)
   departmentId        String?   @map("department_id") @db.Uuid
+  ngoId               String?   @map("ngo_id") @db.Uuid
+  createdById         String?   @map("created_by_id") @db.Uuid
   gender              Gender?
   dateOfBirth         DateTime? @map("date_of_birth") @db.Date
   profileImageUrl     String?   @map("profile_image_url")
@@ -214,6 +216,7 @@ model User {
   isPhoneVerified     Boolean   @default(false) @map("is_phone_verified")
   isEmailVerified     Boolean   @default(false) @map("is_email_verified")
   isSeed              Boolean   @default(false) @map("is_seed")
+  mustChangePassword  Boolean   @default(false) @map("must_change_password")
   lastLoginAt         DateTime? @map("last_login_at")
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
@@ -249,7 +252,12 @@ model User {
   safeZonesAdded      SafeZone[]
   cyberAssigned       CyberReport[]       @relation("cyber_assigned")
   workerProfile       Worker?
-  department          Organization?       @relation("department_members", fields: [departmentId], references: [id])
+  policeDepartment    User?               @relation("department_policemen", fields: [departmentId], references: [id], onDelete: SetNull)
+  policemen           User[]              @relation("department_policemen")
+  ngo                 User?               @relation("ngo_volunteers", fields: [ngoId], references: [id], onDelete: SetNull)
+  ngoVolunteers       User[]              @relation("ngo_volunteers")
+  createdBy           User?               @relation("user_created_by", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers        User[]              @relation("user_created_by")
   redZonesTriggered   RedZone[]           @relation("redzone_triggered_by")
   auditLogs           AuditLog[]          @relation("audit_actor")
   organizationsCreated Organization[]     @relation("org_created_by")
@@ -258,6 +266,8 @@ model User {
   @@index([phone], name: "idx_users_phone")
   @@index([role], name: "idx_users_role")
   @@index([departmentId], name: "idx_users_department_id")
+  @@index([ngoId], name: "idx_users_ngo_id")
+  @@index([createdById], name: "idx_users_created_by_id")
   @@map("users")
 }
 
@@ -1046,7 +1056,6 @@ model Organization {
 
   createdBy        User         @relation("org_created_by", fields: [createdById], references: [id])
   workers          Worker[]
-  members          User[]       @relation("department_members")
   safeZones        SafeZone[]   @relation("department_safe_zones")
   notifiedRedZones RedZone[]    @relation("redzone_notified_departments")
 

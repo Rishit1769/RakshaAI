@@ -21,7 +21,7 @@ router.get('/profile', VolunteerController.getProfile);
 // PATCH /api/volunteers/availability — go available/busy/offline
 router.patch(
   '/availability',
-  authorize('volunteer', 'admin'),
+  authorize('VOLUNTEER', 'SUPERADMIN'),
   validateBody(updateAvailabilitySchema),
   VolunteerController.updateAvailability
 );
@@ -29,12 +29,12 @@ router.patch(
 // POST /api/volunteers/accept — accept an alert
 router.post(
   '/accept',
-  authorize('volunteer', 'admin'),
+  authorize('VOLUNTEER', 'SUPERADMIN'),
   validateBody(acceptAlertSchema),
   VolunteerController.acceptAlert
 );
 
 // GET /api/volunteers/alerts — active alerts feed
-router.get('/alerts', authorize('volunteer', 'admin'), VolunteerController.getAlertsFeed);
+router.get('/alerts', authorize('VOLUNTEER', 'SUPERADMIN'), VolunteerController.getAlertsFeed);
 
 export default router;

@@ -12,6 +12,9 @@ export interface AuthUser {
   role: string;
   isVerified: boolean;
   mpinEnabled?: boolean;
+  mustChangePassword: boolean;
+  departmentId?: string | null;
+  ngoId?: string | null;
 }
 
 interface AuthState {

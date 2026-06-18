@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticate, requireDepartment } from '../middleware/auth.middleware';
+import { authenticate, requirePoliceDepartment } from '../middleware/auth.middleware';
 import { validateBody } from '../middleware/zodValidate.middleware';
-import * as OnboardingController from '../controllers/onboarding.controller';
-import { departmentOnboardWorkerSchema } from '../validators/onboarding.validator';
+import * as HierarchyController from '../controllers/hierarchy.controller';
+import { createPolicemanSchema } from '../validators/hierarchy.validator';
 
 const router = Router();
 
-router.use(authenticate, requireDepartment);
+router.use(authenticate, requirePoliceDepartment);
 
-router.post('/onboard-worker', validateBody(departmentOnboardWorkerSchema), OnboardingController.departmentOnboardWorker);
+router.get('/policemen', HierarchyController.listPolicemen);
+router.post('/policemen', validateBody(createPolicemanSchema), HierarchyController.createPoliceman);
 
 export default router;

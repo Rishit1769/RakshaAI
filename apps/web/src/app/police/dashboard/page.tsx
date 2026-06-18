@@ -21,7 +21,7 @@ interface AlertItem {
 
 export default function PoliceDashboard() {
   const router = useRouter();
-  const { isAuthenticated, isAuthReady } = useProtectedRoute();
+  const { user, isAuthenticated, isAuthReady } = useProtectedRoute();
   const queryClient = useQueryClient();
   const [escalateId, setEscalateId] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -63,16 +63,20 @@ export default function PoliceDashboard() {
 
   if (!isAuthenticated) return null;
 
+  if (user?.role !== 'POLICEMAN') {
+    router.replace('/dashboard');
+    return null;
+  }
+
   const profile = (profileData as { data?: { isOnDuty?: boolean; badgeNumber?: string; rank?: string; station?: { name?: string } } } | undefined)?.data;
   const alerts = ((alertsData as { data?: AlertItem[] } | undefined)?.data) ?? [];
 
   if (noProfile) {
     return (
-      <AppShell title="Police Dashboard" subtitle="Register your police account to access the emergency feed." backLabel="Dashboard">
+      <AppShell title="Police Dashboard" subtitle="Your account is managed by your police department." backLabel="Dashboard">
         <div className="empty-state">
-          <h1 className="text-xl font-semibold text-ink dark:text-white">Police Officer Registration</h1>
-          <p className="mt-2 text-sm text-muted">Register your police account to access the emergency feed.</p>
-          <button onClick={() => router.push('/police/register')} className="btn-primary mt-6">Register Police Account</button>
+          <h1 className="text-xl font-semibold text-ink dark:text-white">Profile Setup Pending</h1>
+          <p className="mt-2 text-sm text-muted">This policeman account was created by your department. Additional police-profile setup has not been completed yet.</p>
         </div>
       </AppShell>
     );

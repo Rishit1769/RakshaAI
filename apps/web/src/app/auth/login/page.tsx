@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import MarketingNav from '@/components/layout/MarketingNav';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { authApi } from '@/lib/api/auth.api';
+import { getPostLoginRoute } from '@/lib/auth-routing';
 import { ApiError } from '@/lib/api/fetcher';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -60,7 +61,7 @@ export default function LoginPage() {
 
       rememberIdentifier(normalizedIdentifier);
       setAuth(response.data.user, response.data.accessToken);
-      router.push('/dashboard');
+      router.push(getPostLoginRoute(response.data.user) as never);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message || 'Login failed. Please check your credentials.');

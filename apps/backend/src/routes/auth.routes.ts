@@ -12,6 +12,7 @@ import {
   setupMpinSchema,
   changeMpinSchema,
   disableMpinSchema,
+  changePasswordSchema,
   refreshTokenSchema,
 } from '../validators/auth.validator';
 
@@ -28,6 +29,7 @@ router.post('/logout', authenticate, authController.logout);
 router.post('/setup-mpin', authenticate, validateBody(setupMpinSchema), authController.setupMpin);
 router.post('/mpin/setup', authenticate, validateBody(setupMpinSchema), authController.setupMpin);
 router.put('/mpin/change', authenticate, validateBody(changeMpinSchema), authController.changeMpin);
+router.post('/change-password', authenticate, validateBody(changePasswordSchema), authController.changePassword);
 router.delete('/mpin/disable', authenticate, validateBody(disableMpinSchema), authController.disableMpin);
 router.get('/me', authenticate, authController.getMe);
 

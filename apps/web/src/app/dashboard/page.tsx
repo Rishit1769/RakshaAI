@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { authApi } from '@/lib/api/auth.api';
+import { getPostLoginRoute } from '@/lib/auth-routing';
 import { useAuthStore } from '@/store/auth.store';
 
 const sidebarLinks = [
@@ -44,6 +46,17 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated || !user) {
+    return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Redirecting...</div>;
+  }
+
+  const postLoginRoute = getPostLoginRoute(user);
+  useEffect(() => {
+    if (postLoginRoute !== '/dashboard') {
+      router.replace(postLoginRoute as never);
+    }
+  }, [postLoginRoute, router]);
+
+  if (postLoginRoute !== '/dashboard') {
     return <div className="min-h-screen bg-background px-6 py-20 text-sm text-[var(--color-muted)]">Redirecting...</div>;
   }
 
