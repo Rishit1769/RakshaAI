@@ -15,6 +15,7 @@ import hotspotRoutes from './hotspot.routes';
 import adminRoutes from './admin.routes';
 import departmentRoutes from './department.routes';
 import ngoRoutes from './ngo.routes';
+import dashboardRoutes from './dashboard.routes';
 import zoneRoutes from './zone.routes';
 import redZoneRoutes from './redzone.routes';
 
@@ -36,6 +37,7 @@ router.use('/hotspots', hotspotRoutes);
 router.use('/admin', adminRoutes);
 router.use('/department', departmentRoutes);
 router.use('/ngo', ngoRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/zones', zoneRoutes);
 router.use('/redzones', redZoneRoutes);
 

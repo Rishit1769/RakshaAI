@@ -77,7 +77,7 @@ export function authorize(...roles: UserRole[]) {
   };
 }
 
-export const requireAdmin = authorize(UserRole.admin, UserRole.super_admin);
+export const requireAdmin = authorize(UserRole.admin, UserRole.super_admin, UserRole.SUPERADMIN);
 export const requireSuperAdmin = authorize(UserRole.SUPERADMIN);
 
 export function requirePoliceDepartment(req: Request, res: Response, next: NextFunction): void {
@@ -114,13 +114,8 @@ export function requireDepartment(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  if (req.user.role !== UserRole.department) {
+  if (req.user.role !== UserRole.department && req.user.role !== UserRole.POLICE_DEPARTMENT) {
     sendForbidden(res, 'Department access required');
-    return;
-  }
-
-  if (!req.user.departmentId) {
-    sendForbidden(res, 'Department account is not linked to a department');
     return;
   }
 
@@ -133,7 +128,13 @@ export function requireDepartmentOrAdmin(req: Request, res: Response, next: Next
     return;
   }
 
-  if (req.user.role === UserRole.department || req.user.role === UserRole.admin || req.user.role === UserRole.super_admin) {
+  if (
+    req.user.role === UserRole.department ||
+    req.user.role === UserRole.POLICE_DEPARTMENT ||
+    req.user.role === UserRole.admin ||
+    req.user.role === UserRole.super_admin ||
+    req.user.role === UserRole.SUPERADMIN
+  ) {
     next();
     return;
   }

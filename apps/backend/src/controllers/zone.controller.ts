@@ -8,6 +8,7 @@ function getActor(req: Request): ZoneService.ZoneActor {
     id: req.user!.id,
     role: req.user!.role,
     departmentId: req.user!.departmentId,
+    ngoId: req.user!.ngoId,
   };
 }
 

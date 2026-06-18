@@ -9,7 +9,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/create', requireDepartmentOrAdmin, validateBody(createZoneSchema), ZoneController.createZone);
-router.get('/', authorize('admin', 'super_admin', 'department', 'worker'), ZoneController.listZones);
+router.get('/', authorize('admin', 'super_admin', 'SUPERADMIN', 'department', 'POLICE_DEPARTMENT', 'NGO', 'worker'), ZoneController.listZones);
 router.put('/:id', requireDepartmentOrAdmin, validateParams(zoneIdParamSchema), validateBody(updateZoneSchema), ZoneController.updateZone);
 router.delete('/:id', requireDepartmentOrAdmin, validateParams(zoneIdParamSchema), ZoneController.deleteZone);
 

@@ -7,15 +7,15 @@ export function getPostLoginRoute(user: AuthUser): string {
 
   switch (user.role) {
     case 'SUPERADMIN':
-      return '/dashboard/admin';
+      return '/dashboard/superadmin';
     case 'POLICE_DEPARTMENT':
       return '/dashboard/department';
     case 'NGO':
       return '/dashboard/ngo';
     case 'POLICEMAN':
-      return '/police/dashboard';
+      return '/dashboard/policeman';
     case 'VOLUNTEER':
-      return '/volunteer/dashboard';
+      return '/dashboard/volunteer';
     default:
       return '/dashboard';
   }

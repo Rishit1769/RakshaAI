@@ -16,7 +16,7 @@ export async function assignPolicemanToHotspot(
     throw new AppError('Requesting user not found', 404);
   }
 
-  if (requester.role !== UserRole.organization_admin) {
+  if (requester.role !== UserRole.POLICE_DEPARTMENT && requester.role !== UserRole.organization_admin) {
     throw new AppError('Only police department users can assign policemen to hotspots', 403);
   }
 

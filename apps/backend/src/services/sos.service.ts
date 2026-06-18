@@ -121,7 +121,12 @@ export async function updateAlertStatus(input: UpdateSosStatusInput) {
     alert.assignedVolunteerId === userId ||
     alert.assignedPoliceId === userId ||
     userRole === 'admin' ||
-    userRole === 'police';
+    userRole === 'police' ||
+    userRole === 'SUPERADMIN' ||
+    userRole === 'POLICEMAN' ||
+    userRole === 'VOLUNTEER' ||
+    userRole === 'POLICE_DEPARTMENT' ||
+    userRole === 'NGO';
 
   if (!canUpdate) throw new AppError('You are not authorized to update this alert', 403);
 
@@ -207,7 +212,12 @@ export async function getAlertById(alertId: string, userId: string, userRole: st
     alert.userId === userId ||
     alert.assignedVolunteerId === userId ||
     userRole === 'police' ||
-    userRole === 'admin';
+    userRole === 'admin' ||
+    userRole === 'SUPERADMIN' ||
+    userRole === 'POLICEMAN' ||
+    userRole === 'VOLUNTEER' ||
+    userRole === 'POLICE_DEPARTMENT' ||
+    userRole === 'NGO';
 
   if (!canView) throw new AppError('Access denied', 403);
 

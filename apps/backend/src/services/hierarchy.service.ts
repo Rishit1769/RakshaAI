@@ -1,7 +1,8 @@
-import { UserRole } from '@prisma/client';
+import { OrganizationStatus, OrganizationType, UserRole, VerificationStatus, VolunteerStatus, WorkerType } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/error.middleware';
 import { hashPassword } from '../utils/password';
+import { sendWelcomeEmail } from './emailService';
 
 interface ManagedAccountInput {
   name: string;
@@ -21,6 +22,7 @@ interface ManagedUserSummary {
   isActive: boolean;
   mustChangePassword: boolean;
   createdAt: Date;
+  workerProfile?: { id: string } | null;
 }
 
 export async function createDepartment(actorId: string, input: ManagedAccountInput) {
@@ -76,7 +78,7 @@ export async function listDepartmentPolicemen(departmentId: string) {
       role: UserRole.POLICEMAN,
       departmentId,
     },
-    select: managedUserSelect,
+    select: managedUserSelectWithWorker,
     orderBy: { createdAt: 'desc' },
   });
 }
@@ -120,39 +122,62 @@ async function createManagedUser(input: {
   }
 
   const passwordHash = await hashPassword(input.tempPassword);
+  const user = await prisma.$transaction(async (tx) => {
+    const createdUser = await tx.user.create({
+      data: {
+        fullName: input.name.trim(),
+        email,
+        passwordHash,
+        role: input.role,
+        departmentId: input.departmentId,
+        ngoId: input.ngoId,
+        createdById: input.actorId,
+        isActive: true,
+        isVerified: true,
+        isEmailVerified: true,
+        mustChangePassword: true,
+      },
+      select: managedUserSelectWithWorker,
+    });
 
-  const user = await prisma.user.create({
-    data: {
-      fullName: input.name.trim(),
-      email,
-      passwordHash,
-      role: input.role,
-      departmentId: input.departmentId,
-      ngoId: input.ngoId,
-      createdById: input.actorId,
-      isActive: true,
-      isVerified: true,
-      isEmailVerified: true,
-      mustChangePassword: true,
-    },
-    select: managedUserSelect,
+    if (input.role === UserRole.POLICE_DEPARTMENT || input.role === UserRole.NGO) {
+      await ensureOrganizationForManagedOwner(tx, createdUser.id, createdUser.fullName, email, input.role);
+    }
+
+    if (input.role === UserRole.POLICEMAN) {
+      await ensureWorkerProfileForPoliceman(tx, createdUser.id, createdUser.fullName, email, passwordHash, input.actorId);
+    }
+
+    if (input.role === UserRole.VOLUNTEER) {
+      await ensureVolunteerProfile(tx, createdUser.id, input.actorId);
+    }
+
+    await tx.auditLog.create({
+      data: {
+        actorId: input.actorId,
+        actorRole: null,
+        action: input.action,
+        entityType: 'User',
+        entityId: createdUser.id,
+        metadata: {
+          email: createdUser.email,
+          role: createdUser.role,
+          departmentId: input.departmentId ?? null,
+          ngoId: input.ngoId ?? null,
+          badgeNumber: input.badgeNumber ?? null,
+        },
+      },
+    });
+
+    return createdUser;
   });
 
-  await prisma.auditLog.create({
-    data: {
-      actorId: input.actorId,
-      actorRole: null,
-      action: input.action,
-      entityType: 'User',
-      entityId: user.id,
-      metadata: {
-        email: user.email,
-        role: user.role,
-        departmentId: input.departmentId ?? null,
-        ngoId: input.ngoId ?? null,
-        badgeNumber: input.badgeNumber ?? null,
-      },
-    },
+  void sendWelcomeEmail({
+    fullName: user.fullName,
+    email: user.email,
+    password: input.tempPassword,
+    role: user.role,
+    departmentName: await resolveDepartmentNameForWelcome(user),
   });
 
   return user;
@@ -161,7 +186,7 @@ async function createManagedUser(input: {
 async function listManagedUsers(role: UserRole) {
   return prisma.user.findMany({
     where: { role },
-    select: managedUserSelect,
+    select: managedUserSelectWithWorker,
     orderBy: { createdAt: 'desc' },
   });
 }
@@ -170,15 +195,15 @@ async function getManagedGroupById(id: string, role: UserRole) {
   const user = await prisma.user.findFirst({
     where: { id, role },
     select: {
-      ...managedUserSelect,
+      ...managedUserSelectWithWorker,
       policemen: {
         where: { role: UserRole.POLICEMAN },
-        select: managedUserSelect,
+        select: managedUserSelectWithWorker,
         orderBy: { createdAt: 'desc' },
       },
       ngoVolunteers: {
         where: { role: UserRole.VOLUNTEER },
-        select: managedUserSelect,
+        select: managedUserSelectWithWorker,
         orderBy: { createdAt: 'desc' },
       },
     },
@@ -200,3 +225,144 @@ const managedUserSelect = {
   mustChangePassword: true,
   createdAt: true,
 } satisfies Record<keyof Pick<ManagedUserSummary, 'id' | 'fullName' | 'email' | 'role' | 'isActive' | 'mustChangePassword' | 'createdAt'>, true>;
+
+const managedUserSelectWithWorker = {
+  ...managedUserSelect,
+  workerProfile: {
+    select: {
+      id: true,
+    },
+  },
+};
+
+async function ensureOrganizationForManagedOwner(
+  tx: Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>,
+  ownerUserId: string,
+  fullName: string,
+  email: string,
+  role: 'POLICE_DEPARTMENT' | 'NGO'
+) {
+  const organizationType = role === UserRole.POLICE_DEPARTMENT ? OrganizationType.police : OrganizationType.ngo;
+  const existing = await tx.organization.findFirst({
+    where: {
+      createdById: ownerUserId,
+      organizationType,
+    },
+    select: { id: true },
+  });
+
+  if (existing) return;
+
+  await tx.organization.create({
+    data: {
+      organizationName: fullName,
+      organizationType,
+      email,
+      status: OrganizationStatus.approved,
+      createdById: ownerUserId,
+      approvedAt: new Date(),
+    },
+  });
+}
+
+async function ensureWorkerProfileForPoliceman(
+  tx: Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>,
+  userId: string,
+  fullName: string,
+  email: string,
+  passwordHash: string,
+  departmentOwnerId: string
+) {
+  const organization = await tx.organization.findFirst({
+    where: {
+      createdById: departmentOwnerId,
+      organizationType: OrganizationType.police,
+    },
+    select: { id: true },
+  });
+
+  if (!organization) {
+    throw new AppError('Police department organization not found', 404);
+  }
+
+  const existing = await tx.worker.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (existing) return;
+
+  await tx.worker.create({
+    data: {
+      userId,
+      organizationId: organization.id,
+      workerType: WorkerType.police_officer,
+      customRole: 'policeman',
+      email,
+      passwordHash,
+      fullName,
+      isActive: true,
+    },
+  });
+}
+
+async function ensureVolunteerProfile(
+  tx: Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>,
+  userId: string,
+  ngoOwnerId: string
+) {
+  const existing = await tx.volunteer.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (existing) return;
+
+  const ngo = await tx.user.findUnique({
+    where: { id: ngoOwnerId },
+    select: { fullName: true },
+  });
+
+  await tx.volunteer.create({
+    data: {
+      userId,
+      status: VolunteerStatus.offline,
+      verificationStatus: VerificationStatus.verified,
+      ngoAffiliation: ngo?.fullName ?? 'NGO',
+      skills: [],
+      languagesSpoken: [],
+      serviceRadiusKm: 5,
+      aadhaarVerified: true,
+    },
+  });
+}
+
+async function resolveDepartmentNameForWelcome(user: ManagedUserSummary) {
+  if (user.role === UserRole.POLICEMAN && user.workerProfile?.id) {
+    const worker = await prisma.worker.findUnique({
+      where: { id: user.workerProfile.id },
+      select: {
+        organization: {
+          select: { organizationName: true },
+        },
+      },
+    });
+
+    return worker?.organization.organizationName ?? null;
+  }
+
+  if (user.role === UserRole.VOLUNTEER && user.id) {
+    const volunteer = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        ngo: {
+          select: { fullName: true },
+        },
+      },
+    });
+
+    return volunteer?.ngo?.fullName ?? null;
+  }
+
+  return null;
+}
