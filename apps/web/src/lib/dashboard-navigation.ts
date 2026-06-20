@@ -44,11 +44,11 @@ export function getDashboardNavigation(role: string): DashboardNavItem[] {
     case 'POLICEMAN':
       return [
         { href: '/dashboard/policeman', label: 'Overview' },
-        { href: '/dashboard/policeman/hotspot', label: 'Hotspot' },
-        { href: '/dashboard/policeman/sos', label: 'SOS Feed' },
-        { href: '/dashboard/policeman/incidents', label: 'Incidents' },
-        { href: '/dashboard/policeman/report', label: 'Report' },
-        { href: '/dashboard/policeman/stations', label: 'Stations' },
+        { href: '/dashboard/policeman/hotspot', label: 'My Hotspot' },
+        { href: '/dashboard/policeman/sos', label: 'SOS Alerts' },
+        { href: '/dashboard/policeman/incidents', label: 'Nearby Incidents' },
+        { href: '/dashboard/policeman/report', label: 'Report Submission' },
+        { href: '/dashboard/policeman/stations', label: 'Nearby Stations' },
         ...commonItems,
       ];
     case 'VOLUNTEER':

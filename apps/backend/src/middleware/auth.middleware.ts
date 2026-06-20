@@ -108,6 +108,20 @@ export function requireNgo(req: Request, res: Response, next: NextFunction): voi
   next();
 }
 
+export function requirePoliceman(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    sendUnauthorized(res);
+    return;
+  }
+
+  if (req.user.role !== UserRole.POLICEMAN) {
+    sendForbidden(res, 'Policeman access required');
+    return;
+  }
+
+  next();
+}
+
 export function requireDepartment(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
     sendUnauthorized(res);

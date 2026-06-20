@@ -148,6 +148,15 @@ export function initializeSocket(httpServer: HttpServer): SocketIOServer {
         });
     });
 
+    socket.on('JOIN_OFFICER_ROOMS', (roomIds: string[]) => {
+      if (!socket.user || socket.user.role !== 'POLICEMAN') return;
+      roomIds
+        .filter((roomId) => roomId.startsWith('officer-hotspot:'))
+        .forEach((roomId) => {
+          void socket.join(roomId);
+        });
+    });
+
     // ── Location updates from client ─────────────────────────────
 
     socket.on(
@@ -232,6 +241,24 @@ export function emitDepartmentScopedSOSCreated(
 }
 
 export function emitNgoScopedSOSCreated(
+  roomIds: string[],
+  payload: { alertId: string; latitude: number; longitude: number }
+): void {
+  roomIds.forEach((roomId) => {
+    getIO().to(roomId).emit('SOS_CREATED', {
+      alertId: payload.alertId,
+      alertCode: payload.alertId.slice(0, 8).toUpperCase(),
+      userId: roomId,
+      alertType: 'general_danger',
+      triggerMethod: 'tap',
+      latitude: payload.latitude,
+      longitude: payload.longitude,
+      createdAt: new Date().toISOString(),
+    });
+  });
+}
+
+export function emitOfficerScopedSOSCreated(
   roomIds: string[],
   payload: { alertId: string; latitude: number; longitude: number }
 ): void {

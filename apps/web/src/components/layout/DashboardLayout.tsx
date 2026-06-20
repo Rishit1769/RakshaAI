@@ -7,6 +7,7 @@ import { authApi } from '@/lib/api/auth.api';
 import { adminApi } from '@/lib/api/admin.api';
 import { departmentApi } from '@/lib/api/department.api';
 import { ngoApi } from '@/lib/api/ngo.api';
+import { officerApi } from '@/lib/api/officer.api';
 import { getDashboardNavigation } from '@/lib/dashboard-navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '@/components/ui/button';
@@ -30,9 +31,11 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
   const [liveSosCount, setLiveSosCount] = useState(0);
   const [departmentName, setDepartmentName] = useState<string | null>(null);
   const [ngoName, setNgoName] = useState<string | null>(null);
+  const [officerMeta, setOfficerMeta] = useState<{ name: string | null; badgeNumber: string | null }>({ name: null, badgeNumber: null });
   const isSuperadmin = user?.role === 'SUPERADMIN';
   const isDepartment = user?.role === 'POLICE_DEPARTMENT';
   const isNgo = user?.role === 'NGO';
+  const isOfficer = user?.role === 'POLICEMAN';
 
   useEffect(() => {
     if (!isSuperadmin) return;
@@ -109,6 +112,40 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
     };
   }, [isNgo, pathname]);
 
+  useEffect(() => {
+    if (!isOfficer) return;
+
+    let mounted = true;
+    const socket = getSocket(useAuthStore.getState().accessToken ?? undefined);
+    const handleSosCreated = () => setLiveSosCount((count) => count + 1);
+    socket.on('SOS_CREATED', handleSosCreated);
+
+    void (async () => {
+      try {
+        const response = await officerApi.getNavigationMeta();
+        if (!mounted) return;
+        const data = response.data;
+        setLiveSosCount(data?.liveSosCount ?? 0);
+        setOfficerMeta({
+          name: data?.officerName ?? null,
+          badgeNumber: data?.badgeNumber ?? null,
+        });
+        if (data?.roomIds?.length) {
+          socket.emit('JOIN_OFFICER_ROOMS', data.roomIds);
+        }
+      } catch (error) {
+        if (mounted && !(error instanceof ApiError)) {
+          setLiveSosCount(0);
+        }
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      socket.off('SOS_CREATED', handleSosCreated);
+    };
+  }, [isOfficer, pathname]);
+
   async function handleLogout() {
     try {
       await authApi.logout();
@@ -181,7 +218,7 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
                     ) : null}
                   </Link>
                 ) : null}
-                {isDepartment || isNgo ? (
+                {isDepartment || isNgo || isOfficer ? (
                   <div className="relative rounded-full border border-primary/20 bg-primary/5 px-4 py-2 shadow-soft">
                     <p className="text-[11px] font-mono uppercase tracking-[0.16em] text-primary">Live SOS</p>
                     <p className="text-sm font-semibold text-ink">{liveSosCount} active feed items</p>
@@ -189,8 +226,16 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
                   </div>
                 ) : null}
                 <div className="hidden rounded-full border border-border/80 bg-white/85 px-4 py-2 text-right shadow-soft lg:block">
-                  <p className="text-xs font-mono uppercase tracking-[0.14em] text-muted">{isDepartment ? 'Department' : isNgo ? 'NGO' : 'Signed in'}</p>
-                  <p className="text-sm font-semibold text-ink">{isDepartment ? departmentName ?? user?.fullName ?? 'Department workspace' : isNgo ? ngoName ?? user?.fullName ?? 'NGO workspace' : user?.fullName ?? 'Workspace user'}</p>
+                  <p className="text-xs font-mono uppercase tracking-[0.14em] text-muted">{isDepartment ? 'Department' : isNgo ? 'NGO' : isOfficer ? 'Officer' : 'Signed in'}</p>
+                  <p className="text-sm font-semibold text-ink">
+                    {isDepartment
+                      ? departmentName ?? user?.fullName ?? 'Department workspace'
+                      : isNgo
+                        ? ngoName ?? user?.fullName ?? 'NGO workspace'
+                        : isOfficer
+                          ? `${officerMeta.name ?? user?.fullName ?? 'Officer'}${officerMeta.badgeNumber ? ` • ${officerMeta.badgeNumber}` : ''}`
+                          : user?.fullName ?? 'Workspace user'}
+                  </p>
                 </div>
                 <Link href={'/dashboard/settings' as never} className="btn-secondary">
                   Settings

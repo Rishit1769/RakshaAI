@@ -57,6 +57,7 @@ interface ClientToServerEvents {
   LEAVE_ALERT_ROOM: (alertId: string) => void;
   JOIN_DEPARTMENT_ROOMS: (roomIds: string[]) => void;
   JOIN_NGO_ROOMS: (roomIds: string[]) => void;
+  JOIN_OFFICER_ROOMS: (roomIds: string[]) => void;
   SEND_LOCATION: (data: {
     alertId: string;
     latitude: number;

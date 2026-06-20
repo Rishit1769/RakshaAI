@@ -3,49 +3,71 @@
 import { useState } from 'react';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { AppShell } from '@/components/layout/AppShell';
-import { SectionCard } from '@/components/dashboard/DashboardPrimitives';
-import { dashboardApi } from '@/lib/api/dashboard.api';
+import { Card } from '@/components/ui/card';
+import { SectionBadge } from '@/components/ui/section-badge';
+import { officerApi } from '@/lib/api/officer.api';
 import { ApiError } from '@/lib/api/fetcher';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+
+const incidentTypes = [
+  { value: 'unsafe_area', label: 'Unsafe Area' },
+  { value: 'stalking', label: 'Stalking' },
+  { value: 'broken_streetlight', label: 'Broken Streetlight' },
+  { value: 'suspicious_behavior', label: 'Suspicious Behavior' },
+  { value: 'unsafe_transport', label: 'Unsafe Transport' },
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'poor_lighting', label: 'Poor Lighting' },
+  { value: 'other', label: 'Other' },
+] as const;
 
 export default function PolicemanReportPage() {
   const { isAuthReady, isAllowed } = useRoleGuard('POLICEMAN');
   const [form, setForm] = useState({
-    title: '',
+    type: 'unsafe_area',
     description: '',
-    category: 'unsafe_area',
-    latitude: '28.6139',
-    longitude: '77.2090',
-    address: '',
-    city: '',
+    severity: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH',
+    lat: '',
+    lng: '',
+    evidenceUrl: '',
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  async function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not available in this browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((prev) => ({
+          ...prev,
+          lat: String(position.coords.latitude),
+          lng: String(position.coords.longitude),
+        }));
+      },
+      () => setError('Unable to retrieve current location.')
+    );
+  }
 
   async function submit() {
     setSubmitting(true);
     setError('');
-    setSuccess('');
-
+    setMessage('');
     try {
-      await dashboardApi.submitOfficialReport({
-        ...form,
-        latitude: Number(form.latitude),
-        longitude: Number(form.longitude),
+      await officerApi.createIncident({
+        type: form.type,
+        description: form.description,
+        lat: Number(form.lat),
+        lng: Number(form.lng),
+        severity: form.severity,
+        evidenceUrl: form.evidenceUrl || undefined,
       });
-      setSuccess('Official report submitted through the current incident/report pipeline.');
-      setForm({
-        title: '',
-        description: '',
-        category: 'unsafe_area',
-        latitude: '28.6139',
-        longitude: '77.2090',
-        address: '',
-        city: '',
-      });
+      setMessage('Officer incident report submitted successfully.');
+      setForm({ type: 'unsafe_area', description: '', severity: 'MEDIUM', lat: '', lng: '', evidenceUrl: '' });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Unable to submit official report.');
+      setError(err instanceof ApiError ? err.message : 'Unable to submit officer incident report.');
     } finally {
       setSubmitting(false);
     }
@@ -55,38 +77,58 @@ export default function PolicemanReportPage() {
   if (!isAllowed) return null;
 
   return (
-    <AppShell title="Submit Official Report" subtitle="Temporary mapping: officer reports are stored through the community incident model with audit logging.">
-      <SectionCard title="Report details">
-        <div className="space-y-4">
-          {error ? <div className="rounded-xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{error}</div> : null}
-          {success ? <div className="rounded-xl border border-safe/30 bg-safe/10 p-3 text-sm text-safe-dark">{success}</div> : null}
-          <FloatingLabelInput label="Title" type="text" value={form.title} onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))} />
-          <label className="block text-sm text-muted">
-            Category
-            <select className="input-field mt-2" value={form.category} onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}>
-              <option value="unsafe_area">Unsafe area</option>
-              <option value="harassment">Harassment</option>
-              <option value="stalking">Stalking</option>
-              <option value="suspicious_behavior">Suspicious behavior</option>
-              <option value="poor_lighting">Poor lighting</option>
-              <option value="other">Other</option>
+    <AppShell title="Report Submission" subtitle="Submit a new officer incident report with severity, location capture, and optional evidence URL.">
+      <Card padding="lg" className="surface-panel-modern">
+        <SectionBadge label="Officer report form" pulse />
+        <div className="mt-6 space-y-4">
+          {error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div> : null}
+          {message ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-mono uppercase tracking-[0.14em] text-muted">Incident Type</span>
+            <select className="input-base h-12 w-full rounded-xl border border-border bg-white px-4 text-sm text-ink" value={form.type} onChange={(event) => setForm((prev) => ({ ...prev, type: event.target.value }))}>
+              {incidentTypes.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
             </select>
           </label>
-          <label className="block text-sm text-muted">
-            Description
-            <textarea className="textarea-field mt-2 min-h-32" value={form.description} onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))} />
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-mono uppercase tracking-[0.14em] text-muted">Description</span>
+            <textarea className="textarea-field min-h-36 rounded-2xl border border-border bg-white px-4 py-3 text-sm text-ink" value={form.description} onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))} />
           </label>
-          <div className="grid gap-4 md:grid-cols-2">
-            <FloatingLabelInput label="Latitude" type="text" value={form.latitude} onChange={(event) => setForm((prev) => ({ ...prev, latitude: event.target.value }))} />
-            <FloatingLabelInput label="Longitude" type="text" value={form.longitude} onChange={(event) => setForm((prev) => ({ ...prev, longitude: event.target.value }))} />
+
+          <div>
+            <span className="mb-3 block text-xs font-mono uppercase tracking-[0.14em] text-muted">Severity</span>
+            <div className="flex flex-wrap gap-3">
+              {(['LOW', 'MEDIUM', 'HIGH'] as const).map((severity) => (
+                <button key={severity} type="button" className={`rounded-full border px-4 py-2 text-sm ${form.severity === severity ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white text-body'}`} onClick={() => setForm((prev) => ({ ...prev, severity }))}>
+                  {severity}
+                </button>
+              ))}
+            </div>
           </div>
-          <FloatingLabelInput label="Address" type="text" value={form.address} onChange={(event) => setForm((prev) => ({ ...prev, address: event.target.value }))} />
-          <FloatingLabelInput label="City" type="text" value={form.city} onChange={(event) => setForm((prev) => ({ ...prev, city: event.target.value }))} />
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" className="btn-secondary" onClick={() => void useCurrentLocation()}>
+              Use Current GPS Location
+            </button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <FloatingLabelInput label="Latitude" type="number" value={form.lat} onChange={(event) => setForm((prev) => ({ ...prev, lat: event.target.value }))} />
+            <FloatingLabelInput label="Longitude" type="number" value={form.lng} onChange={(event) => setForm((prev) => ({ ...prev, lng: event.target.value }))} />
+          </div>
+
+          <FloatingLabelInput label="Evidence URL (optional)" type="url" value={form.evidenceUrl} onChange={(event) => setForm((prev) => ({ ...prev, evidenceUrl: event.target.value }))} />
+
           <button type="button" className="btn-primary" disabled={submitting} onClick={() => void submit()}>
-            {submitting ? 'Submitting...' : 'Submit report'}
+            {submitting ? 'Submitting...' : 'Submit Incident Report'}
           </button>
         </div>
-      </SectionCard>
+      </Card>
     </AppShell>
   );
 }
