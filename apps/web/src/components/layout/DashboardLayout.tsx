@@ -23,6 +23,24 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+function BellIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M15 17H9m9-1V11a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" />
+      <path d="M10.5 20a1.5 1.5 0 0 0 3 0" />
+    </svg>
+  );
+}
+
 export function DashboardLayout({ title, subtitle, actions, children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,15 +48,23 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
   const navItems = getDashboardNavigation(user?.role ?? 'user');
   const [pendingModerationCount, setPendingModerationCount] = useState(0);
   const [liveSosCount, setLiveSosCount] = useState(0);
-  const [departmentName, setDepartmentName] = useState<string | null>(null);
-  const [ngoName, setNgoName] = useState<string | null>(null);
-  const [officerMeta, setOfficerMeta] = useState<{ name: string | null; badgeNumber: string | null }>({ name: null, badgeNumber: null });
-  const [volunteerMeta, setVolunteerMeta] = useState<{ name: string | null; ngoName: string | null }>({ name: null, ngoName: null });
   const isSuperadmin = user?.role === 'SUPERADMIN';
   const isDepartment = user?.role === 'POLICE_DEPARTMENT';
   const isNgo = user?.role === 'NGO';
   const isOfficer = user?.role === 'POLICEMAN';
   const isVolunteer = user?.role === 'VOLUNTEER';
+  const notificationHref = isSuperadmin
+    ? '/dashboard/superadmin/moderation'
+    : isDepartment
+      ? '/dashboard/department/sos'
+      : isNgo
+        ? '/dashboard/ngo/sos'
+        : isOfficer
+          ? '/dashboard/policeman/sos'
+          : isVolunteer
+            ? '/dashboard/volunteer/sos'
+            : null;
+  const notificationCount = isSuperadmin ? pendingModerationCount : liveSosCount;
 
   useEffect(() => {
     if (!isSuperadmin) return;
@@ -66,7 +92,6 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
         if (!mounted) return;
         const data = response.data;
         setLiveSosCount(data?.liveSosCount ?? 0);
-        setDepartmentName(data?.departmentName ?? null);
         if (data?.roomIds?.length) {
           socket.emit('JOIN_DEPARTMENT_ROOMS', data.roomIds);
         }
@@ -98,7 +123,6 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
         if (!mounted) return;
         const data = response.data;
         setLiveSosCount(data?.liveSosCount ?? 0);
-        setNgoName(data?.ngoName ?? null);
         if (data?.roomIds?.length) {
           socket.emit('JOIN_NGO_ROOMS', data.roomIds);
         }
@@ -129,10 +153,6 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
         if (!mounted) return;
         const data = response.data;
         setLiveSosCount(data?.liveSosCount ?? 0);
-        setOfficerMeta({
-          name: data?.officerName ?? null,
-          badgeNumber: data?.badgeNumber ?? null,
-        });
         if (data?.roomIds?.length) {
           socket.emit('JOIN_OFFICER_ROOMS', data.roomIds);
         }
@@ -163,10 +183,6 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
         if (!mounted) return;
         const data = response.data;
         setLiveSosCount(data?.liveSosCount ?? 0);
-        setVolunteerMeta({
-          name: data?.volunteerName ?? null,
-          ngoName: data?.ngoName ?? null,
-        });
         if (data?.roomIds?.length) {
           socket.emit('JOIN_NGO_ROOMS', data.roomIds);
         }
@@ -245,37 +261,20 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
                 <p className="mt-1 text-sm text-muted">{subtitle}</p>
               </div>
               <div className="flex items-center gap-3">
-                {isSuperadmin ? (
-                  <Link href={'/dashboard/superadmin/moderation' as never} className="btn-secondary relative min-h-11 px-4">
-                    <span aria-hidden="true">Bell</span>
-                    {pendingModerationCount > 0 ? (
+                {notificationHref ? (
+                  <Link
+                    href={notificationHref as never}
+                    className="btn-secondary relative flex h-11 w-11 items-center justify-center rounded-xl px-0"
+                    aria-label={isSuperadmin ? 'Open moderation queue' : 'Open SOS feed'}
+                  >
+                    <BellIcon className="h-5 w-5 text-ink" />
+                    {notificationCount > 0 ? (
                       <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[image:var(--gradient-accent)] px-1 text-[11px] font-semibold text-white shadow-accent">
-                        {pendingModerationCount}
+                        {notificationCount}
                       </span>
                     ) : null}
                   </Link>
                 ) : null}
-                {isDepartment || isNgo || isOfficer || isVolunteer ? (
-                  <div className="relative rounded-full border border-primary/20 bg-primary/5 px-4 py-2 shadow-soft">
-                    <p className="text-[11px] font-mono uppercase tracking-[0.16em] text-primary">Live SOS</p>
-                    <p className="text-sm font-semibold text-ink">{liveSosCount} active feed items</p>
-                    {liveSosCount > 0 ? <span className="absolute right-2 top-2 h-2.5 w-2.5 animate-pulse rounded-full bg-primary" /> : null}
-                  </div>
-                ) : null}
-                <div className="hidden rounded-full border border-border/80 bg-white/85 px-4 py-2 text-right shadow-soft lg:block">
-                  <p className="text-xs font-mono uppercase tracking-[0.14em] text-muted">{isDepartment ? 'Department' : isNgo ? 'NGO' : isOfficer ? 'Officer' : isVolunteer ? 'Volunteer' : 'Signed in'}</p>
-                  <p className="text-sm font-semibold text-ink">
-                    {isDepartment
-                      ? departmentName ?? user?.fullName ?? 'Department workspace'
-                      : isNgo
-                        ? ngoName ?? user?.fullName ?? 'NGO workspace'
-                        : isOfficer
-                          ? `${officerMeta.name ?? user?.fullName ?? 'Officer'}${officerMeta.badgeNumber ? ` • ${officerMeta.badgeNumber}` : ''}`
-                          : isVolunteer
-                            ? `${volunteerMeta.name ?? user?.fullName ?? 'Volunteer'}${volunteerMeta.ngoName ? ` • ${volunteerMeta.ngoName}` : ''}`
-                          : user?.fullName ?? 'Workspace user'}
-                  </p>
-                </div>
                 <Link href={'/dashboard/settings' as never} className="btn-secondary">
                   Settings
                 </Link>

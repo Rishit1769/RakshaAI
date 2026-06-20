@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
-import { SectionBadge } from '@/components/ui/section-badge';
 import { adminApi } from '@/lib/api/admin.api';
 import { ApiError } from '@/lib/api/fetcher';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
@@ -89,13 +88,16 @@ export default function SuperadminModerationPage() {
       <div className="space-y-6">
         {error ? <div className="rounded-xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{error}</div> : null}
 
-        <Card padding="lg" className="surface-panel-modern">
+        <Card padding="lg" className="surface-panel-modern border-l-4 border-l-red-500">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <SectionBadge label="Queue pressure" pulse />
+              <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+                <span className="font-mono text-xs uppercase tracking-[0.16em] text-red-600">Queue pressure</span>
+              </div>
               <h2 className="mt-5 text-xl font-semibold text-ink">{items.length} pending moderation items</h2>
             </div>
-            <p className="max-w-xl text-sm leading-7 text-muted">This queue is derived from the current report and comment schema: unverified or escalated reports, plus comments attached to those risky reports.</p>
+            <p className="text-sm leading-7 text-muted">Flagged incidents and comments awaiting your review.</p>
           </div>
         </Card>
 

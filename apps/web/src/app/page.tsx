@@ -44,6 +44,39 @@ const featureRows = [
   },
 ] as const;
 
+function MapPinCardIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M24 42s12-11.4 12-22a12 12 0 1 0-24 0c0 10.6 12 22 12 22Z" />
+      <circle cx="24" cy="20" r="4.5" />
+    </svg>
+  );
+}
+
+function SupportCardIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M24 7 12 12v10c0 8.3 5.2 15.7 12 19 6.8-3.3 12-10.7 12-19V12L24 7Z" />
+      <path d="M19 22h10" />
+      <path d="M19 27h6" />
+    </svg>
+  );
+}
+
+function RouteCardIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="14" cy="14" r="4" />
+      <circle cx="34" cy="34" r="4" />
+      <path d="M18 14h6c4.4 0 8 3.6 8 8v4" />
+      <path d="m28 30 4-4 4 4" />
+      <path d="M14 18v10c0 3.3 2.7 6 6 6h10" />
+    </svg>
+  );
+}
+
+const featureIcons = [MapPinCardIcon, SupportCardIcon, RouteCardIcon] as const;
+
 function HeroConsole() {
   return (
     <div className="relative hidden lg:block">
@@ -172,10 +205,10 @@ export default function HomePage() {
                 <div className="relative h-44 overflow-hidden border-b border-white/10 p-5">
                   <div className="dot-grid absolute inset-0 opacity-20" />
                   <div className="relative flex h-full items-center justify-center rounded-[1.75rem] border border-white/10 bg-white/5">
-                    <div className="grid gap-3 text-center">
-                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-white/70">Overview</span>
-                      <span className="font-mono text-xs uppercase tracking-[0.18em] text-white/70">Signals</span>
-                    </div>
+                    {(() => {
+                      const FeatureIcon = featureIcons[index];
+                      return <FeatureIcon className={`h-12 w-12 ${index === 1 ? 'text-primary' : 'text-white/72'}`} />;
+                    })()}
                   </div>
                 </div>
                 <div className="p-6">
