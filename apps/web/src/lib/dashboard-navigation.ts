@@ -23,12 +23,12 @@ export function getDashboardNavigation(role: string): DashboardNavItem[] {
     case 'POLICE_DEPARTMENT':
       return [
         { href: '/dashboard/department', label: 'Overview' },
-        { href: '/dashboard/department/policemen', label: 'Policemen' },
-        { href: '/dashboard/department/assignments', label: 'Assignments' },
-        { href: '/dashboard/department/map', label: 'Map' },
-        { href: '/dashboard/department/sos', label: 'SOS Feed' },
-        { href: '/dashboard/department/zones', label: 'Zones' },
-        { href: '/dashboard/department/activity', label: 'Activity' },
+        { href: '/dashboard/department/policemen', label: 'Manage Policemen' },
+        { href: '/dashboard/department/assignments', label: 'Hotspot Assignment' },
+        { href: '/dashboard/department/map', label: 'Incident Map' },
+        { href: '/dashboard/department/sos', label: 'SOS Alert Feed' },
+        { href: '/dashboard/department/zones', label: 'SafeZone / RedZone' },
+        { href: '/dashboard/department/activity', label: 'Activity Report' },
         ...commonItems,
       ];
     case 'NGO':

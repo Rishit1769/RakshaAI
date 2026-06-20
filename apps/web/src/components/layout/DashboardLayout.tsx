@@ -5,10 +5,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { authApi } from '@/lib/api/auth.api';
 import { adminApi } from '@/lib/api/admin.api';
+import { departmentApi } from '@/lib/api/department.api';
 import { getDashboardNavigation } from '@/lib/dashboard-navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ApiError } from '@/lib/api/fetcher';
+import { getSocket } from '@/lib/socket';
 
 interface DashboardLayoutProps {
   title: string;
@@ -23,7 +26,10 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
   const { user, clearAuth } = useAuthStore();
   const navItems = getDashboardNavigation(user?.role ?? 'user');
   const [pendingModerationCount, setPendingModerationCount] = useState(0);
+  const [liveSosCount, setLiveSosCount] = useState(0);
+  const [departmentName, setDepartmentName] = useState<string | null>(null);
   const isSuperadmin = user?.role === 'SUPERADMIN';
+  const isDepartment = user?.role === 'POLICE_DEPARTMENT';
 
   useEffect(() => {
     if (!isSuperadmin) return;
@@ -36,6 +42,38 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
       }
     })();
   }, [isSuperadmin, pathname]);
+
+  useEffect(() => {
+    if (!isDepartment) return;
+
+    let mounted = true;
+    const socket = getSocket(useAuthStore.getState().accessToken ?? undefined);
+    const handleSosCreated = () => setLiveSosCount((count) => count + 1);
+    socket.on('SOS_CREATED', handleSosCreated);
+
+    void (async () => {
+      try {
+        const response = await departmentApi.getNavigationMeta();
+        if (!mounted) return;
+        const data = response.data;
+        setLiveSosCount(data?.liveSosCount ?? 0);
+        setDepartmentName(data?.departmentName ?? null);
+        if (data?.roomIds?.length) {
+          socket.emit('JOIN_DEPARTMENT_ROOMS', data.roomIds);
+        }
+      } catch (error) {
+        if (mounted && !(error instanceof ApiError)) {
+          setLiveSosCount(0);
+        }
+      }
+      return undefined;
+    })();
+
+    return () => {
+      mounted = false;
+      socket.off('SOS_CREATED', handleSosCreated);
+    };
+  }, [isDepartment, pathname]);
 
   async function handleLogout() {
     try {
@@ -109,9 +147,16 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
                     ) : null}
                   </Link>
                 ) : null}
+                {isDepartment ? (
+                  <div className="relative rounded-full border border-primary/20 bg-primary/5 px-4 py-2 shadow-soft">
+                    <p className="text-[11px] font-mono uppercase tracking-[0.16em] text-primary">Live SOS</p>
+                    <p className="text-sm font-semibold text-ink">{liveSosCount} active feed items</p>
+                    {liveSosCount > 0 ? <span className="absolute right-2 top-2 h-2.5 w-2.5 animate-pulse rounded-full bg-primary" /> : null}
+                  </div>
+                ) : null}
                 <div className="hidden rounded-full border border-border/80 bg-white/85 px-4 py-2 text-right shadow-soft lg:block">
-                  <p className="text-xs font-mono uppercase tracking-[0.14em] text-muted">Signed in</p>
-                  <p className="text-sm font-semibold text-ink">{user?.fullName ?? 'Workspace user'}</p>
+                  <p className="text-xs font-mono uppercase tracking-[0.14em] text-muted">{isDepartment ? 'Department' : 'Signed in'}</p>
+                  <p className="text-sm font-semibold text-ink">{isDepartment ? departmentName ?? user?.fullName ?? 'Department workspace' : user?.fullName ?? 'Workspace user'}</p>
                 </div>
                 <Link href={'/dashboard/settings' as never} className="btn-secondary">
                   Settings

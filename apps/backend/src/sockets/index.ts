@@ -13,6 +13,12 @@ interface SocketUser {
   role: string;
 }
 
+interface SocketJwtPayload {
+  sub: string;
+  email: string;
+  role: string;
+}
+
 interface AuthenticatedSocket extends Socket {
   user?: SocketUser;
 }
@@ -87,8 +93,8 @@ export function initializeSocket(httpServer: HttpServer): SocketIOServer {
     }
 
     try {
-      const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as SocketUser;
-      socket.user = { id: payload.id, email: payload.email, role: payload.role };
+      const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as SocketJwtPayload;
+      socket.user = { id: payload.sub, email: payload.email, role: payload.role };
       next();
     } catch {
       next(new Error('Authentication failed: invalid token'));
@@ -122,6 +128,15 @@ export function initializeSocket(httpServer: HttpServer): SocketIOServer {
 
     socket.on('LEAVE_ALERT_ROOM', (alertId: string) => {
       void socket.leave(`alert:${alertId}`);
+    });
+
+    socket.on('JOIN_DEPARTMENT_ROOMS', (roomIds: string[]) => {
+      if (!socket.user || socket.user.role !== 'POLICE_DEPARTMENT') return;
+      roomIds
+        .filter((roomId) => roomId.startsWith('department-zone:'))
+        .forEach((roomId) => {
+          void socket.join(roomId);
+        });
     });
 
     // ── Location updates from client ─────────────────────────────
@@ -187,6 +202,24 @@ export function getIO(): SocketIOServer {
 /** Broadcast SOS_CREATED to ALL connected responders (volunteers, police, admin) */
 export function emitSOSCreated(payload: SosCreatedPayload): void {
   getIO().emit('SOS_CREATED', payload);
+}
+
+export function emitDepartmentScopedSOSCreated(
+  roomIds: string[],
+  payload: { alertId: string; latitude: number; longitude: number }
+): void {
+  roomIds.forEach((roomId) => {
+    getIO().to(roomId).emit('SOS_CREATED', {
+      alertId: payload.alertId,
+      alertCode: payload.alertId.slice(0, 8).toUpperCase(),
+      userId: roomId,
+      alertType: 'general_danger',
+      triggerMethod: 'tap',
+      latitude: payload.latitude,
+      longitude: payload.longitude,
+      createdAt: new Date().toISOString(),
+    });
+  });
 }
 
 /** Broadcast LOCATION_UPDATE to all subscribers of a specific alert room */
