@@ -34,11 +34,11 @@ export function getDashboardNavigation(role: string): DashboardNavItem[] {
     case 'NGO':
       return [
         { href: '/dashboard/ngo', label: 'Overview' },
-        { href: '/dashboard/ngo/volunteers', label: 'Volunteers' },
-        { href: '/dashboard/ngo/response', label: 'Response' },
+        { href: '/dashboard/ngo/volunteers', label: 'Manage Volunteers' },
+        { href: '/dashboard/ngo/response', label: 'Incident Response' },
         { href: '/dashboard/ngo/sos', label: 'SOS Feed' },
-        { href: '/dashboard/ngo/zones', label: 'Zones' },
-        { href: '/dashboard/ngo/activity', label: 'Activity' },
+        { href: '/dashboard/ngo/zones', label: 'SafeZone Awareness' },
+        { href: '/dashboard/ngo/activity', label: 'Activity Log' },
         ...commonItems,
       ];
     case 'POLICEMAN':

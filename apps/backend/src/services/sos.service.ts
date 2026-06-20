@@ -5,6 +5,7 @@ import { AppError } from '../middleware/error.middleware';
 import { logger } from '../config/logger';
 import { emitSOSCreated, emitAlertStatusChanged } from '../sockets';
 import { emitDepartmentScopedSosNotification } from './department.service';
+import { emitNgoScopedSosNotification } from './ngo.service';
 import { sendSOSAlert } from './emailService';
 
 export interface CreateSosInput {
@@ -101,6 +102,7 @@ export async function createSosAlert(input: CreateSosInput) {
     });
     if (resolvedLocation) {
       void emitDepartmentScopedSosNotification(alert.id, resolvedLocation.latitude, resolvedLocation.longitude);
+      void emitNgoScopedSosNotification(alert.id, resolvedLocation.latitude, resolvedLocation.longitude);
     }
   } catch {
     logger.error('Socket emit failed for SOS_CREATED', { alertId: alert.id });
