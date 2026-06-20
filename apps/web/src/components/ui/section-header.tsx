@@ -16,8 +16,8 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn('space-y-4', align === 'center' && 'mx-auto text-center', className)}>
-      {badge ? <SectionBadge label={badge} /> : null}
+    <div className={cn('space-y-5', align === 'center' && 'mx-auto text-center', className)}>
+      {badge ? <SectionBadge label={badge} className={align === 'center' ? 'mx-auto' : undefined} /> : null}
       <div className="space-y-3">
         <div className="display-section">{title}</div>
         {description ? <div className="max-w-3xl text-base leading-8 text-body md:text-lg">{description}</div> : null}

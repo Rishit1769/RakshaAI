@@ -11,7 +11,7 @@ export function MetricCard({
   inset?: string;
 }) {
   return (
-    <Card>
+    <Card className="metric-card">
       <p className="font-mono text-[0.72rem] uppercase tracking-[0.16em] text-muted">{label}</p>
       <p className="mt-3 text-3xl font-semibold tracking-[-0.02em] text-ink">{value}</p>
       {inset ? <p className="mt-2 text-sm text-muted">{inset}</p> : null}

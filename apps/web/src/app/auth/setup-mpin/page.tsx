@@ -84,8 +84,8 @@ export default function SetupMpinPage() {
   return (
     <main className="min-h-screen bg-background">
       <MarketingNav />
-      <section className="page-container grid gap-8 py-10 lg:grid-cols-[0.9fr_0.8fr] lg:py-16">
-        <div className="surface-panel p-8 lg:p-12">
+      <section className="page-container grid gap-8 py-10 lg:grid-cols-[1fr_0.84fr] lg:py-16">
+        <div className="hero-panel p-8 lg:p-12">
           <span className="eyebrow">Faster account access</span>
           <h1 className="display-section mt-6">Add MPIN for quicker, lower-friction sign-in.</h1>
           <p className="mt-4 text-lg leading-8 text-body">
@@ -93,7 +93,7 @@ export default function SetupMpinPage() {
           </p>
         </div>
 
-        <div className="product-card p-8">
+        <div className="surface-panel-modern p-8">
           <div className="mb-8">
             <p className="text-sm font-semibold text-ink">{step === 'enter' ? 'Create MPIN' : 'Confirm MPIN'}</p>
             <p className="mt-2 text-sm text-muted">Use six digits that you can recall quickly but others cannot guess easily.</p>
@@ -125,7 +125,7 @@ export default function SetupMpinPage() {
                   if (key === 'Del') handleBackspace();
                   else handleDigit(key);
                 }}
-                className={`h-14 rounded-xl border text-lg font-semibold transition-colors ${!key ? 'invisible' : 'border-hairline bg-canvas text-ink hover:bg-surface-soft dark:bg-[#14171d] dark:text-white'}`}
+                className={`h-14 rounded-2xl border text-lg font-semibold transition-all ${!key ? 'invisible' : 'border-border bg-white text-ink shadow-soft hover:-translate-y-0.5 hover:bg-surface-soft hover:shadow-card'}`}
               >
                 {key}
               </button>

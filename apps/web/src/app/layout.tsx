@@ -41,14 +41,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${calistoga.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{const saved=localStorage.getItem('raksha-theme');const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;const theme=saved||(prefersDark?'dark':'light');document.documentElement.setAttribute('data-theme',theme);document.documentElement.style.colorScheme=theme;}catch(e){}})();`,
-          }}
-        />
-      </head>
+    <html lang="en" className={`${inter.variable} ${calistoga.variable} ${jetbrainsMono.variable}`}>
+      <head />
       <body className="min-h-screen bg-background font-sans text-body antialiased">
         <Providers>
           {children}

@@ -26,7 +26,7 @@ export function PageHero({
   className,
 }: PageHeroProps) {
   return (
-    <section className={cn('grid items-center gap-8 lg:gap-12', aside ? 'lg:grid-cols-[1.08fr_0.92fr]' : '', className)}>
+    <section className={cn('grid items-center gap-10 lg:gap-14', aside ? 'lg:grid-cols-[1.08fr_0.92fr]' : '', className)}>
       <motion.div
         variants={stagger}
         initial="hidden"

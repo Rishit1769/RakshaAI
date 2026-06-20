@@ -51,7 +51,7 @@ export default function DownloadAppButton() {
         type="button"
         onClick={handleDownload}
         disabled={isLoading}
-        className="fixed bottom-5 right-5 z-50 inline-flex min-h-11 items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold shadow-card"
+        className="fixed bottom-5 right-5 z-50 inline-flex min-h-11 items-center justify-center rounded-full border border-border/80 bg-white/92 px-5 py-3 text-sm font-semibold text-ink shadow-card backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-accent"
         style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface-card)', color: 'var(--color-ink)' }}
       >
         {isLoading ? 'Preparing download...' : 'Download Mobile App'}
@@ -61,7 +61,7 @@ export default function DownloadAppButton() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-24 right-6 z-50 max-w-xs rounded-[var(--rounded-lg)] border px-4 py-3 text-sm shadow-card"
+          className="fixed bottom-24 right-6 z-50 max-w-xs rounded-2xl border border-border/80 bg-white/92 px-4 py-3 text-sm text-ink shadow-card backdrop-blur-md"
           style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface-card)', color: 'var(--color-ink)' }}
         >
           {toast}

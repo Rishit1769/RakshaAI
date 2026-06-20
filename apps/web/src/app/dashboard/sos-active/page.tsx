@@ -7,7 +7,6 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { sosApi } from '@/lib/api/sos.api';
 import { useSosRealtime } from '@/hooks/useSosRealtime';
 import { useLocationBroadcast } from '@/hooks/useLocationBroadcast';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 
 function SosActivePageContent() {
   const router = useRouter();
@@ -84,20 +83,23 @@ function SosActivePageContent() {
             <h1 className="text-lg font-semibold text-white">{realtime.isResolved ? 'You are safe' : 'Emergency Alert Active'}</h1>
             <p className="text-sm text-white/70">{statusLabel[currentStatus] ?? 'Coordinating response...'}</p>
           </div>
-          <ThemeToggle size="sm" />
+          <div className="inline-flex items-center gap-3 rounded-full border border-white/12 bg-white/6 px-4 py-2 text-xs font-mono uppercase tracking-[0.16em] text-white/75">
+            <span className="h-2 w-2 rounded-full bg-white animate-pulse-dot" />
+            Live response
+          </div>
         </div>
       </header>
 
       <main className="page-container grid gap-6 py-8 lg:grid-cols-[0.82fr_1.18fr]">
         <div className="surface-panel flex flex-col items-center justify-center gap-6 p-8 text-center">
-          <div className={`relative flex h-48 w-48 items-center justify-center rounded-full ${realtime.isResolved ? 'bg-safe text-white' : 'bg-emergency text-white'} shadow-emergency`}>
+          <div className={`relative flex h-48 w-48 items-center justify-center rounded-full border border-white/12 ${realtime.isResolved ? 'bg-safe text-white' : 'bg-emergency text-white'} shadow-emergency`}>
             <div className="text-center">
               <span className="block text-3xl font-semibold tracking-[0.18em]">{realtime.isResolved ? 'SAFE' : 'SOS'}</span>
               <span className="mt-2 block text-xs uppercase tracking-[0.2em] text-white/80">{realtime.isResolved ? 'Resolved' : currentStatus}</span>
             </div>
           </div>
           {alertData?.alertCode ? (
-            <div className="rounded-[var(--rounded-lg)] bg-white/10 px-5 py-3 text-sm text-white">
+            <div className="rounded-2xl border border-white/10 bg-white/10 px-5 py-3 text-sm text-white">
               Code: <span className="font-semibold">{alertData.alertCode}</span>
             </div>
           ) : null}
@@ -111,9 +113,9 @@ function SosActivePageContent() {
         </div>
 
         <div className="product-card space-y-4 p-8">
-          <p className="text-sm font-semibold text-white">Response timeline</p>
+          <p className="font-mono text-xs uppercase tracking-[0.16em] text-white/70">Response timeline</p>
           {responderRows.map((item) => (
-            <div key={item.label} className="flex items-center justify-between rounded-[var(--rounded-md)] border border-white/10 bg-white/5 px-4 py-4">
+            <div key={item.label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
               <span className="text-sm font-medium text-white">{item.label}</span>
               <span className="text-sm text-white/75">{item.status}</span>
             </div>

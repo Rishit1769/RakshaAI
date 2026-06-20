@@ -3,12 +3,12 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/cn';
 
 const buttonVariants = cva(
-  'focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-60',
+  'focus-ring inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98]',
   {
     variants: {
       variant: {
         primary: 'bg-[image:var(--gradient-accent)] text-white shadow-soft hover:-translate-y-0.5 hover:shadow-accent-lg hover:brightness-110',
-        secondary: 'border border-border bg-white/90 text-foreground shadow-soft hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card',
+        secondary: 'border border-border/80 bg-white/92 text-foreground shadow-soft hover:-translate-y-0.5 hover:border-primary/25 hover:bg-surface-soft/75 hover:shadow-card',
         ghost: 'bg-transparent text-muted hover:bg-primary/5 hover:text-foreground',
         danger: 'bg-emergency text-white shadow-[var(--shadow-emergency)] hover:-translate-y-0.5 hover:brightness-105',
       },

@@ -9,7 +9,7 @@ interface LoadingStateProps {
 
 export function LoadingState({ label = 'Loading...', className = '' }: LoadingStateProps) {
   return (
-    <div className={`card flex items-center justify-center gap-3 text-sm text-[var(--color-muted)] ${className}`}>
+    <div className={`card flex min-h-32 items-center justify-center gap-3 text-sm text-[var(--color-muted)] ${className}`}>
       <span className="h-4 w-4 animate-spin rounded-full border-2 border-[color-mix(in_srgb,var(--color-primary)_30%,transparent)] border-t-[var(--color-primary)]" />
       <span>{label}</span>
     </div>
@@ -44,7 +44,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="empty-state">
+    <div className="empty-state text-center">
       {icon ? <div className="mb-3 text-base font-medium text-[var(--color-muted)]">{icon}</div> : null}
       <h3 className="text-base font-semibold text-[var(--color-ink)]">{title}</h3>
       {description ? <p className="mt-1 text-sm text-[var(--color-muted)]">{description}</p> : null}
