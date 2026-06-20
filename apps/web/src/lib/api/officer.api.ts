@@ -7,7 +7,12 @@ export const officerApi = {
   getSos: () => api.get('/officer/sos'),
   acknowledgeSos: (id: string) => api.patch(`/officer/sos/${id}/acknowledge`, {}),
   resolveSos: (id: string) => api.patch(`/officer/sos/${id}/resolve`, {}),
-  getIncidents: (radius = 5) => api.get(`/officer/incidents?radius=${radius}`),
+  getIncidents: (radius = 5, center?: { latitude: number; longitude: number }) =>
+    api.get(
+      center
+        ? `/officer/incidents?radius=${radius}&lat=${center.latitude}&lng=${center.longitude}`
+        : `/officer/incidents?radius=${radius}`
+    ),
   resolveIncident: (id: string) => api.patch(`/officer/incidents/${id}/resolve`, {}),
   createIncident: (body: { type: string; description: string; lat: number; lng: number; severity: 'LOW' | 'MEDIUM' | 'HIGH'; evidenceUrl?: string }) =>
     api.post('/officer/incidents', body),

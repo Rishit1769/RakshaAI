@@ -34,7 +34,13 @@ export const resolveSos = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const listIncidents = asyncHandler(async (req: Request, res: Response) => {
-  const result = await OfficerService.listIncidents(req.user!.id, Number((req.query as { radius?: number }).radius ?? 5));
+  const query = req.query as { radius?: number; lat?: number; lng?: number };
+  const result = await OfficerService.listIncidents(
+    req.user!.id,
+    Number(query.radius ?? 5),
+    query.lat !== undefined ? Number(query.lat) : undefined,
+    query.lng !== undefined ? Number(query.lng) : undefined
+  );
   sendSuccess(res, result, 'Officer incidents retrieved');
 });
 

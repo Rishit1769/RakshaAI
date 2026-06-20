@@ -1,4 +1,4 @@
-import { AlertStatus, OrganizationType, Prisma, ReportCategory, UserRole, WorkerType } from '@prisma/client';
+import { AlertStatus, OrganizationStatus, OrganizationType, Prisma, ReportCategory, UserRole, WorkerType } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/error.middleware';
 import * as HierarchyService from './hierarchy.service';
@@ -22,6 +22,8 @@ type CoverageArea = {
 };
 
 const HOTSPOT_DEFAULT_RADIUS_METERS = 1200;
+const FALLBACK_INCIDENT_RADIUS_KM = 50;
+const INDIA_CENTER = { latitude: 20.5937, longitude: 78.9629 };
 const HOTSPOT_METADATA_ACTIONS = [
   'DEPARTMENT_CREATED_HOTSPOT',
   'DEPARTMENT_UPDATED_HOTSPOT',
@@ -44,7 +46,7 @@ export async function getNavigationMeta(departmentUserId: string) {
 
 export async function getOverview(departmentUserId: string) {
   const organization = await getDepartmentOrganization(departmentUserId);
-  const [policemen, hotspots, coverage, incidents, alerts, activity] = await Promise.all([
+  const [policemen, hotspots, coverage, incidentResult, alerts, activity] = await Promise.all([
     listPolicemen(departmentUserId),
     listHotspots(departmentUserId),
     getDepartmentCoverageAreas(departmentUserId, organization.id),
@@ -52,6 +54,7 @@ export async function getOverview(departmentUserId: string) {
     getScopedAlerts(await getDepartmentCoverageAreas(departmentUserId, organization.id)),
     getRecentDepartmentActivity(departmentUserId, 10),
   ]);
+  const incidents = incidentResult.items;
 
   const last24Hours = Date.now() - 24 * 60 * 60 * 1000;
   const last7Days = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -459,20 +462,23 @@ export async function listIncidents(departmentUserId: string) {
     orderBy: { createdAt: 'desc' },
   });
 
-  return reports
-    .filter((report) => isPointInsideCoverage(coverage, report.latitude, report.longitude))
-    .map((report) => ({
-      id: report.id,
-      latitude: report.latitude,
-      longitude: report.longitude,
-      type: report.title ?? String(report.category).replace(/_/g, ' '),
-      severity: pinColorToSeverity(report.pinColor),
-      reporterName: report.isAnonymous ? 'Anonymous' : report.reporter?.fullName ?? 'Anonymous',
-      timestamp: report.createdAt.toISOString(),
-      pinScore: report.score,
-      status: report.isActive ? 'OPEN' : 'RESOLVED',
-      description: report.description ?? '',
-    }));
+  const noHotspotsConfigured = coverage.length === 0;
+  const fallbackCenter = resolveFallbackIncidentCenter(reports);
+  const items = reports
+    .filter((report) => {
+      if (!noHotspotsConfigured) {
+        return isPointInsideCoverage(coverage, report.latitude, report.longitude);
+      }
+
+      return haversineDistance(fallbackCenter.latitude, fallbackCenter.longitude, report.latitude, report.longitude) <= FALLBACK_INCIDENT_RADIUS_KM;
+    })
+    .map((report) => serializeDepartmentIncident(report));
+
+  return {
+    items,
+    noHotspotsConfigured,
+    mapCenter: noHotspotsConfigured ? fallbackCenter : resolveMapCenter(coverage),
+  };
 }
 
 export async function resolveIncident(departmentUserId: string, incidentId: string, notes?: string) {
@@ -745,10 +751,11 @@ export async function getActivity(departmentUserId: string) {
 async function getRecentDepartmentActivity(departmentUserId: string, limit: number) {
   const organization = await getDepartmentOrganization(departmentUserId);
   const coverage = await getDepartmentCoverageAreas(departmentUserId, organization.id);
-  const [alerts, incidents] = await Promise.all([
+  const [alerts, incidentResult] = await Promise.all([
     getScopedAlerts(coverage),
     listIncidents(departmentUserId),
   ]);
+  const incidents = incidentResult.items;
 
   return [
     ...alerts.slice(0, limit).map((alert) => ({
@@ -771,7 +778,7 @@ async function getRecentDepartmentActivity(departmentUserId: string, limit: numb
 }
 
 async function getDepartmentOrganization(departmentUserId: string) {
-  const organization = await prisma.organization.findFirst({
+  let organization = await prisma.organization.findFirst({
     where: {
       createdById: departmentUserId,
       organizationType: OrganizationType.police,
@@ -779,7 +786,27 @@ async function getDepartmentOrganization(departmentUserId: string) {
     select: { id: true, organizationName: true },
   });
 
-  if (!organization) throw new AppError('Police department organization not found', 404);
+  if (!organization) {
+    const owner = await prisma.user.findFirst({
+      where: { id: departmentUserId, role: UserRole.POLICE_DEPARTMENT },
+      select: { fullName: true, email: true },
+    });
+
+    if (!owner) throw new AppError('Police department organization not found', 404);
+
+    organization = await prisma.organization.create({
+      data: {
+        organizationName: owner.fullName,
+        organizationType: OrganizationType.police,
+        email: owner.email,
+        status: OrganizationStatus.approved,
+        createdById: departmentUserId,
+        approvedAt: new Date(),
+      },
+      select: { id: true, organizationName: true },
+    });
+  }
+
   return organization;
 }
 
@@ -1032,7 +1059,7 @@ function isPointInsideCoverage(coverage: CoverageArea[], latitude: number, longi
 
 function resolveMapCenter(coverage: CoverageArea[]) {
   if (!coverage.length) {
-    return { latitude: 20.5937, longitude: 78.9629 };
+    return INDIA_CENTER;
   }
 
   const latitude = coverage.reduce((sum, item) => sum + item.latitude, 0) / coverage.length;
@@ -1066,6 +1093,43 @@ function pinColorToSeverity(color: string): Severity {
 
 function formatCoordinates(latitude: number, longitude: number) {
   return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+}
+
+function resolveFallbackIncidentCenter(reports: Array<{ latitude: number; longitude: number }>) {
+  if (!reports.length) return INDIA_CENTER;
+
+  return {
+    latitude: reports.reduce((sum, report) => sum + Number(report.latitude), 0) / reports.length,
+    longitude: reports.reduce((sum, report) => sum + Number(report.longitude), 0) / reports.length,
+  };
+}
+
+function serializeDepartmentIncident(report: {
+  id: string;
+  latitude: number;
+  longitude: number;
+  title: string | null;
+  category: string;
+  pinColor: string;
+  isAnonymous: boolean;
+  reporter: { fullName: string } | null;
+  createdAt: Date;
+  score: number;
+  isActive: boolean;
+  description: string | null;
+}) {
+  return {
+    id: report.id,
+    latitude: Number(report.latitude),
+    longitude: Number(report.longitude),
+    type: report.title ?? String(report.category).replace(/_/g, ' '),
+    severity: pinColorToSeverity(report.pinColor),
+    reporterName: report.isAnonymous ? 'Anonymous' : report.reporter?.fullName ?? 'Anonymous',
+    timestamp: report.createdAt.toISOString(),
+    pinScore: Number(report.score),
+    status: report.isActive ? 'OPEN' : 'RESOLVED',
+    description: report.description ?? '',
+  };
 }
 
 function readJsonString(value: Prisma.JsonValue | null | undefined, key: string) {

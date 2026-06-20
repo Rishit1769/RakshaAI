@@ -6,6 +6,7 @@ import type { Circle, Control, LayerGroup, Map as LeafletMap, Marker } from 'lea
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { normalizeCenter, toCoordinateNumber } from '@/lib/geo';
 
 export interface MapMarker {
   id: string;
@@ -75,6 +76,7 @@ export default function SafetyMap({
   showPoliceStations = false,
   showLegend = false,
 }: SafetyMapProps) {
+  const normalizedCenter = normalizeCenter(center);
   const mapRef = useRef<LeafletMap | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const circleRef = useRef<Circle | null>(null);
@@ -107,7 +109,7 @@ export default function SafetyMap({
       container.innerHTML = '';
 
       const map = L.map(container, {
-        center: [center.latitude, center.longitude],
+        center: [normalizedCenter.latitude, normalizedCenter.longitude],
         zoom,
         zoomControl: true,
         attributionControl: true,
@@ -162,12 +164,12 @@ export default function SafetyMap({
 
   useEffect(() => {
     if (!mapRef.current) return;
-    mapRef.current.setView([center.latitude, center.longitude], zoom);
+    mapRef.current.setView([normalizedCenter.latitude, normalizedCenter.longitude], zoom);
     renderRadius();
     if (showPoliceStations) {
       void loadPoliceStations();
     }
-  }, [center.latitude, center.longitude, zoom, radiusKm, showPoliceStations]);
+  }, [normalizedCenter.latitude, normalizedCenter.longitude, zoom, radiusKm, showPoliceStations]);
 
   useEffect(() => {
     renderMarkers();
@@ -197,7 +199,7 @@ export default function SafetyMap({
 
     if (!radiusKm) return;
 
-    circleRef.current = L.circle([center.latitude, center.longitude], {
+    circleRef.current = L.circle([normalizedCenter.latitude, normalizedCenter.longitude], {
       radius: radiusKm * 1000,
       color: 'var(--color-primary)',
       fillColor: 'var(--color-primary)',
@@ -215,7 +217,9 @@ export default function SafetyMap({
     layer.clearLayers();
 
     markers.forEach((item) => {
-      const marker = L.marker([item.latitude, item.longitude], { icon: buildMarkerIcon(L, item) });
+      const latitude = toCoordinateNumber(item.latitude);
+      const longitude = toCoordinateNumber(item.longitude);
+      const marker = L.marker([latitude, longitude], { icon: buildMarkerIcon(L, item) });
       if (item.popupHtml ?? item.label) {
         marker.bindPopup(item.popupHtml ?? `<strong>${item.label}</strong>`);
       }
@@ -233,7 +237,7 @@ export default function SafetyMap({
 
     if (!placementMode || !selectedLocation) return;
 
-    placementMarkerRef.current = L.marker([selectedLocation.latitude, selectedLocation.longitude], { icon: buildPlacementIcon(L) })
+    placementMarkerRef.current = L.marker([toCoordinateNumber(selectedLocation.latitude), toCoordinateNumber(selectedLocation.longitude)], { icon: buildPlacementIcon(L) })
       .addTo(map)
       .bindPopup('Marked unsafe area')
       .openPopup();
@@ -250,10 +254,10 @@ export default function SafetyMap({
       const response = await fetch('https://overpass-api.de/api/interpreter', {
         method: 'POST',
         body: `
-          [out:json][timeout:25];
-          (
-            node["amenity"="police"](around:5000,${center.latitude},${center.longitude});
-            way["amenity"="police"](around:5000,${center.latitude},${center.longitude});
+            [out:json][timeout:25];
+            (
+            node["amenity"="police"](around:5000,${normalizedCenter.latitude},${normalizedCenter.longitude});
+            way["amenity"="police"](around:5000,${normalizedCenter.latitude},${normalizedCenter.longitude});
           );
           out body center;
         `,

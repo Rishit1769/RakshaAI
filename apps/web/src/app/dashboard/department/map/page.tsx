@@ -9,6 +9,7 @@ import { SectionBadge } from '@/components/ui/section-badge';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { departmentApi } from '@/lib/api/department.api';
 import { ApiError } from '@/lib/api/fetcher';
+import { INDIA_CENTER } from '@/lib/geo';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
@@ -29,9 +30,16 @@ type Incident = {
   description: string;
 };
 
+type MapCenter = {
+  latitude: number;
+  longitude: number;
+};
+
 export default function DepartmentIncidentMapPage() {
   const { isAuthReady, isAllowed } = useRoleGuard('POLICE_DEPARTMENT');
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [mapCenter, setMapCenter] = useState<MapCenter>(INDIA_CENTER);
+  const [noHotspotsConfigured, setNoHotspotsConfigured] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<'ALL' | 'LOW' | 'MEDIUM' | 'HIGH'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'OPEN' | 'RESOLVED'>('ALL');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -40,7 +48,14 @@ export default function DepartmentIncidentMapPage() {
   async function load() {
     try {
       const response = await departmentApi.getIncidents();
-      setIncidents((response.data ?? []) as Incident[]);
+      const payload = (response.data ?? {}) as {
+        items?: Incident[];
+        mapCenter?: { latitude: number; longitude: number };
+        noHotspotsConfigured?: boolean;
+      };
+      setIncidents(payload.items ?? []);
+      setMapCenter(payload.mapCenter ?? INDIA_CENTER);
+      setNoHotspotsConfigured(Boolean(payload.noHotspotsConfigured));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load the incident map.');
     }
@@ -87,6 +102,7 @@ export default function DepartmentIncidentMapPage() {
     <AppShell title="Incident Map" subtitle="Review all community incidents that fall within your current hotspots and department zones, then resolve them from a single map-driven workflow.">
       <div className="space-y-8">
         {error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div> : null}
+        {noHotspotsConfigured ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">No hotspots configured yet - showing nearby incidents using the current fallback area.</div> : null}
 
         <Card padding="lg" className="surface-panel-modern">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -110,7 +126,7 @@ export default function DepartmentIncidentMapPage() {
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-            <SafetyMap center={selectedIncident ? { latitude: selectedIncident.latitude, longitude: selectedIncident.longitude } : { latitude: 20.5937, longitude: 78.9629 }} zoom={12} markers={markers} className="h-[40rem] w-full" />
+            <SafetyMap center={selectedIncident ? { latitude: selectedIncident.latitude, longitude: selectedIncident.longitude } : mapCenter} zoom={12} markers={markers} className="h-[40rem] w-full" />
 
             <div className="space-y-4 overflow-y-auto pr-2 xl:max-h-[40rem]">
               {filteredIncidents.map((incident) => (

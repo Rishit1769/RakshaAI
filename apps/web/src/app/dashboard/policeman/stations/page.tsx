@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { SectionBadge } from '@/components/ui/section-badge';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { officerApi } from '@/lib/api/officer.api';
+import { getCurrentBrowserLocation, INDIA_CENTER } from '@/lib/geo';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
@@ -36,7 +37,7 @@ type OverpassResponse = {
 
 export default function PolicemanStationsPage() {
   const { isAuthReady, isAllowed } = useRoleGuard('POLICEMAN');
-  const [origin, setOrigin] = useState<{ latitude: number; longitude: number }>({ latitude: 20.5937, longitude: 78.9629 });
+  const [origin, setOrigin] = useState<{ latitude: number; longitude: number }>(INDIA_CENTER);
   const [stations, setStations] = useState<Station[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,22 +48,20 @@ export default function PolicemanStationsPage() {
 
     void (async () => {
       try {
+        const currentLocation = await getCurrentBrowserLocation();
+        if (currentLocation.latitude !== INDIA_CENTER.latitude || currentLocation.longitude !== INDIA_CENTER.longitude) {
+          setOrigin(currentLocation);
+          return;
+        }
+
         const hotspotResponse = await officerApi.getHotspot();
         const hotspot = hotspotResponse.data as { latitude?: number; longitude?: number } | null | undefined;
         if (hotspot?.latitude && hotspot?.longitude) {
           setOrigin({ latitude: hotspot.latitude, longitude: hotspot.longitude });
           return;
         }
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setOrigin({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-          },
-          () => {
-            setOrigin({ latitude: 28.6139, longitude: 77.209 });
-          }
-        );
       } catch {
-        setOrigin({ latitude: 28.6139, longitude: 77.209 });
+        setOrigin(INDIA_CENTER);
       }
     })();
   }, [isAllowed]);

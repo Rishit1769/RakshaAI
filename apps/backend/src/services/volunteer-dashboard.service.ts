@@ -1,4 +1,4 @@
-import { OrganizationType, Prisma, UserRole } from '@prisma/client';
+import { OrganizationStatus, OrganizationType, Prisma, UserRole, VerificationStatus, VolunteerStatus } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/error.middleware';
 import { createAuditLog } from '../utils/createAuditLog';
@@ -298,14 +298,47 @@ async function getVolunteerContext(volunteerUserId: string) {
   });
   if (!user || !user.ngoId) throw new AppError('Volunteer NGO association not found', 404);
 
-  const organization = await prisma.organization.findFirst({
+  if (!user.volunteerProfile?.id) {
+    await prisma.volunteer.create({
+      data: {
+        userId: user.id,
+        status: VolunteerStatus.offline,
+        verificationStatus: VerificationStatus.verified,
+        ngoAffiliation: user.ngo?.fullName ?? 'NGO',
+        skills: [],
+        languagesSpoken: [],
+        serviceRadiusKm: 5,
+        aadhaarVerified: true,
+      },
+    });
+  }
+
+  let organization = await prisma.organization.findFirst({
     where: {
       createdById: user.ngoId,
       organizationType: OrganizationType.ngo,
     },
     select: { id: true, organizationName: true },
   });
-  if (!organization) throw new AppError('NGO organization not found', 404);
+  if (!organization) {
+    const ngoOwner = await prisma.user.findUnique({
+      where: { id: user.ngoId },
+      select: { fullName: true, email: true },
+    });
+    if (!ngoOwner) throw new AppError('NGO organization not found', 404);
+
+    organization = await prisma.organization.create({
+      data: {
+        organizationName: ngoOwner.fullName,
+        organizationType: OrganizationType.ngo,
+        email: ngoOwner.email,
+        status: OrganizationStatus.approved,
+        createdById: user.ngoId,
+        approvedAt: new Date(),
+      },
+      select: { id: true, organizationName: true },
+    });
+  }
 
   return {
     id: user.id,

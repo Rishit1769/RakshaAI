@@ -10,6 +10,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { departmentApi } from '@/lib/api/department.api';
 import { ApiError } from '@/lib/api/fetcher';
+import { getCurrentBrowserLocation, INDIA_CENTER } from '@/lib/geo';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
@@ -36,12 +37,21 @@ type Hotspot = {
   assignedOfficer?: { id: string; name: string } | null;
 };
 
+type HotspotDraftState = {
+  name: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  radius: string;
+  lat: number;
+  lng: number;
+  selectedOfficerId: string;
+};
+
 export default function DepartmentAssignmentsPage() {
   const { isAuthReady, isAllowed } = useRoleGuard('POLICE_DEPARTMENT');
   const [policemen, setPolicemen] = useState<Policeman[]>([]);
   const [hotspots, setHotspots] = useState<Hotspot[]>([]);
   const [selectedHotspotId, setSelectedHotspotId] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ name: '', severity: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH', radius: '1200', lat: 28.6139, lng: 77.209, selectedOfficerId: '' });
+  const [draft, setDraft] = useState<HotspotDraftState>({ name: '', severity: 'MEDIUM', radius: '1200', lat: INDIA_CENTER.latitude, lng: INDIA_CENTER.longitude, selectedOfficerId: '' });
   const [error, setError] = useState('');
 
   async function load() {
@@ -60,6 +70,14 @@ export default function DepartmentAssignmentsPage() {
   useEffect(() => {
     if (!isAllowed) return;
     void load();
+  }, [isAllowed]);
+
+  useEffect(() => {
+    if (!isAllowed) return;
+    void (async () => {
+      const currentLocation = await getCurrentBrowserLocation();
+      setDraft((prev) => ({ ...prev, lat: currentLocation.latitude, lng: currentLocation.longitude }));
+    })();
   }, [isAllowed]);
 
   const selectedHotspot = hotspots.find((item) => item.id === selectedHotspotId) ?? null;

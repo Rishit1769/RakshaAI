@@ -1,4 +1,4 @@
-import { Prisma, ReportCategory, UserRole } from '@prisma/client';
+import { OrganizationStatus, OrganizationType, Prisma, ReportCategory, UserRole, WorkerType } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/error.middleware';
 import { createAuditLog } from '../utils/createAuditLog';
@@ -8,6 +8,8 @@ import { emitOfficerScopedSOSCreated } from '../sockets';
 type Severity = 'LOW' | 'MEDIUM' | 'HIGH';
 
 const DEFAULT_HOTSPOT_RADIUS_METERS = 1200;
+const FALLBACK_INCIDENT_RADIUS_KM = 50;
+const INDIA_CENTER = { latitude: 20.5937, longitude: 78.9629 };
 
 export async function getNavigationMeta(officerUserId: string) {
   const officer = await getOfficerProfile(officerUserId);
@@ -32,6 +34,7 @@ export async function getOverview(officerUserId: string) {
   ]);
 
   if (!hotspot) {
+    const fallbackCenter = await resolveOfficerFallbackCenter(officerUserId);
     return {
       assignment: null,
       metrics: [
@@ -40,7 +43,11 @@ export async function getOverview(officerUserId: string) {
         { label: 'Total resolved', value: resolvedCount },
         { label: 'Department', value: officer.departmentName ?? 'Unassigned' },
       ],
-      map: null,
+      map: {
+        center: fallbackCenter,
+        radiusMeters: FALLBACK_INCIDENT_RADIUS_KM * 1000,
+        incidents: [],
+      },
     };
   }
 
@@ -100,6 +107,8 @@ export async function getHotspot(officerUserId: string) {
 
   return {
     ...hotspot,
+    latitude: Number(hotspot.latitude),
+    longitude: Number(hotspot.longitude),
     assignmentHistory: assignmentHistory.map((item) => ({
       id: item.id,
       action: item.action,
@@ -168,10 +177,40 @@ export async function resolveSos(officerUserId: string, alertId: string) {
   return { success: true };
 }
 
-export async function listIncidents(officerUserId: string, radiusKm = 5) {
+export async function listIncidents(officerUserId: string, radiusKm = 5, latitude?: number, longitude?: number) {
   const hotspot = await getAssignedHotspot(officerUserId);
-  if (!hotspot) return [];
-  return getScopedIncidentsForHotspot(hotspot, radiusKm);
+  if (!hotspot) {
+    const fallbackCenter = await resolveOfficerFallbackCenter(officerUserId, latitude, longitude);
+    const reports = await prisma.communityReport.findMany({
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        latitude: true,
+        longitude: true,
+        description: true,
+        score: true,
+        createdAt: true,
+        pinColor: true,
+        isActive: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      items: reports
+        .filter((report) => haversineDistance(fallbackCenter.latitude, fallbackCenter.longitude, report.latitude, report.longitude) <= FALLBACK_INCIDENT_RADIUS_KM)
+        .map((report) => serializeIncident(report)),
+      noHotspotAssigned: true,
+      mapCenter: fallbackCenter,
+    };
+  }
+
+  return {
+    items: await getScopedIncidentsForHotspot(hotspot, radiusKm),
+    noHotspotAssigned: false,
+    mapCenter: { latitude: Number(hotspot.latitude), longitude: Number(hotspot.longitude) },
+  };
 }
 
 export async function resolveIncident(officerUserId: string, incidentId: string) {
@@ -231,11 +270,33 @@ async function getOfficerProfile(officerUserId: string) {
       fullName: true,
       email: true,
       departmentId: true,
+      passwordHash: true,
       policeDepartment: { select: { fullName: true } },
-      workerProfile: { select: { id: true } },
+      workerProfile: { select: { id: true, customRole: true } },
     },
   });
-  if (!user || !user.workerProfile?.id) throw new AppError('Officer profile not found', 404);
+  if (!user) throw new AppError('Officer profile not found', 404);
+
+  let workerId = user.workerProfile?.id ?? null;
+  if (!workerId && user.departmentId) {
+    const organization = await ensureDepartmentOrganization(user.departmentId);
+    const worker = await prisma.worker.create({
+      data: {
+        userId: user.id,
+        organizationId: organization.id,
+        workerType: WorkerType.police_officer,
+        customRole: 'Seeded officer',
+        email: user.email,
+        passwordHash: user.passwordHash,
+        fullName: user.fullName,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    workerId = worker.id;
+  }
+
+  if (!workerId) throw new AppError('Officer profile not found', 404);
 
   const createdLog = await prisma.auditLog.findFirst({
     where: { entityId: officerUserId, action: 'CREATED_POLICEMAN' },
@@ -245,9 +306,9 @@ async function getOfficerProfile(officerUserId: string) {
 
   return {
     ...user,
-    badgeNumber: readJsonString(createdLog?.metadata, 'badgeNumber'),
+    badgeNumber: readJsonString(createdLog?.metadata, 'badgeNumber') ?? user.workerProfile?.customRole ?? null,
     departmentName: user.policeDepartment?.fullName ?? null,
-    workerId: user.workerProfile.id,
+    workerId,
   };
 }
 
@@ -281,8 +342,8 @@ async function getAssignedHotspot(officerUserId: string) {
   return {
     id: hotspot.id,
     name: hotspot.title ?? 'Department hotspot',
-    latitude: hotspot.latitude,
-    longitude: hotspot.longitude,
+    latitude: Number(hotspot.latitude),
+    longitude: Number(hotspot.longitude),
     radiusMeters: readJsonNumber(metadata?.metadata, 'radiusMeters') ?? DEFAULT_HOTSPOT_RADIUS_METERS,
     severity: (readJsonString(metadata?.metadata, 'severity') as Severity | null) ?? riskScoreToSeverity(Number(hotspot.riskScore)),
     status: hotspot.isActive ? 'ACTIVE' : 'INACTIVE',
@@ -358,17 +419,7 @@ async function getScopedIncidentsForHotspot(hotspot: NonNullable<Awaited<ReturnT
 
   return reports
     .filter((report) => haversineDistance(hotspot.latitude, hotspot.longitude, report.latitude, report.longitude) <= radiusKm)
-    .map((report) => ({
-      id: report.id,
-      type: report.title ?? String(report.category).replace(/_/g, ' '),
-      severity: pinColorToSeverity(report.pinColor),
-      latitude: report.latitude,
-      longitude: report.longitude,
-      description: report.description ?? '',
-      pinScore: report.score,
-      timestamp: report.createdAt.toISOString(),
-      status: report.isActive ? 'OPEN' : 'RESOLVED',
-    }));
+    .map((report) => serializeIncident(report));
 }
 
 function riskScoreToSeverity(score: number): Severity {
@@ -409,6 +460,84 @@ function readJsonNumber(value: Prisma.JsonValue | null | undefined, key: string)
 
 function buildOfficerHotspotRoom(hotspotId: string) {
   return `officer-hotspot:${hotspotId}`;
+}
+
+async function ensureDepartmentOrganization(departmentOwnerId: string) {
+  let organization = await prisma.organization.findFirst({
+    where: {
+      createdById: departmentOwnerId,
+      organizationType: OrganizationType.police,
+    },
+    select: { id: true, organizationName: true },
+  });
+
+  if (!organization) {
+    const owner = await prisma.user.findUnique({
+      where: { id: departmentOwnerId },
+      select: { fullName: true, email: true },
+    });
+    if (!owner) throw new AppError('Police department organization not found', 404);
+
+    organization = await prisma.organization.create({
+      data: {
+        organizationName: owner.fullName,
+        organizationType: OrganizationType.police,
+        email: owner.email,
+        status: OrganizationStatus.approved,
+        createdById: departmentOwnerId,
+        approvedAt: new Date(),
+      },
+      select: { id: true, organizationName: true },
+    });
+  }
+
+  return organization;
+}
+
+async function resolveOfficerFallbackCenter(officerUserId: string, latitude?: number, longitude?: number) {
+  if (latitude !== undefined && longitude !== undefined) {
+    return { latitude: Number(latitude), longitude: Number(longitude) };
+  }
+
+  const lastKnownLocation = await prisma.userLocation.findFirst({
+    where: { userId: officerUserId },
+    orderBy: { recordedAt: 'desc' },
+    select: { latitude: true, longitude: true },
+  });
+
+  if (lastKnownLocation) {
+    return {
+      latitude: Number(lastKnownLocation.latitude),
+      longitude: Number(lastKnownLocation.longitude),
+    };
+  }
+
+  return INDIA_CENTER;
+}
+
+function serializeIncident(report: {
+  id: string;
+  title: string | null;
+  category: string;
+  latitude: number;
+  longitude: number;
+  description: string | null;
+  score: number;
+  createdAt: Date;
+  pinColor: string;
+  isActive: boolean;
+}) {
+  return {
+    id: report.id,
+    type: report.title ?? String(report.category).replace(/_/g, ' '),
+    severity: pinColorToSeverity(report.pinColor),
+    latitude: Number(report.latitude),
+    longitude: Number(report.longitude),
+    description: report.description ?? '',
+    pinScore: Number(report.score),
+    timestamp: report.createdAt.toISOString(),
+    status: report.isActive ? 'OPEN' : 'RESOLVED',
+  };
 }
 
 export async function emitOfficerScopedSosNotification(alertId: string, latitude: number, longitude: number) {

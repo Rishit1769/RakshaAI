@@ -146,7 +146,7 @@ async function createManagedUser(input: {
     }
 
     if (input.role === UserRole.POLICEMAN) {
-      await ensureWorkerProfileForPoliceman(tx, createdUser.id, createdUser.fullName, email, passwordHash, input.actorId);
+      await ensureWorkerProfileForPoliceman(tx, createdUser.id, createdUser.fullName, email, passwordHash, input.actorId, input.badgeNumber);
     }
 
     if (input.role === UserRole.VOLUNTEER) {
@@ -270,7 +270,8 @@ async function ensureWorkerProfileForPoliceman(
   fullName: string,
   email: string,
   passwordHash: string,
-  departmentOwnerId: string
+  departmentOwnerId: string,
+  badgeNumber?: string
 ) {
   const organization = await tx.organization.findFirst({
     where: {
@@ -296,7 +297,7 @@ async function ensureWorkerProfileForPoliceman(
       userId,
       organizationId: organization.id,
       workerType: WorkerType.police_officer,
-      customRole: 'policeman',
+      customRole: badgeNumber ?? 'policeman',
       email,
       passwordHash,
       fullName,

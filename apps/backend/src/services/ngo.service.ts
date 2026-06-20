@@ -1,4 +1,4 @@
-import { OrganizationType, Prisma, UserRole, VolunteerStatus } from '@prisma/client';
+import { OrganizationStatus, OrganizationType, Prisma, UserRole, VolunteerStatus } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/error.middleware';
 import * as HierarchyService from './hierarchy.service';
@@ -365,11 +365,31 @@ export async function getActivity(ngoUserId: string) {
 }
 
 async function getNgoOrganization(ngoUserId: string) {
-  const organization = await prisma.organization.findFirst({
+  let organization = await prisma.organization.findFirst({
     where: { createdById: ngoUserId, organizationType: OrganizationType.ngo },
     select: { id: true, organizationName: true },
   });
-  if (!organization) throw new AppError('NGO organization not found', 404);
+
+  if (!organization) {
+    const owner = await prisma.user.findFirst({
+      where: { id: ngoUserId, role: UserRole.NGO },
+      select: { fullName: true, email: true },
+    });
+    if (!owner) throw new AppError('NGO organization not found', 404);
+
+    organization = await prisma.organization.create({
+      data: {
+        organizationName: owner.fullName,
+        organizationType: OrganizationType.ngo,
+        email: owner.email,
+        status: OrganizationStatus.approved,
+        createdById: ngoUserId,
+        approvedAt: new Date(),
+      },
+      select: { id: true, organizationName: true },
+    });
+  }
+
   return organization;
 }
 

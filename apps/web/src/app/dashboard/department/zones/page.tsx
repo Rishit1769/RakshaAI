@@ -10,6 +10,7 @@ import { LoadingState } from '@/components/ui/LoadingState';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { departmentApi } from '@/lib/api/department.api';
 import { ApiError } from '@/lib/api/fetcher';
+import { getCurrentBrowserLocation, INDIA_CENTER } from '@/lib/geo';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
@@ -27,12 +28,21 @@ type Zone = {
   description: string;
 };
 
+type ZoneFormState = {
+  name: string;
+  type: 'SAFE' | 'RED';
+  lat: number;
+  lng: number;
+  radius: string;
+  description: string;
+};
+
 export default function DepartmentZonesPage() {
   const { isAuthReady, isAllowed } = useRoleGuard('POLICE_DEPARTMENT');
   const [zones, setZones] = useState<Zone[]>([]);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: '', type: 'SAFE' as 'SAFE' | 'RED', lat: 28.6139, lng: 77.209, radius: '1500', description: '' });
+  const [form, setForm] = useState<ZoneFormState>({ name: '', type: 'SAFE', lat: INDIA_CENTER.latitude, lng: INDIA_CENTER.longitude, radius: '1500', description: '' });
   const [error, setError] = useState('');
 
   async function load() {
@@ -47,6 +57,14 @@ export default function DepartmentZonesPage() {
   useEffect(() => {
     if (!isAllowed) return;
     void load();
+  }, [isAllowed]);
+
+  useEffect(() => {
+    if (!isAllowed) return;
+    void (async () => {
+      const currentLocation = await getCurrentBrowserLocation();
+      setForm((prev) => ({ ...prev, lat: currentLocation.latitude, lng: currentLocation.longitude }));
+    })();
   }, [isAllowed]);
 
   const selectedZone = zones.find((zone) => zone.id === selectedZoneId) ?? null;

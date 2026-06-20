@@ -9,6 +9,7 @@ import { SectionBadge } from '@/components/ui/section-badge';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { officerApi } from '@/lib/api/officer.api';
 import { ApiError } from '@/lib/api/fetcher';
+import { getCurrentBrowserLocation, INDIA_CENTER } from '@/lib/geo';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 
 const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
@@ -28,19 +29,33 @@ type Incident = {
   status: 'OPEN' | 'RESOLVED';
 };
 
+type MapCenter = {
+  latitude: number;
+  longitude: number;
+};
+
 export default function PolicemanIncidentsPage() {
   const { isAuthReady, isAllowed } = useRoleGuard('POLICEMAN');
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [mapCenter, setMapCenter] = useState<MapCenter>(INDIA_CENTER);
+  const [noHotspotAssigned, setNoHotspotAssigned] = useState(false);
   const [radius, setRadius] = useState(5);
   const [severity, setSeverity] = useState<'ALL' | 'LOW' | 'MEDIUM' | 'HIGH'>('ALL');
   const [status, setStatus] = useState<'ALL' | 'OPEN' | 'RESOLVED'>('ALL');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  async function load(nextRadius = radius) {
+  async function load(nextRadius = radius, nextCenter = mapCenter) {
     try {
-      const response = await officerApi.getIncidents(nextRadius);
-      setIncidents((response.data ?? []) as Incident[]);
+      const response = await officerApi.getIncidents(nextRadius, nextCenter);
+      const payload = (response.data ?? {}) as {
+        items?: Incident[];
+        mapCenter?: { latitude: number; longitude: number };
+        noHotspotAssigned?: boolean;
+      };
+      setIncidents(payload.items ?? []);
+      setMapCenter(payload.mapCenter ?? nextCenter);
+      setNoHotspotAssigned(Boolean(payload.noHotspotAssigned));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to load nearby incidents.');
     }
@@ -48,7 +63,11 @@ export default function PolicemanIncidentsPage() {
 
   useEffect(() => {
     if (!isAllowed) return;
-    void load(radius);
+    void (async () => {
+      const currentLocation = await getCurrentBrowserLocation();
+      setMapCenter(currentLocation);
+      await load(radius, currentLocation);
+    })();
   }, [isAllowed, radius]);
 
   const filtered = useMemo(
@@ -87,6 +106,7 @@ export default function PolicemanIncidentsPage() {
     <AppShell title="Nearby Incidents" subtitle="Radius-based incident map for your assigned zone, with status filters and direct resolve actions for eligible reports.">
       <div className="space-y-8">
         {error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div> : null}
+        {noHotspotAssigned ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">No hotspot assigned yet - showing incidents around your live location fallback.</div> : null}
 
         <Card padding="lg" className="surface-panel-modern">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -117,7 +137,7 @@ export default function PolicemanIncidentsPage() {
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-            <SafetyMap center={selectedIncident ? { latitude: selectedIncident.latitude, longitude: selectedIncident.longitude } : { latitude: 20.5937, longitude: 78.9629 }} zoom={13} markers={markers} className="h-[38rem] w-full" />
+            <SafetyMap center={selectedIncident ? { latitude: selectedIncident.latitude, longitude: selectedIncident.longitude } : mapCenter} zoom={13} markers={markers} className="h-[38rem] w-full" />
 
             <div className="space-y-4 overflow-y-auto pr-2 xl:max-h-[38rem]">
               {filtered.map((incident) => (

@@ -6,6 +6,8 @@ export const officerEntityParamSchema = z.object({
 
 export const officerIncidentsQuerySchema = z.object({
   radius: z.coerce.number().min(1).max(20).default(5),
+  lat: z.coerce.number().min(-90).max(90).optional(),
+  lng: z.coerce.number().min(-180).max(180).optional(),
 });
 
 export const officerReportSchema = z.object({
