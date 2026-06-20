@@ -122,6 +122,20 @@ export function requirePoliceman(req: Request, res: Response, next: NextFunction
   next();
 }
 
+export function requireVolunteer(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user) {
+    sendUnauthorized(res);
+    return;
+  }
+
+  if (req.user.role !== UserRole.VOLUNTEER) {
+    sendForbidden(res, 'Volunteer access required');
+    return;
+  }
+
+  next();
+}
+
 export function requireDepartment(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
     sendUnauthorized(res);

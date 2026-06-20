@@ -55,10 +55,10 @@ export function getDashboardNavigation(role: string): DashboardNavItem[] {
       return [
         { href: '/dashboard/volunteer', label: 'Overview' },
         { href: '/dashboard/volunteer/sos', label: 'SOS Feed' },
-        { href: '/dashboard/volunteer/cases', label: 'Cases' },
-        { href: '/dashboard/volunteer/map', label: 'Map' },
+        { href: '/dashboard/volunteer/cases', label: 'Assigned Cases' },
+        { href: '/dashboard/volunteer/map', label: 'Incident Map' },
         { href: '/dashboard/volunteer/check-in', label: 'Check-In' },
-        { href: '/dashboard/volunteer/zones', label: 'Zones' },
+        { href: '/dashboard/volunteer/zones', label: 'SafeZone Map' },
         ...commonItems,
       ];
     default:

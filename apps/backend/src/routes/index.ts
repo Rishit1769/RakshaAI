@@ -19,6 +19,7 @@ import dashboardRoutes from './dashboard.routes';
 import zoneRoutes from './zone.routes';
 import redZoneRoutes from './redzone.routes';
 import officerRoutes from './officer.routes';
+import volunteerDashboardRoutes from './volunteer-dashboard.routes';
 
 const router = Router();
 
@@ -42,6 +43,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/zones', zoneRoutes);
 router.use('/redzones', redZoneRoutes);
 router.use('/officer', officerRoutes);
+router.use('/volunteer', volunteerDashboardRoutes);
 
 export default router;
 
