@@ -8,6 +8,9 @@ import { ApiError } from '@/lib/api/fetcher';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
 import { SectionBadge } from '@/components/ui/section-badge';
+import { getPostLoginRoute } from '@/lib/auth-routing';
+import { useAuthStore } from '@/store/auth.store';
+import { useRouter } from 'next/navigation';
 
 type MpinMode = 'setup' | 'change' | 'disable' | null;
 
@@ -20,13 +23,24 @@ function validateNewMpin(value: string) {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { isAuthenticated, isAuthReady } = useProtectedRoute();
+  const { user, accessToken, clearAuth, setAuth } = useAuthStore();
   const [me, setMe] = useState<AuthUser | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [actionMode, setActionMode] = useState<MpinMode>(null);
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [profileDraft, setProfileDraft] = useState({
+    fullName: '',
+    email: '',
+  });
   const [form, setForm] = useState({
     mpin: '',
     confirmMpin: '',
@@ -41,7 +55,10 @@ export default function SettingsPage() {
     void (async () => {
       try {
         const response = await authApi.getMe();
-        if (response.success && response.data) setMe(response.data);
+        if (response.success && response.data) {
+          setMe(response.data);
+          setProfileDraft({ fullName: response.data.fullName, email: response.data.email });
+        }
       } catch {
         setFormError('Unable to load account settings right now.');
       } finally {
@@ -71,6 +88,46 @@ export default function SettingsPage() {
     if (error instanceof ApiError) return error.message || fallback;
     if (error instanceof Error && error.message) return error.message;
     return fallback;
+  }
+
+  async function handlePasswordSubmit() {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setFormError('Please complete all password fields.');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setFormError('New password and confirmation must match.');
+      return;
+    }
+
+    setSubmitting(true);
+    setFormError('');
+    try {
+      await authApi.changePassword(passwordForm);
+      if (user) {
+        setAuth({ ...user, mustChangePassword: false }, accessToken ?? '');
+      }
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSuccessMessage('Password updated successfully.');
+      if (user?.mustChangePassword) {
+        router.push(getPostLoginRoute({ ...user, mustChangePassword: false }) as never);
+      }
+    } catch (error) {
+      setFormError(parseApiError(error, 'Unable to update password right now.'));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore server-side logout failures and still clear local state.
+    } finally {
+      clearAuth();
+      router.push('/auth/login');
+    }
   }
 
   async function handleSetup() {
@@ -144,13 +201,45 @@ export default function SettingsPage() {
   }
 
   if (!isAuthReady) return <div className="min-h-screen bg-background px-6 py-20 text-sm text-muted">Checking session...</div>;
-
   if (!isAuthenticated) return null;
 
   return (
-    <AppShell title="Account Settings" subtitle="Manage sign-in speed and account security." backLabel="Dashboard">
+    <AppShell title="Settings" subtitle="Profile summary, password controls, MPIN access, and logout in one place." backLabel="Dashboard">
       <div className="space-y-6">
         {successMessage ? <div className="rounded-2xl border border-safe/20 bg-safe/10 p-3 text-sm text-safe-dark">{successMessage}</div> : null}
+        {formError ? <div className="rounded-2xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{formError}</div> : null}
+
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <Card className="surface-panel-modern">
+            <SectionBadge label="Profile" />
+            <div className="mt-5 space-y-4">
+              <FloatingLabelInput label="Name" type="text" value={profileDraft.fullName} onChange={(event) => setProfileDraft((current) => ({ ...current, fullName: event.target.value }))} />
+              <FloatingLabelInput label="Email" type="email" value={profileDraft.email} disabled />
+              <p className="text-sm leading-7 text-muted">
+                The current API exposes profile retrieval and password updates, but not a saved profile-edit endpoint yet. Name is shown here for continuity and future wiring.
+              </p>
+              {loadingProfile ? <p className="text-sm text-muted">Loading profile...</p> : null}
+            </div>
+          </Card>
+
+          <Card className="surface-panel-modern">
+            <SectionBadge label="Password" pulse={Boolean(user?.mustChangePassword)} />
+            <div className="mt-5 space-y-4">
+              {user?.mustChangePassword ? (
+                <p className="rounded-2xl border border-primary/15 bg-primary/[0.05] p-4 text-sm leading-7 text-body">
+                  This account was created by an administrator. Update the temporary password here before moving anywhere else in the dashboard.
+                </p>
+              ) : null}
+              <FloatingLabelInput label="Current Password" type="password" value={passwordForm.currentPassword} onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))} />
+              <FloatingLabelInput label="New Password" type="password" value={passwordForm.newPassword} onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))} />
+              <FloatingLabelInput label="Confirm New Password" type="password" value={passwordForm.confirmPassword} onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))} />
+              <button type="button" className="btn-primary w-full" onClick={() => void handlePasswordSubmit()} disabled={submitting}>
+                {submitting ? 'Updating password...' : 'Update password'}
+              </button>
+            </div>
+          </Card>
+        </div>
+
         <Card>
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -182,13 +271,12 @@ export default function SettingsPage() {
               <h3 className="text-lg font-semibold text-ink">{actionMode === 'setup' ? 'Set Up MPIN' : actionMode === 'change' ? 'Change MPIN' : 'Disable MPIN'}</h3>
               <button type="button" onClick={closeMode} className="text-sm text-muted">Cancel</button>
             </div>
-            {formError ? <div className="mt-4 rounded-2xl border border-emergency/30 bg-emergency/10 p-3 text-sm text-emergency">{formError}</div> : null}
             <div className="mt-5 space-y-4">
               {actionMode === 'setup' ? (
                 <>
                   <FloatingLabelInput label="Enter 6-digit MPIN" type="password" inputMode="numeric" maxLength={6} value={form.mpin} onChange={(event) => setForm((prev) => ({ ...prev, mpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
                   <FloatingLabelInput label="Confirm MPIN" type="password" inputMode="numeric" maxLength={6} value={form.confirmMpin} onChange={(event) => setForm((prev) => ({ ...prev, confirmMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
-                  <button type="button" onClick={handleSetup} disabled={submitting} className="btn-primary">{submitting ? 'Saving...' : 'Save MPIN'}</button>
+                  <button type="button" onClick={() => void handleSetup()} disabled={submitting} className="btn-primary">{submitting ? 'Saving...' : 'Save MPIN'}</button>
                 </>
               ) : null}
               {actionMode === 'change' ? (
@@ -196,19 +284,29 @@ export default function SettingsPage() {
                   <FloatingLabelInput label="Current MPIN" type="password" inputMode="numeric" maxLength={6} value={form.currentMpin} onChange={(event) => setForm((prev) => ({ ...prev, currentMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
                   <FloatingLabelInput label="New MPIN" type="password" inputMode="numeric" maxLength={6} value={form.newMpin} onChange={(event) => setForm((prev) => ({ ...prev, newMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
                   <FloatingLabelInput label="Confirm New MPIN" type="password" inputMode="numeric" maxLength={6} value={form.newConfirmMpin} onChange={(event) => setForm((prev) => ({ ...prev, newConfirmMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
-                  <button type="button" onClick={handleChange} disabled={submitting} className="btn-primary">{submitting ? 'Updating...' : 'Update MPIN'}</button>
+                  <button type="button" onClick={() => void handleChange()} disabled={submitting} className="btn-primary">{submitting ? 'Updating...' : 'Update MPIN'}</button>
                 </>
               ) : null}
               {actionMode === 'disable' ? (
                 <>
                   <p className="text-sm text-muted">Confirm your current MPIN before disabling MPIN login for this account.</p>
                   <FloatingLabelInput label="Current MPIN" type="password" inputMode="numeric" maxLength={6} value={form.disableCurrentMpin} onChange={(event) => setForm((prev) => ({ ...prev, disableCurrentMpin: event.target.value.replace(/\D/g, '') }))} disabled={submitting} />
-                  <button type="button" onClick={handleDisable} disabled={submitting} className="btn-secondary">{submitting ? 'Disabling...' : 'Disable MPIN'}</button>
+                  <button type="button" onClick={() => void handleDisable()} disabled={submitting} className="btn-secondary">{submitting ? 'Disabling...' : 'Disable MPIN'}</button>
                 </>
               ) : null}
             </div>
           </Card>
         ) : null}
+
+        <Card className="surface-panel-modern">
+          <SectionBadge label="Session control" />
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+            <p className="max-w-2xl text-sm leading-7 text-muted">Sign out from the current web session. This calls the existing logout endpoint, clears local auth state, and returns you to the login screen.</p>
+            <button type="button" className="btn-secondary" onClick={() => void handleLogout()}>
+              Logout
+            </button>
+          </div>
+        </Card>
       </div>
     </AppShell>
   );

@@ -5,20 +5,23 @@ interface AppShellProps {
   subtitle: string;
   backHref?: string;
   backLabel?: string;
+  showBack?: boolean;
   actions?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function AppShell({ title, subtitle, backHref = '/dashboard', backLabel = 'Back', actions, children }: AppShellProps) {
+export function AppShell({ title, subtitle, backHref = '/dashboard', backLabel = 'Back', showBack = true, actions, children }: AppShellProps) {
   return (
     <DashboardLayout
       title={title}
       subtitle={subtitle}
       actions={
         <>
-          <a href={backHref} className="btn-secondary">
-            {backLabel}
-          </a>
+          {showBack ? (
+            <a href={backHref} className="btn-secondary">
+              {backLabel}
+            </a>
+          ) : null}
           {actions}
         </>
       }

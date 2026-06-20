@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { authApi } from '@/lib/api/auth.api';
+import { adminApi } from '@/lib/api/admin.api';
 import { getDashboardNavigation } from '@/lib/dashboard-navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '@/components/ui/button';
@@ -20,6 +22,20 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
   const pathname = usePathname();
   const { user, clearAuth } = useAuthStore();
   const navItems = getDashboardNavigation(user?.role ?? 'user');
+  const [pendingModerationCount, setPendingModerationCount] = useState(0);
+  const isSuperadmin = user?.role === 'SUPERADMIN';
+
+  useEffect(() => {
+    if (!isSuperadmin) return;
+    void (async () => {
+      try {
+        const response = await adminApi.getNavigationMeta();
+        setPendingModerationCount(response.data?.pendingModerationCount ?? 0);
+      } catch {
+        setPendingModerationCount(0);
+      }
+    })();
+  }, [isSuperadmin, pathname]);
 
   async function handleLogout() {
     try {
@@ -83,6 +99,20 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
                 <p className="mt-1 text-sm text-muted">{subtitle}</p>
               </div>
               <div className="flex items-center gap-3">
+                {isSuperadmin ? (
+                  <Link href={'/dashboard/superadmin/moderation' as never} className="btn-secondary relative min-h-11 px-4">
+                    <span aria-hidden="true">Bell</span>
+                    {pendingModerationCount > 0 ? (
+                      <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-[image:var(--gradient-accent)] px-1 text-[11px] font-semibold text-white shadow-accent">
+                        {pendingModerationCount}
+                      </span>
+                    ) : null}
+                  </Link>
+                ) : null}
+                <div className="hidden rounded-full border border-border/80 bg-white/85 px-4 py-2 text-right shadow-soft lg:block">
+                  <p className="text-xs font-mono uppercase tracking-[0.14em] text-muted">Signed in</p>
+                  <p className="text-sm font-semibold text-ink">{user?.fullName ?? 'Workspace user'}</p>
+                </div>
                 <Link href={'/dashboard/settings' as never} className="btn-secondary">
                   Settings
                 </Link>

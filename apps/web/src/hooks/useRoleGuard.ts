@@ -11,7 +11,7 @@ export function useRoleGuard(expectedRole: string) {
   useEffect(() => {
     if (!auth.isAuthReady || !auth.isAuthenticated || !auth.user) return;
     if (auth.user.role !== expectedRole) {
-      router.replace('/dashboard');
+      router.replace('/auth/login');
     }
   }, [auth.isAuthReady, auth.isAuthenticated, auth.user, expectedRole, router]);
 

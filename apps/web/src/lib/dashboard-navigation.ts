@@ -12,12 +12,12 @@ export function getDashboardNavigation(role: string): DashboardNavItem[] {
     case 'SUPERADMIN':
       return [
         { href: '/dashboard/superadmin', label: 'Overview' },
-        { href: '/dashboard/superadmin/users', label: 'Users' },
-        { href: '/dashboard/superadmin/create', label: 'Create' },
-        { href: '/dashboard/superadmin/moderation', label: 'Moderation' },
-        { href: '/dashboard/superadmin/hotspots', label: 'Hotspots' },
-        { href: '/dashboard/superadmin/analytics', label: 'Analytics' },
-        { href: '/dashboard/superadmin/audit', label: 'Audit' },
+        { href: '/dashboard/superadmin/users', label: 'User Management' },
+        { href: '/dashboard/superadmin/create', label: 'Create Dept / NGO' },
+        { href: '/dashboard/superadmin/hotspots', label: 'Hotspot Oversight' },
+        { href: '/dashboard/superadmin/analytics', label: 'SOS Analytics' },
+        { href: '/dashboard/superadmin/moderation', label: 'Moderation Queue' },
+        { href: '/dashboard/superadmin/audit', label: 'Audit Log' },
         ...commonItems,
       ];
     case 'POLICE_DEPARTMENT':

@@ -15,6 +15,8 @@ export interface MapMarker {
   label?: string;
   popupHtml?: string;
   pinColor?: 'white' | 'yellow' | 'red';
+  markerColor?: string;
+  markerText?: string;
 }
 
 interface SafetyMapProps {
@@ -324,8 +326,8 @@ function buildMarkerIcon(L: typeof import('leaflet'), marker: MapMarker) {
   }
 
   const baseType = marker.type as keyof typeof MARKER_COLORS;
-  const color = MARKER_COLORS[baseType];
-  const label = MARKER_LABELS[baseType];
+  const color = marker.markerColor ?? MARKER_COLORS[baseType];
+  const label = marker.markerText ?? MARKER_LABELS[baseType];
 
   return L.divIcon({
     html: `<div style="

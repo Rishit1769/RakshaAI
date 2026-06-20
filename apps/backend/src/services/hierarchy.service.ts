@@ -2,6 +2,7 @@ import { OrganizationStatus, OrganizationType, UserRole, VerificationStatus, Vol
 import { prisma } from '../config/database';
 import { AppError } from '../middleware/error.middleware';
 import { hashPassword } from '../utils/password';
+import { createAuditLog } from '../utils/createAuditLog';
 import { sendWelcomeEmail } from './emailService';
 
 interface ManagedAccountInput {
@@ -152,22 +153,20 @@ async function createManagedUser(input: {
       await ensureVolunteerProfile(tx, createdUser.id, input.actorId);
     }
 
-    await tx.auditLog.create({
-      data: {
-        actorId: input.actorId,
-        actorRole: null,
-        action: input.action,
-        entityType: 'User',
-        entityId: createdUser.id,
-        metadata: {
-          email: createdUser.email,
-          role: createdUser.role,
-          departmentId: input.departmentId ?? null,
-          ngoId: input.ngoId ?? null,
-          badgeNumber: input.badgeNumber ?? null,
-        },
+    await createAuditLog(
+      input.actorId,
+      input.action,
+      createdUser.id,
+      {
+        email: createdUser.email,
+        role: createdUser.role,
+        departmentId: input.departmentId ?? null,
+        ngoId: input.ngoId ?? null,
+        badgeNumber: input.badgeNumber ?? null,
       },
-    });
+      'User',
+      tx
+    );
 
     return createdUser;
   });

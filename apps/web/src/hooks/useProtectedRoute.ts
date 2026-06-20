@@ -17,8 +17,8 @@ export function useProtectedRoute() {
       return;
     }
 
-    if (isAuthReady && isAuthenticated && user?.mustChangePassword && pathname !== '/auth/change-password') {
-      router.replace('/auth/change-password');
+    if (isAuthReady && isAuthenticated && user?.mustChangePassword && pathname !== '/dashboard/settings') {
+      router.replace('/dashboard/settings');
     }
   }, [isAuthReady, isAuthenticated, pathname, router, user?.mustChangePassword]);
 

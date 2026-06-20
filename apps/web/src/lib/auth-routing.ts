@@ -2,7 +2,7 @@ import type { AuthUser } from '@/store/auth.store';
 
 export function getPostLoginRoute(user: AuthUser): string {
   if (user.mustChangePassword) {
-    return '/auth/change-password';
+    return '/dashboard/settings';
   }
 
   switch (user.role) {
