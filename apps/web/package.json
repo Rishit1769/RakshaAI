@@ -4,10 +4,10 @@
   "private": true,
   "description": "RakshaAI Web — Next.js App Router frontend",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "NPM_CONFIG_LOGLEVEL=silent next dev -H 0.0.0.0 -p 3001",
+    "build": "NPM_CONFIG_LOGLEVEL=silent next build",
+    "start": "NPM_CONFIG_LOGLEVEL=silent next start",
+    "lint": "NPM_CONFIG_LOGLEVEL=silent next lint",
     "clean": "rimraf .next out",
     "postinstall": "mkdir -p public/leaflet && (cp ../../node_modules/leaflet/dist/images/* public/leaflet/ 2>/dev/null || cp node_modules/leaflet/dist/images/* public/leaflet/)"
   },

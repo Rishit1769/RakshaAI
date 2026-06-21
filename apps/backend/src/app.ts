@@ -19,6 +19,11 @@ export function createApp(): Application {
     ].filter(Boolean))
   );
 
+  app.use((req, _res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    next();
+  });
+
   app.use(helmet());
 
   app.use(

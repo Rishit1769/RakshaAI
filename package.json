@@ -8,10 +8,11 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently --names \"backend,web\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev": "bash ./scripts/dev-reset.sh && concurrently --names \"backend,web\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:reset": "bash ./scripts/dev-reset.sh",
     "build": "npm run build:backend && npm run build:web",
-    "dev:backend": "npm --prefix apps/backend run dev",
-    "dev:web": "npm --prefix apps/web run dev",
+    "dev:backend": "npm run dev --workspace=@rakshaai/backend",
+    "dev:web": "npm run dev --workspace=@rakshaai/web",
     "build:backend": "npm run build --workspace=apps/backend",
     "build:web": "npm run build --workspace=apps/web",
     "db:generate": "npm run db:generate --workspace=apps/backend",

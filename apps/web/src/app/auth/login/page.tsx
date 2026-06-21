@@ -32,16 +32,29 @@ export default function LoginPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    console.log('Login submit fired', {
+      identifier,
+      loginMethod,
+      credentialPreview: credential ? '***' : '(empty)',
+    });
 
     const normalizedIdentifier = identifier.trim();
     const normalizedCredential = loginMethod === 'mpin' ? credential.replace(/\D/g, '') : credential;
 
     if (!normalizedIdentifier || !normalizedCredential) {
+      console.error('🚨 SILENT FRONTEND VALIDATION FAILURE: missing identifier or credential', {
+        normalizedIdentifier,
+        hasCredential: Boolean(normalizedCredential),
+        loginMethod,
+      });
       setError(loginMethod === 'password' ? 'Please enter your email or phone and password.' : 'Please enter your email or phone and 6-digit MPIN.');
       return;
     }
 
     if (loginMethod === 'mpin' && !/^\d{6}$/.test(normalizedCredential)) {
+      console.error('🚨 SILENT FRONTEND VALIDATION FAILURE: invalid MPIN format', {
+        normalizedCredentialLength: normalizedCredential.length,
+      });
       setError('MPIN must be exactly 6 digits.');
       return;
     }
@@ -50,21 +63,31 @@ export default function LoginPage() {
     setError('');
 
     try {
+      console.log('Calling API:', `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api'}/auth/login`);
       const response = await authApi.login({
         identifier: normalizedIdentifier,
         credential: normalizedCredential,
         loginMethod,
       });
+      console.log('API response:', response);
 
       if (!response.success || !response.data) {
+        console.error('🚨 Login response missing success/data payload', response);
         setError(response.message || 'Login failed. Please check your credentials.');
         return;
       }
 
       const authenticatedUser = await establishAuthenticatedSession(response.data);
+      console.log('Authenticated session established', authenticatedUser);
       rememberIdentifier(normalizedIdentifier);
       router.push(getPostLoginRoute(authenticatedUser) as never);
     } catch (err) {
+      console.error(
+        'API error:',
+        err instanceof ApiError ? err.statusCode : undefined,
+        err instanceof ApiError ? err.body : undefined,
+        err
+      );
       if (err instanceof ApiError) {
         setError(err.message || 'Login failed. Please check your credentials.');
       } else if (err instanceof TypeError) {
