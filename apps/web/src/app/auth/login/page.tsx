@@ -7,6 +7,7 @@ import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { FilterPills } from '@/components/ui/filter-pills';
 import { authApi } from '@/lib/api/auth.api';
+import { establishAuthenticatedSession } from '@/lib/auth-session';
 import { getPostLoginRoute } from '@/lib/auth-routing';
 import { ApiError } from '@/lib/api/fetcher';
 import { useAuthStore } from '@/store/auth.store';
@@ -21,7 +22,7 @@ const benefits = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth, rememberIdentifier } = useAuthStore();
+  const { rememberIdentifier } = useAuthStore();
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('password');
   const [identifier, setIdentifier] = useState('');
   const [credential, setCredential] = useState('');
@@ -60,9 +61,9 @@ export default function LoginPage() {
         return;
       }
 
+      const authenticatedUser = await establishAuthenticatedSession(response.data);
       rememberIdentifier(normalizedIdentifier);
-      setAuth(response.data.user, response.data.accessToken);
-      router.push(getPostLoginRoute(response.data.user) as never);
+      router.push(getPostLoginRoute(authenticatedUser) as never);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message || 'Login failed. Please check your credentials.');

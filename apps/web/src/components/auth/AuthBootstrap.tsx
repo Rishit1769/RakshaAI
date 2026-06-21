@@ -22,6 +22,13 @@ export default function AuthBootstrap() {
 
     hasBootstrapped.current = true;
     let cancelled = false;
+    let didFinish = false;
+    const timeout = window.setTimeout(() => {
+      if (didFinish || cancelled) return;
+      console.warn('Session check timed out — clearing loading state');
+      clearAuth();
+      setBootstrapping(false);
+    }, 8000);
 
     const bootstrapAuth = async () => {
       setBootstrapping(true);
@@ -30,7 +37,10 @@ export default function AuthBootstrap() {
       const hasStoredSession = Boolean(storedToken || user);
 
       if (!hasStoredSession) {
-        if (!cancelled) setBootstrapping(false);
+        if (!cancelled) {
+          didFinish = true;
+          setBootstrapping(false);
+        }
         return;
       }
 
@@ -58,6 +68,7 @@ export default function AuthBootstrap() {
         }
       } finally {
         if (!cancelled) {
+          didFinish = true;
           setBootstrapping(false);
         }
       }
@@ -67,6 +78,7 @@ export default function AuthBootstrap() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
     };
   }, [accessToken, clearAuth, isHydrated, setAccessToken, setAuth, setBootstrapping, user]);
 
