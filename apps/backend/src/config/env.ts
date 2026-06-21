@@ -1,21 +1,9 @@
 import dotenv from 'dotenv';
-import fs from 'fs';
 import path from 'path';
 
-const envCandidates = [
-  path.resolve(process.cwd(), 'apps/backend/.env.local'),
-  path.resolve(process.cwd(), 'apps/backend/.env'),
-  path.resolve(process.cwd(), '.env.local'),
-  path.resolve(process.cwd(), '.env'),
-  path.resolve(__dirname, '../../.env.local'),
-  path.resolve(__dirname, '../../.env'),
-];
+const rootEnvPath = path.resolve(__dirname, '../../../../.env');
 
-for (const envPath of envCandidates) {
-  if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath, override: false });
-  }
-}
+dotenv.config({ path: rootEnvPath, override: false });
 
 const requiredEnvVars: string[] = [
   'DATABASE_URL',
