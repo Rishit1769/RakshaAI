@@ -1,12 +1,9 @@
 'use client';
 
-import 'leaflet/dist/leaflet.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Circle, Control, LayerGroup, Map as LeafletMap, Marker } from 'leaflet';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { normalizeCenter, toCoordinateNumber } from '@/lib/geo';
+import { configureLeafletDefaults } from '@/lib/leaflet-config';
+import { INDIA_CENTER, normalizeCenter, toCoordinateNumber } from '@/lib/geo';
 
 export interface MapMarker {
   id: string;
@@ -32,6 +29,8 @@ interface SafetyMapProps {
   showPoliceStations?: boolean;
   showLegend?: boolean;
 }
+
+type PermissionStateValue = 'granted' | 'denied' | 'prompt';
 
 type PoliceStationElement = {
   id: number;
@@ -83,24 +82,33 @@ export default function SafetyMap({
   const overlayLayerRef = useRef<LayerGroup | null>(null);
   const policeLayerRef = useRef<LayerGroup | null>(null);
   const placementMarkerRef = useRef<Marker | null>(null);
+  const userMarkerRef = useRef<Marker | null>(null);
   const legendControlRef = useRef<Control | null>(null);
   const leafletRef = useRef<typeof import('leaflet') | null>(null);
+  const userLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const permissionStateRef = useRef<PermissionStateValue>('prompt');
+  const isMountedRef = useRef(false);
+  const [showLocationBanner, setShowLocationBanner] = useState(false);
+  const [locationBannerDismissed, setLocationBannerDismissed] = useState(false);
+  const shouldShowLocationBanner = showLocationBanner && !locationBannerDismissed;
+  const mapClassName = useMemo(() => `raksha-map ${className}`, [className]);
 
   useEffect(() => {
     let active = true;
+    isMountedRef.current = true;
 
     void (async () => {
       const L = await import('leaflet');
       if (!active || !containerRef.current) return;
 
       leafletRef.current = L;
+      configureLeafletDefaults(L);
+      ensurePulseStyle();
 
-      delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: markerIcon2x.src,
-        iconUrl: markerIcon.src,
-        shadowUrl: markerShadow.src,
-      });
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
 
       const container = containerRef.current as HTMLDivElement & { _leaflet_id?: number };
       if (container._leaflet_id) {
@@ -109,8 +117,8 @@ export default function SafetyMap({
       container.innerHTML = '';
 
       const map = L.map(container, {
-        center: [normalizedCenter.latitude, normalizedCenter.longitude],
-        zoom,
+        center: [INDIA_CENTER.latitude, INDIA_CENTER.longitude],
+        zoom: 5,
         zoomControl: true,
         attributionControl: true,
       });
@@ -140,6 +148,7 @@ export default function SafetyMap({
       renderRadius();
       renderMarkers();
       renderPlacementMarker();
+      void applyUserLocation(map);
       if (showPoliceStations) {
         void loadPoliceStations();
       }
@@ -147,10 +156,13 @@ export default function SafetyMap({
 
     return () => {
       active = false;
+      isMountedRef.current = false;
       legendControlRef.current?.remove();
       legendControlRef.current = null;
       placementMarkerRef.current?.remove();
       placementMarkerRef.current = null;
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
       overlayLayerRef.current?.clearLayers();
       overlayLayerRef.current = null;
       policeLayerRef.current?.clearLayers();
@@ -170,6 +182,48 @@ export default function SafetyMap({
       void loadPoliceStations();
     }
   }, [normalizedCenter.latitude, normalizedCenter.longitude, zoom, radiusKm, showPoliceStations]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return;
+
+    let active = true;
+    let cleanup: (() => void) | undefined;
+
+    void navigator.permissions
+      .query({ name: 'geolocation' as PermissionName })
+      .then((result) => {
+        if (!active) return;
+
+        const syncState = () => {
+          permissionStateRef.current = result.state;
+          setShowLocationBanner(result.state === 'denied');
+          if (result.state !== 'denied') {
+            setLocationBannerDismissed(false);
+          }
+        };
+
+        syncState();
+
+        if (typeof result.addEventListener === 'function') {
+          result.addEventListener('change', syncState);
+          cleanup = () => result.removeEventListener('change', syncState);
+          return;
+        }
+
+        result.onchange = syncState;
+        cleanup = () => {
+          result.onchange = null;
+        };
+      })
+      .catch(() => {
+        // Ignore permissions API failures and let geolocation callbacks handle state.
+      });
+
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, []);
 
   useEffect(() => {
     renderMarkers();
@@ -199,7 +253,9 @@ export default function SafetyMap({
 
     if (!radiusKm) return;
 
-    circleRef.current = L.circle([normalizedCenter.latitude, normalizedCenter.longitude], {
+    const radiusCenter = userLocationRef.current ?? normalizedCenter;
+
+    circleRef.current = L.circle([radiusCenter.latitude, radiusCenter.longitude], {
       radius: radiusKm * 1000,
       color: 'var(--color-primary)',
       fillColor: 'var(--color-primary)',
@@ -217,8 +273,9 @@ export default function SafetyMap({
     layer.clearLayers();
 
     markers.forEach((item) => {
-      const latitude = toCoordinateNumber(item.latitude);
-      const longitude = toCoordinateNumber(item.longitude);
+      const latitude = toCoordinateNumber(item.latitude, Number.NaN);
+      const longitude = toCoordinateNumber(item.longitude, Number.NaN);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
       const marker = L.marker([latitude, longitude], { icon: buildMarkerIcon(L, item) });
       if (item.popupHtml ?? item.label) {
         marker.bindPopup(item.popupHtml ?? `<strong>${item.label}</strong>`);
@@ -237,7 +294,11 @@ export default function SafetyMap({
 
     if (!placementMode || !selectedLocation) return;
 
-    placementMarkerRef.current = L.marker([toCoordinateNumber(selectedLocation.latitude), toCoordinateNumber(selectedLocation.longitude)], { icon: buildPlacementIcon(L) })
+    const latitude = toCoordinateNumber(selectedLocation.latitude, Number.NaN);
+    const longitude = toCoordinateNumber(selectedLocation.longitude, Number.NaN);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+    placementMarkerRef.current = L.marker([latitude, longitude], { icon: buildPlacementIcon(L) })
       .addTo(map)
       .bindPopup('Marked unsafe area')
       .openPopup();
@@ -251,13 +312,14 @@ export default function SafetyMap({
     layer.clearLayers();
 
     try {
+      const anchor = userLocationRef.current ?? normalizedCenter;
       const response = await fetch('https://overpass-api.de/api/interpreter', {
         method: 'POST',
         body: `
             [out:json][timeout:25];
             (
-            node["amenity"="police"](around:5000,${normalizedCenter.latitude},${normalizedCenter.longitude});
-            way["amenity"="police"](around:5000,${normalizedCenter.latitude},${normalizedCenter.longitude});
+            node["amenity"="police"](around:5000,${anchor.latitude},${anchor.longitude});
+            way["amenity"="police"](around:5000,${anchor.latitude},${anchor.longitude});
           );
           out body center;
         `,
@@ -290,10 +352,68 @@ export default function SafetyMap({
   }
 
   return (
-    <div className={`raksha-map ${className}`}>
+    <div className={mapClassName}>
+      {shouldShowLocationBanner ? (
+        <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p>Location access is blocked. Enable it in your browser settings for accurate map positioning.</p>
+          <button type="button" onClick={() => setLocationBannerDismissed(true)} className="shrink-0 font-semibold text-amber-900">
+            Dismiss
+          </button>
+        </div>
+      ) : null}
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );
+
+  async function applyUserLocation(map: LeafletMap) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!isMountedRef.current) return;
+
+        const latitude = toCoordinateNumber(position.coords.latitude, INDIA_CENTER.latitude);
+        const longitude = toCoordinateNumber(position.coords.longitude, INDIA_CENTER.longitude);
+        const accuracy = Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : 0;
+        const userLatLng: [number, number] = [latitude, longitude];
+        const L = leafletRef.current;
+
+        if (!L) return;
+
+        userLocationRef.current = { latitude, longitude };
+        permissionStateRef.current = 'granted';
+        setShowLocationBanner(false);
+        setLocationBannerDismissed(false);
+
+        map.flyTo(userLatLng, 13, { animate: true, duration: 1.2 });
+        renderRadius();
+        if (showPoliceStations) {
+          void loadPoliceStations();
+        }
+
+        userMarkerRef.current?.remove();
+        userMarkerRef.current = L.marker(userLatLng, { icon: buildUserLocationIcon(L) })
+          .addTo(map)
+          .bindPopup(`Your location<br/>Accuracy: ${Math.round(accuracy)}m`)
+          .openPopup();
+      },
+      (error) => {
+        if (!isMountedRef.current) return;
+
+        if (error.code === error.PERMISSION_DENIED) {
+          permissionStateRef.current = 'denied';
+          setShowLocationBanner(true);
+        }
+
+        console.warn('Geolocation error:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  }
 }
 
 function buildLegendControl(L: typeof import('leaflet')): Control {
@@ -414,6 +534,41 @@ function buildPoliceStationIcon(L: typeof import('leaflet')) {
     iconAnchor: [20, 16],
     popupAnchor: [0, -16],
   });
+}
+
+function buildUserLocationIcon(L: typeof import('leaflet')) {
+  return L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        width: 20px;
+        height: 20px;
+        background: #3b82f6;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(59,130,246,0.3);
+        animation: pulse 2s infinite;
+      "></div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -10],
+  });
+}
+
+function ensurePulseStyle() {
+  if (typeof document === 'undefined' || document.getElementById('leaflet-pulse-style')) return;
+
+  const style = document.createElement('style');
+  style.id = 'leaflet-pulse-style';
+  style.textContent = `
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.5); }
+      70% { box-shadow: 0 0 0 12px rgba(59,130,246,0); }
+      100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 export function buildIncidentPopupHtml(incident: {

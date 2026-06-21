@@ -58,7 +58,7 @@ export const env = {
   FIREBASE_SERVER_KEY: process.env.FIREBASE_SERVER_KEY ?? '',
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ?? '',
   POLICE_ALERT_EMAIL: process.env.POLICE_ALERT_EMAIL ?? '',
-  FRONTEND_URL: process.env.FRONTEND_URL ?? process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+  FRONTEND_URL: process.env.FRONTEND_URL ?? 'http://localhost:3000',
 
   // CORS
   CORS_ORIGIN: process.env.CORS_ORIGIN ?? process.env.FRONTEND_URL ?? 'http://localhost:3000',

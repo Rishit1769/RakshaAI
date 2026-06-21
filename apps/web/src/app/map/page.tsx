@@ -12,6 +12,7 @@ import { useProtectedRoute } from '@/hooks/useProtectedRoute';
 import { api } from '@/lib/api/fetcher';
 import type { MapMarker } from '@/components/SafetyMap';
 import { buildIncidentPopupHtml } from '@/components/SafetyMap';
+import { INDIA_CENTER } from '@/lib/geo';
 
 const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
   ssr: false,
@@ -48,7 +49,8 @@ export default function MapPage() {
 
     navigator.geolocation?.getCurrentPosition(
       (position) => setUserLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-      () => setUserLocation({ latitude: 20.5937, longitude: 78.9629 })
+      () => setUserLocation(null),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [isAuthReady, isAuthenticated]);
 
@@ -185,19 +187,15 @@ export default function MapPage() {
             />
           </div>
 
-          {userLocation ? (
-            <SafetyMap
-              center={userLocation}
-              zoom={14}
-              markers={buildMarkers()}
-              radiusKm={5}
-              className="h-[calc(100vh-64px)] min-h-[32rem] w-full"
-              showPoliceStations
-              showLegend
-            />
-          ) : (
-            <LoadingState label="Acquiring location..." className="h-[calc(100vh-64px)] min-h-[32rem] w-full" />
-          )}
+          <SafetyMap
+            center={userLocation ?? INDIA_CENTER}
+            zoom={14}
+            markers={buildMarkers()}
+            radiusKm={5}
+            className="h-[calc(100vh-64px)] min-h-[32rem] w-full"
+            showPoliceStations
+            showLegend
+          />
         </div>
       </div>
     </AppShell>

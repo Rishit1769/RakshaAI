@@ -12,9 +12,12 @@ import apiRouter from './routes/index';
 
 export function createApp(): Application {
   const app = express();
-  const allowedOrigins = env.CORS_ORIGIN.split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+  const allowedOrigins = Array.from(
+    new Set([
+      env.FRONTEND_URL,
+      ...env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
+    ].filter(Boolean))
+  );
 
   app.use(helmet());
 
