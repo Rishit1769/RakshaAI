@@ -1,6 +1,6 @@
 // RakshaAI — Prisma Schema
 // Database: PostgreSQL 15+ with PostGIS extension
-// Generated from BackendSchema.txt specification
+// Generated from docs/BackendSchema.md specification
 
 generator client {
   provider        = "prisma-client-js"

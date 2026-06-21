@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// RakshaAI Design Token System — mirrors UIUX.txt color specification
+/// RakshaAI Design Token System - mirrors Docs/UIUX.md color specification
 
 class AppColors {
   AppColors._();
