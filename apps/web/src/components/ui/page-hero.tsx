@@ -1,9 +1,5 @@
-'use client';
-
 import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
-import { fadeInUp, stagger } from '@/lib/motion';
 import { SectionBadge } from './section-badge';
 
 interface PageHeroProps {
@@ -27,23 +23,18 @@ export function PageHero({
 }: PageHeroProps) {
   return (
     <section className={cn('grid items-center gap-10 lg:gap-14', aside ? 'lg:grid-cols-[1.08fr_0.92fr]' : '', className)}>
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        animate="visible"
-        className={cn('space-y-6', align === 'marketing' ? 'max-w-3xl' : 'max-w-2xl')}
-      >
+      <div className={cn('space-y-6', align === 'marketing' ? 'max-w-3xl' : 'max-w-2xl')}>
         {badge ? (
-          <motion.div variants={fadeInUp}>
+          <div className="appear-fade-up appear-delay-1">
             <SectionBadge label={badge} pulse />
-          </motion.div>
+          </div>
         ) : null}
-        <motion.div variants={fadeInUp} className="space-y-4">
+        <div className="appear-fade-up appear-delay-2 space-y-4">
           <div className={align === 'marketing' ? 'display-hero' : 'display-section'}>{title}</div>
           <div className="max-w-2xl text-base leading-8 text-body md:text-lg">{description}</div>
-        </motion.div>
-        {actions ? <motion.div variants={fadeInUp} className="flex flex-wrap gap-3">{actions}</motion.div> : null}
-      </motion.div>
+        </div>
+        {actions ? <div className="appear-fade-up appear-delay-3 flex flex-wrap gap-3">{actions}</div> : null}
+      </div>
       {aside ? <div>{aside}</div> : null}
     </section>
   );

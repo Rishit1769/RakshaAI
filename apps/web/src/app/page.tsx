@@ -191,7 +191,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="solutions" className="inverted-section py-20 md:py-28">
+      <section id="solutions" className="bg-surface-soft/60 py-20 md:py-28">
         <div className="page-container space-y-12">
           <SectionHeader
             badge="Real product fragments"
@@ -201,20 +201,20 @@ export default function HomePage() {
 
           <div className="grid gap-6 lg:grid-cols-3">
             {featureRows.map((row, index) => (
-              <Card key={row.title} variant={index === 1 ? 'featured' : 'inverted'} padding="none" className="overflow-hidden">
-                <div className="relative h-44 overflow-hidden border-b border-white/10 p-5">
-                  <div className="dot-grid absolute inset-0 opacity-20" />
-                  <div className="relative flex h-full items-center justify-center rounded-[1.75rem] border border-white/10 bg-white/5">
+              <Card key={row.title} variant={index === 1 ? 'featured' : 'default'} padding="none" className="overflow-hidden">
+                <div className="relative h-44 overflow-hidden border-b border-border/70 p-5">
+                  <div className="dot-grid absolute inset-0 opacity-10" />
+                  <div className="relative flex h-full items-center justify-center rounded-[1.75rem] border border-border/70 bg-surface-soft/80">
                     {(() => {
                       const FeatureIcon = featureIcons[index];
-                      return <FeatureIcon className={`h-12 w-12 ${index === 1 ? 'text-primary' : 'text-white/72'}`} />;
+                      return <FeatureIcon className={`h-12 w-12 ${index === 1 ? 'text-primary' : 'text-ink/80'}`} />;
                     })()}
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold text-white">{row.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-white/72">{row.copy}</p>
-                  <Link href={row.href} className="mt-5 inline-flex text-sm font-semibold text-white">
+                  <h3 className="text-xl font-semibold text-ink">{row.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-body">{row.copy}</p>
+                  <Link href={row.href} className="mt-5 inline-flex text-sm font-semibold text-ink">
                     Explore surface
                   </Link>
                 </div>
