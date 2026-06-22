@@ -11,15 +11,15 @@ export const riskAnalysisSchema = z.object({
 });
 
 export const chatSchema = z.object({
-  messages: z
+  history: z
     .array(
       z.object({
         role: z.enum(['user', 'model']),
         content: z.string().min(1).max(2000),
       })
     )
-    .min(1)
     .max(20),
+  message: z.string().min(1).max(2000),
 });
 
 export type ClassifyEmergencyBody = z.infer<typeof classifyEmergencySchema>;

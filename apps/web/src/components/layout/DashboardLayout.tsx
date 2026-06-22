@@ -13,6 +13,7 @@ import { getDashboardNavigation } from '@/lib/dashboard-navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { AIAssistantWidget } from '@/components/AIAssistantWidget';
 import { ApiError } from '@/lib/api/fetcher';
 import { getSocket } from '@/lib/socket';
 
@@ -286,6 +287,7 @@ export function DashboardLayout({ title, subtitle, actions, children }: Dashboar
           <main className="page-container flex-1 py-8 md:py-10">{children}</main>
         </div>
       </div>
+      <AIAssistantWidget />
     </div>
   );
 }

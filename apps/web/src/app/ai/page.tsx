@@ -38,7 +38,7 @@ export default function AiPage() {
   }, [messages]);
 
   const chatMutation = useMutation({
-    mutationFn: (msgs: Message[]) => api.post('/ai/chat', { messages: msgs }),
+    mutationFn: ({ history, message }: { history: Message[]; message: string }) => api.post('/ai/chat', { history, message }),
     onSuccess: (data) => {
       const reply = (data as { data?: { reply?: string } })?.data?.reply ?? 'Sorry, I could not generate a response.';
       setMessages((prev) => [...prev, { role: 'model', content: reply }]);
@@ -63,7 +63,10 @@ export default function AiPage() {
     const newMessages: Message[] = [...messages, { role: 'user', content: text.trim() }];
     setMessages(newMessages);
     setInput('');
-    chatMutation.mutate(newMessages.filter((_, index) => index > 0));
+    chatMutation.mutate({
+      history: newMessages.slice(1, -1),
+      message: text.trim(),
+    });
   }
 
   if (!isAuthReady) return <LoadingState label="Checking session..." className="h-80 w-full" />;

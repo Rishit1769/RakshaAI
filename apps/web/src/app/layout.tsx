@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Calistoga, Inter, JetBrains_Mono } from 'next/font/google';
 import LeafletRuntimeConfig from '@/components/LeafletRuntimeConfig';
-import DownloadAppButton from '@/components/ui/DownloadAppButton';
 import './globals.css';
 import { Providers } from './providers';
 
@@ -48,7 +47,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <LeafletRuntimeConfig />
           {children}
-          <DownloadAppButton />
         </Providers>
       </body>
     </html>
