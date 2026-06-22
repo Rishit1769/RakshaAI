@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { getSocketBaseUrl } from '@/lib/runtime-config';
 
 // ─── Event types (mirrors backend) ─────────────────────────────────────────
 
@@ -72,11 +73,6 @@ type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 let socket: AppSocket | null = null;
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_WS_URL ??
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') ??
-  'http://localhost:5000';
-
 /**
  * Returns (and lazily creates) the singleton Socket.IO client.
  * Pass `token` to authenticate. Safe to call multiple times.
@@ -89,13 +85,16 @@ export function getSocket(token?: string): AppSocket {
     socket = null;
   }
 
-  socket = io(BACKEND_URL, {
+  const backendUrl = getSocketBaseUrl();
+  const socketOptions = {
     auth: token ? { token } : undefined,
     transports: ['websocket', 'polling'],
     autoConnect: true,
     reconnectionAttempts: 10,
     reconnectionDelay: 2000,
-  }) as AppSocket;
+  };
+
+  socket = (backendUrl ? io(backendUrl, socketOptions) : io(socketOptions)) as AppSocket;
 
   socket.on('connect', () => {
     console.debug('[Socket] Connected:', socket?.id);

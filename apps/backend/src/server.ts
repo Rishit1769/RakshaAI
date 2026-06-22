@@ -1,3 +1,40 @@
+const path = require('path');
+const dotenv = require('dotenv');
+
+dotenv.config({
+  path: path.resolve(__dirname, '../../../', process.env.NODE_ENV === 'production' ? '.env.production' : '.env'),
+  override: false,
+});
+
+const REQUIRED_ENV_VARS = [
+  'DATABASE_URL',
+  'PORT',
+  'CORS_ORIGIN',
+  'NODE_ENV',
+  'JWT_REFRESH_SECRET',
+] as const;
+
+function validateEnv() {
+  const missing: string[] = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
+
+  if (!process.env.JWT_ACCESS_SECRET && !process.env.JWT_SECRET) {
+    missing.push('JWT_ACCESS_SECRET or JWT_SECRET');
+  }
+
+  if (missing.length > 0) {
+    console.error('❌ Missing required environment variables:', missing.join(', '));
+    console.error('❌ Make sure the correct .env file is populated before starting the server');
+    process.exit(1);
+  }
+
+  console.log('✅ Environment:', process.env.NODE_ENV);
+  console.log('✅ Database URL defined:', Boolean(process.env.DATABASE_URL));
+  console.log('✅ CORS origins:', process.env.CORS_ORIGIN);
+  console.log('✅ JWT configured:', Boolean(process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET));
+}
+
+validateEnv();
+
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION:', err);
   process.exit(1);
@@ -15,7 +52,7 @@ import { logger } from './config/logger';
 import { connectDatabase, disconnectDatabase } from './config/database';
 import { initializeSocket } from './sockets/index';
 
-const SERVER_HOST = process.env.HOST ?? '0.0.0.0';
+const SERVER_HOST = process.env.HOST ?? '127.0.0.1';
 
 async function bootstrap(): Promise<void> {
   await connectDatabase();
@@ -36,8 +73,6 @@ async function bootstrap(): Promise<void> {
 
   httpServer.listen(env.PORT, SERVER_HOST, () => {
     console.log(`✅ Backend running on ${SERVER_HOST}:${env.PORT}`);
-    console.log(`✅ Environment: ${env.NODE_ENV}`);
-    console.log(`✅ Database URL defined: ${Boolean(process.env.DATABASE_URL)}`);
     logger.info(`Backend successfully initialized on ${SERVER_HOST}:${env.PORT}`);
     logger.info('Backend runtime configuration', {
       nodeEnv: env.NODE_ENV,

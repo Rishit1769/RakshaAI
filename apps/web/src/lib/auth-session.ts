@@ -24,7 +24,9 @@ export async function establishAuthenticatedSession(payload: AuthResponse): Prom
   } catch (error) {
     console.error('[auth-session] failed to establish authenticated session', error);
     useAuthStore.getState().clearAuth();
-    throw error;
+    throw new Error(
+      'Login succeeded, but we could not finish loading your session. Please try again.'
+    );
   } finally {
     console.log('[auth-session] establishAuthenticatedSession finished');
     useAuthStore.getState().setBootstrapping(false);

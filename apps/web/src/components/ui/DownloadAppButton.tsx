@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
+import { buildApiUrl } from '@/lib/runtime-config';
 
 export default function DownloadAppButton() {
   const pathname = usePathname();
@@ -19,7 +18,7 @@ export default function DownloadAppButton() {
     setToast('');
 
     try {
-      const response = await fetch(`${API_BASE}/app/download`, {
+      const response = await fetch(buildApiUrl('/app/download'), {
         method: 'GET',
         credentials: 'include',
       });

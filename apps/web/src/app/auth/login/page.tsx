@@ -10,6 +10,7 @@ import { authApi } from '@/lib/api/auth.api';
 import { establishAuthenticatedSession } from '@/lib/auth-session';
 import { getPostLoginRoute } from '@/lib/auth-routing';
 import { ApiError } from '@/lib/api/fetcher';
+import { buildApiUrl } from '@/lib/runtime-config';
 import { useAuthStore } from '@/store/auth.store';
 
 type LoginMethod = 'password' | 'mpin';
@@ -23,6 +24,7 @@ const benefits = [
 export default function LoginPage() {
   const router = useRouter();
   const { rememberIdentifier } = useAuthStore();
+  const resolvedApiUrl = buildApiUrl('/auth/login');
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('password');
   const [identifier, setIdentifier] = useState('');
   const [credential, setCredential] = useState('');
@@ -36,6 +38,7 @@ export default function LoginPage() {
       identifier,
       loginMethod,
       credentialPreview: credential ? '***' : '(empty)',
+      resolvedApiUrl,
     });
 
     const normalizedIdentifier = identifier.trim();
@@ -63,7 +66,8 @@ export default function LoginPage() {
     setError('');
 
     try {
-      console.log('Calling API:', `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api'}/auth/login`);
+      console.log('API URL:', process.env.NEXT_PUBLIC_API_URL ?? '(unset)');
+      console.log('Calling API:', resolvedApiUrl);
       const response = await authApi.login({
         identifier: normalizedIdentifier,
         credential: normalizedCredential,
@@ -84,14 +88,17 @@ export default function LoginPage() {
     } catch (err) {
       console.error(
         'API error:',
+        err instanceof ApiError ? err.code : undefined,
         err instanceof ApiError ? err.statusCode : undefined,
         err instanceof ApiError ? err.body : undefined,
         err
       );
-      if (err instanceof ApiError) {
-        setError(err.message || 'Login failed. Please check your credentials.');
-      } else if (err instanceof TypeError) {
+      if (err instanceof ApiError && err.code === 'TIMEOUT') {
+        setError('Request timed out. Please check that the backend is reachable.');
+      } else if (err instanceof ApiError && err.code === 'NETWORK') {
         setError('Unable to reach the server. Please check your connection.');
+      } else if (err instanceof ApiError) {
+        setError(err.message || 'Login failed. Please check your credentials.');
       } else {
         setError('An unexpected error occurred. Please try again.');
       }

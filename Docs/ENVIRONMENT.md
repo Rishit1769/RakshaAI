@@ -133,17 +133,19 @@ CORS_ORIGIN=http://localhost:3000
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
 
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-NEXT_PUBLIC_WS_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=/api
+NEXT_PUBLIC_WS_URL=
+NEXT_PUBLIC_SOCKET_URL=
 ```
 
 ## 6. Validation
 
 The backend performs startup checks for required env vars in `apps/backend/src/config/env.ts`.
 
+For production web builds, set `NEXT_PUBLIC_*` before `npm --workspace=apps/web run build`. Next.js bakes these values into the client bundle at build time, so a PM2 restart alone will not update browser API targets.
+
 If you extend configuration, prefer to:
 
 - add a required-var guard for truly mandatory values
 - supply a safe default only when the app can operate without the variable
 - document the new variable in this file and in `docs/DEPLOYMENT.md`
-

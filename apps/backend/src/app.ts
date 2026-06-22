@@ -29,7 +29,22 @@ export function createApp(): Application {
   app.use(
     cors({
       origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        if (
+          env.NODE_ENV !== 'production' &&
+          (origin.includes('localhost') ||
+            origin.includes('127.0.0.1') ||
+            /^http:\/\/\d+\.\d+\.\d+\.\d+:\d+$/.test(origin))
+        ) {
           callback(null, true);
           return;
         }

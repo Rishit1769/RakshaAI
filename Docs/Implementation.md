@@ -872,8 +872,9 @@ If you need a real background worker, introduce one explicitly:
 | `CORS_ORIGIN` | Optional | Allowed browser origins | Backend CORS, socket origin | `http://localhost:3000` |
 | `RATE_LIMIT_WINDOW_MS` | Optional | Global throttle window | Backend rate limiter | `900000` |
 | `RATE_LIMIT_MAX_REQUESTS` | Optional | Global throttle ceiling | Backend rate limiter | `100` |
-| `NEXT_PUBLIC_API_URL` | Optional | Browser API base URL | Web fetch wrapper | `http://localhost:5000/api` |
-| `NEXT_PUBLIC_WS_URL` | Optional | Browser WebSocket base URL | Socket client | `http://localhost:5000` |
+| `NEXT_PUBLIC_API_URL` | Optional | Browser API base URL | Web fetch wrapper | `/api` |
+| `NEXT_PUBLIC_WS_URL` | Optional | Browser WebSocket base URL | Socket client | same-origin when unset |
+| `NEXT_PUBLIC_SOCKET_URL` | Optional | Alias for browser WebSocket base URL | Socket client | same-origin when unset |
 | `VITE_API_URL` | Legacy/unused | Old frontend API variable | Not currently used by the web app | `http://localhost:3000` |
 
 ### Service-to-Env Mapping
@@ -883,7 +884,7 @@ If you need a real background worker, introduce one explicitly:
 - Storage: `MINIO_*`.
 - AI: `GEMINI_API_KEY`.
 - Map/email imagery: `GOOGLE_MAPS_API_KEY`.
-- Web client: `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WS_URL`.
+- Web client: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`, and `NEXT_PUBLIC_SOCKET_URL`.
 
 ## 15. Error Handling Patterns
 

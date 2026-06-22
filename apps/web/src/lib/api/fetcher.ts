@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/auth.store';
 import { readAccessToken, writeAccessToken } from '@/lib/auth-storage';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 /**
  * Core fetch wrapper for all RakshaAI API calls.
@@ -9,13 +10,6 @@ import { readAccessToken, writeAccessToken } from '@/lib/auth-storage';
  * - Typed generic responses
  * - NO Axios — native Fetch API only
  */
-
-export const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api').replace(/\/+$/, '');
-
-export function buildApiUrl(path: string): string {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE}${normalizedPath}`;
-}
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -29,12 +23,15 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly statusCode: number,
-    public readonly body?: unknown
+    public readonly body?: unknown,
+    public readonly code?: 'TIMEOUT' | 'NETWORK' | 'HTTP' | 'PARSE'
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
 
 function getToken(): string | null {
   return readAccessToken();
@@ -94,35 +91,73 @@ export async function fetcher<T>(
   };
 
   const requestUrl = buildApiUrl(path);
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => {
+    abortController.abort(new DOMException('Request timed out', 'AbortError'));
+  }, DEFAULT_REQUEST_TIMEOUT_MS);
   const requestInit: RequestInit = {
     ...rest,
     credentials: 'include',
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal: abortController.signal,
   };
 
   console.log('[api] request', {
     url: requestUrl,
     method: requestInit.method ?? 'GET',
+    timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
   });
 
   let response: Response;
   try {
     response = await fetch(requestUrl, requestInit);
   } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('[api] request timed out', {
+        url: requestUrl,
+        method: requestInit.method ?? 'GET',
+        timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+      });
+      throw new ApiError(
+        'Request timed out. Please check that the backend is reachable.',
+        408,
+        { url: requestUrl, method: requestInit.method ?? 'GET', timeoutMs: DEFAULT_REQUEST_TIMEOUT_MS },
+        'TIMEOUT'
+      );
+    }
+
     console.error('[api] network error', {
       url: requestUrl,
       method: requestInit.method ?? 'GET',
       error,
     });
-    throw error;
+    throw new ApiError(
+      'Unable to reach the server. Please check your connection.',
+      0,
+      { url: requestUrl, method: requestInit.method ?? 'GET', cause: error },
+      'NETWORK'
+    );
   }
 
-  let data: ApiResponse<T>;
-  try {
-    data = (await response.json()) as ApiResponse<T>;
-  } catch {
-    throw new ApiError('Failed to parse server response', response.status);
+  clearTimeout(timeoutId);
+
+  const responseText = await response.text();
+  const contentType = response.headers.get('content-type') ?? '';
+  const isJsonResponse = contentType.includes('application/json');
+
+  let data: ApiResponse<T> | null = null;
+  if (responseText) {
+    if (isJsonResponse) {
+      try {
+        data = JSON.parse(responseText) as ApiResponse<T>;
+      } catch {
+        throw new ApiError('Failed to parse server JSON response', response.status, responseText, 'PARSE');
+      }
+    } else if (response.ok) {
+      throw new ApiError('Unexpected non-JSON response from server', response.status, responseText, 'PARSE');
+    }
   }
 
   if (!response.ok) {
@@ -136,7 +171,26 @@ export async function fetcher<T>(
         useAuthStore.getState().clearAuth();
       }
     }
-    throw new ApiError(data.message ?? 'Request failed', response.status, data);
+
+    if (response.status === 404) {
+      throw new ApiError(
+        'API endpoint not found. Check NEXT_PUBLIC_API_URL configuration.',
+        response.status,
+        data ?? responseText,
+        'HTTP'
+      );
+    }
+
+    throw new ApiError(
+      data?.message ?? `Server returned status ${response.status}`,
+      response.status,
+      data ?? responseText,
+      'HTTP'
+    );
+  }
+
+  if (!data) {
+    throw new ApiError('Empty response from server', response.status, responseText, 'PARSE');
   }
 
   return data;

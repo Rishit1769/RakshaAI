@@ -1,1 +1,1 @@
-import '../../prisma/seed';
+import '../../../prisma/seed';
