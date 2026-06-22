@@ -4,7 +4,7 @@
   "private": true,
   "description": "RakshaAI Backend — Node.js + Express + TypeScript",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only --exit-child src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --exit-child src/server.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/server.js",
     "db:generate": "prisma generate --schema=../../prisma/schema.prisma",
