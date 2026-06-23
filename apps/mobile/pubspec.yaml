@@ -1,89 +1,30 @@
 name: rakshaai_mobile
-description: RakshaAI — AI-Powered Women Safety & Emergency Response Mobile App
-publish_to: 'none'
+description: Native Android client for the RakshaAI safety platform.
+publish_to: none
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
-  flutter: '>=3.19.0'
+  sdk: ">=3.4.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-
-  # ─── State Management ──────────────────────────────────────
-  flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
-
-  # ─── Navigation ───────────────────────────────────────────
-  go_router: ^13.2.0
-
-  # ─── HTTP Client ──────────────────────────────────────────
-  dio: ^5.4.3+1
-  retrofit: ^4.1.0
-
-  # ─── Local Storage ────────────────────────────────────────
-  flutter_secure_storage: ^9.0.0
-  shared_preferences: ^2.2.3
-
-  # ─── Maps & Geolocation ───────────────────────────────────
-  flutter_map: ^7.0.1
+  cupertino_icons: ^1.0.8
+  dio: ^5.9.0
+  flutter_map: ^8.2.2
+  flutter_riverpod: ^2.6.1
+  flutter_secure_storage: ^9.2.4
+  geolocator: ^14.0.2
+  go_router: ^16.3.0
+  intl: ^0.20.2
   latlong2: ^0.9.1
-  geolocator: ^12.0.0
-
-  # ─── Realtime / WebSocket ──────────────────────────────────
-  socket_io_client: ^2.0.3+1
-
-  # ─── Push Notifications ───────────────────────────────────
-  firebase_core: ^3.2.0
-  firebase_messaging: ^15.0.4
-  flutter_local_notifications: ^17.2.1+2
-
-  # ─── UI & Design ──────────────────────────────────────────
-  google_fonts: ^6.2.1
-  flutter_svg: ^2.0.10+1
-  cached_network_image: ^3.3.1
-  shimmer: ^3.0.0
-
-  # ─── Sensors (shake detection) ────────────────────────────
-  sensors_plus: ^4.0.2
-
-  # ─── Speech & TTS (voice SOS) ─────────────────────────────
-  speech_to_text: ^6.6.2
-  flutter_tts: ^4.0.2
-
-  # ─── Permissions ──────────────────────────────────────────
-  permission_handler: ^11.3.1
-
-  # ─── Utilities ────────────────────────────────────────────
-  intl: ^0.19.0
-  logger: ^2.3.0
-  uuid: ^4.4.0
-  connectivity_plus: ^6.0.3
+  socket_io_client: ^3.1.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
-  build_runner: ^2.4.9
-  riverpod_generator: ^2.3.11
-  retrofit_generator: ^8.1.0
-  json_serializable: ^6.8.0
-  json_annotation: ^4.9.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
-    - assets/icons/
-    - assets/animations/
-  fonts:
-    - family: Poppins
-      fonts:
-        - asset: assets/fonts/Poppins-Regular.ttf
-        - asset: assets/fonts/Poppins-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Poppins-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Poppins-Bold.ttf
-          weight: 700

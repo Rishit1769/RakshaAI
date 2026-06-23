@@ -28,19 +28,43 @@ export const checkRegistrationOtp = asyncHandler(async (req: Request, res: Respo
 export const verifyRegistrationOtp = asyncHandler(async (req: Request, res: Response) => {
   const result = await AuthService.verifyRegistrationOtp(req.body as AuthService.VerifyOtpInput);
   attachRefreshTokenCookie(res, result.tokens.refreshToken);
-  sendCreated(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Registration successful');
+  sendCreated(
+    res,
+    {
+      user: result.user,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+    },
+    'Registration successful'
+  );
 });
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const result = await AuthService.registerUser(req.body as AuthService.RegisterInput);
   attachRefreshTokenCookie(res, result.tokens.refreshToken);
-  sendCreated(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Registration successful');
+  sendCreated(
+    res,
+    {
+      user: result.user,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+    },
+    'Registration successful'
+  );
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const result = await AuthService.loginUser(req.body as AuthService.LoginInput);
   attachRefreshTokenCookie(res, result.tokens.refreshToken);
-  sendSuccess(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Login successful');
+  sendSuccess(
+    res,
+    {
+      user: result.user,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+    },
+    'Login successful'
+  );
 });
 
 export const loginWithMpin = asyncHandler(async (req: Request, res: Response) => {
@@ -60,7 +84,15 @@ export const loginWithMpin = asyncHandler(async (req: Request, res: Response) =>
     loginMethod: 'mpin',
   });
   attachRefreshTokenCookie(res, result.tokens.refreshToken);
-  sendSuccess(res, { user: result.user, accessToken: result.tokens.accessToken }, 'Login successful');
+  sendSuccess(
+    res,
+    {
+      user: result.user,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+    },
+    'Login successful'
+  );
 });
 
 export const setupMpin = asyncHandler(async (req: Request, res: Response) => {
