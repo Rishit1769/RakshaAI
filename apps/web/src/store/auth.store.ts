@@ -48,11 +48,17 @@ export const useAuthStore = create<AuthState>()(
           accessToken,
           isAuthenticated: true,
           preferredIdentifier: user.email,
+          isBootstrapping: false,
         });
       },
       setAccessToken: (accessToken) => {
         syncAccessToken(accessToken);
-        set((state) => ({ ...state, accessToken, isAuthenticated: Boolean(accessToken && state.user) }));
+        set((state) => ({
+          ...state,
+          accessToken,
+          isAuthenticated: Boolean(accessToken && state.user),
+          isBootstrapping: false,
+        }));
       },
       setBootstrapping: (value) => {
         set({ isBootstrapping: value });
@@ -65,7 +71,13 @@ export const useAuthStore = create<AuthState>()(
       },
       clearAuth: () => {
         syncAccessToken(null);
-        set((state) => ({ user: null, accessToken: null, isAuthenticated: false, preferredIdentifier: state.preferredIdentifier }));
+        set((state) => ({
+          user: null,
+          accessToken: null,
+          isAuthenticated: false,
+          preferredIdentifier: state.preferredIdentifier,
+          isBootstrapping: false,
+        }));
       },
     }),
     {

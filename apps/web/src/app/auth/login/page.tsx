@@ -7,8 +7,10 @@ import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import { FilterPills } from '@/components/ui/filter-pills';
 import { authApi } from '@/lib/api/auth.api';
+import { establishAuthenticatedSession } from '@/lib/auth-session';
 import { getPostLoginRoute } from '@/lib/auth-routing';
 import { ApiError } from '@/lib/api/fetcher';
+import { buildApiUrl } from '@/lib/runtime-config';
 import { useAuthStore } from '@/store/auth.store';
 
 type LoginMethod = 'password' | 'mpin';
@@ -21,7 +23,8 @@ const benefits = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth, rememberIdentifier } = useAuthStore();
+  const { rememberIdentifier } = useAuthStore();
+  const resolvedApiUrl = buildApiUrl('/auth/login');
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('password');
   const [identifier, setIdentifier] = useState('');
   const [credential, setCredential] = useState('');
@@ -31,16 +34,30 @@ export default function LoginPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    console.log('Login submit fired', {
+      identifier,
+      loginMethod,
+      credentialPreview: credential ? '***' : '(empty)',
+      resolvedApiUrl,
+    });
 
     const normalizedIdentifier = identifier.trim();
     const normalizedCredential = loginMethod === 'mpin' ? credential.replace(/\D/g, '') : credential;
 
     if (!normalizedIdentifier || !normalizedCredential) {
+      console.error('🚨 SILENT FRONTEND VALIDATION FAILURE: missing identifier or credential', {
+        normalizedIdentifier,
+        hasCredential: Boolean(normalizedCredential),
+        loginMethod,
+      });
       setError(loginMethod === 'password' ? 'Please enter your email or phone and password.' : 'Please enter your email or phone and 6-digit MPIN.');
       return;
     }
 
     if (loginMethod === 'mpin' && !/^\d{6}$/.test(normalizedCredential)) {
+      console.error('🚨 SILENT FRONTEND VALIDATION FAILURE: invalid MPIN format', {
+        normalizedCredentialLength: normalizedCredential.length,
+      });
       setError('MPIN must be exactly 6 digits.');
       return;
     }
@@ -49,25 +66,39 @@ export default function LoginPage() {
     setError('');
 
     try {
+      console.log('API URL:', process.env.NEXT_PUBLIC_API_URL ?? '(unset)');
+      console.log('Calling API:', resolvedApiUrl);
       const response = await authApi.login({
         identifier: normalizedIdentifier,
         credential: normalizedCredential,
         loginMethod,
       });
+      console.log('API response:', response);
 
       if (!response.success || !response.data) {
+        console.error('🚨 Login response missing success/data payload', response);
         setError(response.message || 'Login failed. Please check your credentials.');
         return;
       }
 
+      const authenticatedUser = await establishAuthenticatedSession(response.data);
+      console.log('Authenticated session established', authenticatedUser);
       rememberIdentifier(normalizedIdentifier);
-      setAuth(response.data.user, response.data.accessToken);
-      router.push(getPostLoginRoute(response.data.user) as never);
+      router.push(getPostLoginRoute(authenticatedUser) as never);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message || 'Login failed. Please check your credentials.');
-      } else if (err instanceof TypeError) {
+      console.error(
+        'API error:',
+        err instanceof ApiError ? err.code : undefined,
+        err instanceof ApiError ? err.statusCode : undefined,
+        err instanceof ApiError ? err.body : undefined,
+        err
+      );
+      if (err instanceof ApiError && err.code === 'TIMEOUT') {
+        setError('Request timed out. Please check that the backend is reachable.');
+      } else if (err instanceof ApiError && err.code === 'NETWORK') {
         setError('Unable to reach the server. Please check your connection.');
+      } else if (err instanceof ApiError) {
+        setError(err.message || 'Login failed. Please check your credentials.');
       } else {
         setError('An unexpected error occurred. Please try again.');
       }

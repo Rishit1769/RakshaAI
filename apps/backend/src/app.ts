@@ -12,16 +12,39 @@ import apiRouter from './routes/index';
 
 export function createApp(): Application {
   const app = express();
-  const allowedOrigins = env.CORS_ORIGIN.split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+  const allowedOrigins = Array.from(
+    new Set([
+      env.FRONTEND_URL,
+      ...env.CORS_ORIGIN.split(',').map((origin) => origin.trim()),
+    ].filter(Boolean))
+  );
+
+  app.use((req, _res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    next();
+  });
 
   app.use(helmet());
 
   app.use(
     cors({
       origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin) {
+          callback(null, true);
+          return;
+        }
+
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        if (
+          env.NODE_ENV !== 'production' &&
+          (origin.includes('localhost') ||
+            origin.includes('127.0.0.1') ||
+            /^http:\/\/\d+\.\d+\.\d+\.\d+:\d+$/.test(origin))
+        ) {
           callback(null, true);
           return;
         }

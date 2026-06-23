@@ -1,8 +1,32 @@
+const path = require('path');
+const dotenv = require('dotenv');
+
+dotenv.config({
+  path: path.resolve(__dirname, process.env.NODE_ENV === 'production' ? '../../.env.production' : '../../.env'),
+  override: false,
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
     typedRoutes: true,
+  },
+  async rewrites() {
+    if (process.env.NODE_ENV !== 'development') {
+      return [];
+    }
+
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:5000/api/:path*',
+      },
+      {
+        source: '/socket.io/:path*',
+        destination: 'http://127.0.0.1:5000/socket.io/:path*',
+      },
+    ];
   },
   images: {
     remotePatterns: [

@@ -1,30 +1,24 @@
 import dotenv from 'dotenv';
-import fs from 'fs';
 import path from 'path';
 
-const envCandidates = [
-  path.resolve(process.cwd(), 'apps/backend/.env.local'),
-  path.resolve(process.cwd(), 'apps/backend/.env'),
-  path.resolve(process.cwd(), '.env.local'),
-  path.resolve(process.cwd(), '.env'),
-  path.resolve(__dirname, '../../.env.local'),
-  path.resolve(__dirname, '../../.env'),
+const rootEnvFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+const rootEnvPath = path.resolve(__dirname, `../../../../${rootEnvFile}`);
+
+dotenv.config({ path: rootEnvPath, override: false });
+
+const jwtAccessSecret = process.env.JWT_ACCESS_SECRET ?? process.env.JWT_SECRET;
+const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+const jwtAccessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN ?? process.env.JWT_EXPIRES_IN ?? '15m';
+const jwtRefreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN ?? '7d';
+
+const requiredEnvVars: Array<[string, string | undefined]> = [
+  ['DATABASE_URL', process.env.DATABASE_URL],
+  ['JWT_ACCESS_SECRET or JWT_SECRET', jwtAccessSecret],
+  ['JWT_REFRESH_SECRET', jwtRefreshSecret],
 ];
 
-for (const envPath of envCandidates) {
-  if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath, override: false });
-  }
-}
-
-const requiredEnvVars: string[] = [
-  'DATABASE_URL',
-  'JWT_ACCESS_SECRET',
-  'JWT_REFRESH_SECRET',
-];
-
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
+for (const [envVar, value] of requiredEnvVars) {
+  if (!value) {
     throw new Error(`Missing required environment variable: ${envVar}`);
   }
 }
@@ -37,10 +31,10 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL as string,
 
   // JWT
-  JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET as string,
-  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
-  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
-  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+  JWT_ACCESS_SECRET: jwtAccessSecret as string,
+  JWT_REFRESH_SECRET: jwtRefreshSecret as string,
+  JWT_ACCESS_EXPIRES_IN: jwtAccessExpiresIn,
+  JWT_REFRESH_EXPIRES_IN: jwtRefreshExpiresIn,
 
   // SMTP / Email
   EMAIL_HOST: process.env.EMAIL_HOST ?? process.env.SMTP_HOST ?? '',
@@ -70,10 +64,14 @@ export const env = {
   FIREBASE_SERVER_KEY: process.env.FIREBASE_SERVER_KEY ?? '',
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ?? '',
   POLICE_ALERT_EMAIL: process.env.POLICE_ALERT_EMAIL ?? '',
-  FRONTEND_URL: process.env.FRONTEND_URL ?? process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+  FRONTEND_URL: process.env.FRONTEND_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001',
 
   // CORS
-  CORS_ORIGIN: process.env.CORS_ORIGIN ?? process.env.FRONTEND_URL ?? 'http://localhost:3000',
+  CORS_ORIGIN:
+    process.env.CORS_ORIGIN ??
+    process.env.FRONTEND_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    'http://localhost:3001',
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS ?? '900000', 10),

@@ -66,13 +66,16 @@ export interface AlertStatusPayload {
 // ─── Module state ──────────────────────────────────────────────────────────
 
 let io: SocketIOServer | null = null;
+const allowedOrigins = env.CORS_ORIGIN.split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // ─── Initialize ────────────────────────────────────────────────────────────
 
 export function initializeSocket(httpServer: HttpServer): SocketIOServer {
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: env.CORS_ORIGIN,
+      origin: allowedOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     },
@@ -204,7 +207,7 @@ export function initializeSocket(httpServer: HttpServer): SocketIOServer {
     });
   });
 
-  logger.info('✅ Socket.IO initialized');
+  logger.info('✅ Socket.IO initialized', { allowedOrigins });
   return io;
 }
 

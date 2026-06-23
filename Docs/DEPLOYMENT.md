@@ -136,6 +136,8 @@ npm --workspace=apps/web run build
 npm --workspace=apps/web run start
 ```
 
+Important: build the web app only after `apps/web/.env.production` or equivalent `NEXT_PUBLIC_*` values are set. Those public env variables are compiled into the Next.js bundle, so changing them later requires a fresh rebuild.
+
 There is no PM2 configuration checked into the repository. If you want PM2, wrap the same `node dist/server.js` and `next start` commands in a local process file.
 
 ### With Docker
@@ -158,7 +160,7 @@ Note: Redis is present in compose, but the current application code does not rel
 
 ## 8. Nginx Reverse Proxy
 
-The repository includes Docker Compose support for Nginx, but no checked-in Nginx config file. A practical production proxy should:
+The repository includes a checked-in Nginx reference at `docker/nginx/nginx.conf`. A practical production proxy should:
 
 - forward browser traffic to the web container
 - forward `/api` and Socket.IO traffic to the backend
@@ -190,6 +192,16 @@ server {
     proxy_pass http://web:3000;
   }
 }
+```
+
+For the live `raksha.rishit.codes` deployment, the web app should use:
+
+```env
+NEXT_PUBLIC_API_URL=https://raksha.rishit.codes/api
+NEXT_PUBLIC_WS_URL=https://raksha.rishit.codes
+NEXT_PUBLIC_SOCKET_URL=https://raksha.rishit.codes
+FRONTEND_URL=https://raksha.rishit.codes
+CORS_ORIGIN=https://raksha.rishit.codes
 ```
 
 ## 9. CI/CD
@@ -274,4 +286,3 @@ Recommended monitoring:
 | Login fails | JWT secret, auth issue, or inactive user | backend logs |
 | Emails do not send | SMTP misconfiguration | SMTP env vars |
 | APK download fails | MinIO credentials or bucket config | MinIO env vars |
-

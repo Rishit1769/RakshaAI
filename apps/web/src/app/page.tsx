@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import MarketingFooter from '@/components/layout/MarketingFooter';
 import MarketingNav from '@/components/layout/MarketingNav';
 import { Card } from '@/components/ui/card';
+import DownloadAppButton from '@/components/ui/DownloadAppButton';
 import { PageHero } from '@/components/ui/page-hero';
 import { SectionHeader } from '@/components/ui/section-header';
 import { fadeInUp, stagger } from '@/lib/motion';
@@ -128,6 +129,7 @@ export default function HomePage() {
   return (
     <main className="bg-background">
       <MarketingNav />
+      <DownloadAppButton />
 
       <section className="border-b border-border py-14 md:py-20">
         <div className="page-container">

@@ -56,6 +56,7 @@ export const riskAnalysis = asyncHandler(async (req: Request, res: Response) => 
 export const chat = asyncHandler(async (req: Request, res: Response) => {
   if (!process.env.GEMINI_API_KEY?.trim()) throw new AppError('AI service is not configured', 503);
 
-  const reply = await AiService.chatWithAssistant(req.user!.id, req.body.messages as AiService.ChatMessage[]);
+  const body = req.body as { history: AiService.ChatMessage[]; message: string };
+  const reply = await AiService.chatWithAssistant(req.user!.id, body.history ?? [], body.message);
   sendSuccess(res, { reply }, 'Response generated');
 });

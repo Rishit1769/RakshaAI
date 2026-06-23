@@ -7,8 +7,8 @@ import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
 import FloatingLabelInput from '@/components/ui/FloatingLabelInput';
 import PasswordStrength from '@/components/ui/PasswordStrength';
 import { authApi } from '@/lib/api/auth.api';
+import { establishAuthenticatedSession } from '@/lib/auth-session';
 import { ApiError } from '@/lib/api/fetcher';
-import { useAuthStore } from '@/store/auth.store';
 
 type RegisterStep = 1 | 2 | 3;
 
@@ -79,7 +79,6 @@ function validateProfile(form: ProfileFormState): ProfileErrors {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
   const [step, setStep] = useState<RegisterStep>(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -213,7 +212,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setAuth(response.data.user, response.data.accessToken);
+      await establishAuthenticatedSession(response.data);
       router.push('/dashboard');
     } catch (error) {
       setFormError(parseApiError(error, 'Unable to create your account right now.'));

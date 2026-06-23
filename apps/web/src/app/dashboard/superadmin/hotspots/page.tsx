@@ -1,14 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import SafetyMap, { type MapMarker } from '@/components/SafetyMap';
+import dynamic from 'next/dynamic';
+import type { MapMarker } from '@/components/SafetyMap';
 import { AppShell } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/card';
+import { LoadingState } from '@/components/ui/LoadingState';
 import { Select } from '@/components/ui/field';
 import { SectionBadge } from '@/components/ui/section-badge';
 import { adminApi } from '@/lib/api/admin.api';
 import { ApiError } from '@/lib/api/fetcher';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
+
+const SafetyMap = dynamic(() => import('@/components/SafetyMap'), {
+  ssr: false,
+  loading: () => <LoadingState label="Loading map..." className="h-[34rem] w-full" />,
+});
 
 type HotspotRow = {
   id: string;

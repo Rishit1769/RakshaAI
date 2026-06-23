@@ -8,15 +8,26 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently --names \"backend,web\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev": "bash ./scripts/dev-reset.sh && concurrently --names \"backend,web\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev:web\"",
     "build": "npm run build:backend && npm run build:web",
-    "dev:backend": "npm --prefix apps/backend run dev",
-    "dev:web": "npm --prefix apps/web run dev",
-    "build:backend": "npm run build --workspace=apps/backend",
-    "build:web": "npm run build --workspace=apps/web",
-    "db:generate": "npm run db:generate --workspace=apps/backend",
-    "db:migrate": "npm run db:migrate --workspace=apps/backend",
-    "db:studio": "npm run db:studio --workspace=apps/backend",
+    "dev:backend": "npm run dev --workspace=@rakshaai/backend",
+    "dev:web": "npm run dev --workspace=@rakshaai/web",
+    "build:backend": "npm run build --workspace=@rakshaai/backend",
+    "build:web": "npm run build --workspace=@rakshaai/web",
+    "start": "NODE_ENV=production npm run start:backend & NODE_ENV=production npm run start:web",
+    "start:backend": "npm run start --workspace=@rakshaai/backend",
+    "start:web": "npm run start --workspace=@rakshaai/web",
+    "start:pm2": "pm2 start ecosystem.config.js --env production",
+    "stop:pm2": "pm2 delete all",
+    "restart:pm2": "pm2 delete all && pm2 start ecosystem.config.js --env production && pm2 save",
+    "logs:pm2": "pm2 logs",
+    "status:pm2": "pm2 status",
+    "deploy": "npm run build && npm run restart:pm2",
+    "db:generate": "npm run db:generate --workspace=@rakshaai/backend",
+    "db:migrate": "npm run db:migrate --workspace=@rakshaai/backend",
+    "db:seed": "npm run db:seed --workspace=@rakshaai/backend",
+    "db:studio": "npm run db:studio --workspace=@rakshaai/backend",
+    "dev:reset": "bash ./scripts/dev-reset.sh",
     "seed:roles": "node scripts/seed.js",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
@@ -27,7 +38,7 @@
     "npm": ">=9.0.0"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "node prisma/seed-bootstrap.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

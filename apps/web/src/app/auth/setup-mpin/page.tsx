@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import MarketingNav from '@/components/layout/MarketingNav';
 import { useAuthStore } from '@/store/auth.store';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
+import { buildApiUrl } from '@/lib/runtime-config';
 
 type Step = 'enter' | 'confirm';
 
@@ -56,7 +55,7 @@ export default function SetupMpinPage() {
     setError('');
 
     try {
-      const res = await fetch(`${API_BASE}/auth/setup-mpin`, {
+      const res = await fetch(buildApiUrl('/auth/setup-mpin'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
