@@ -81,3 +81,4 @@ apps/backend/src/prisma/migrations/
 # Docker secrets
 # ───────────────────────────────────────────────
 docker/secrets/
+apps/web/public/downloads/*.apk
